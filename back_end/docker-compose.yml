@@ -1,0 +1,93 @@
+services:
+  db:
+    image: mysql:latest
+    container_name: mysql_container
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456789
+      MYSQL_DATABASE: astro_tech
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: phpmyadmin_container
+    restart: always
+    environment:
+      PMA_HOST: db
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+
+  client_api:
+    build: ./client_api
+    ports:
+      - "3001:3001"
+    depends_on:
+      - db
+    environment:
+      PORT: 3001
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: 123456789
+      DB_NAME: astro_tech
+
+  fichier_api:
+    build: ./fichier_api
+    ports:
+      - "3002:3002"
+    volumes:
+      - ./fichier_api/uploads:/app/uploads
+    depends_on:
+      - db
+    environment:
+      PORT: 3002
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: 123456789
+      DB_NAME: astro_tech
+
+  referent_api:
+    build: ./referent_api
+    ports:
+      - "3003:3003"
+    depends_on:
+      - db
+    environment:
+      PORT: 3003
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: 123456789
+      DB_NAME: astro_tech
+
+  technicien_api:
+    build: ./technicien_api
+    ports:
+      - "3004:3004"
+    depends_on:
+      - db
+    environment:
+      PORT: 3004
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: 123456789
+      DB_NAME: astro_tech
+
+  affaires_api:
+    build: ./affaires_api
+    ports:
+      - "3005:3005"
+    depends_on:
+      - db
+    environment:
+      PORT: 3005
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: 123456789
+      DB_NAME: astro_tech
+
+volumes:
+  db_data: {}

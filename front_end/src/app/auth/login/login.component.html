@@ -1,0 +1,71 @@
+<div class="login-page d-flex align-items-center justify-content-center">
+  <div class="login-card p-5 shadow-lg rounded-4">
+
+    <!-- Logo -->
+    <div class="text-center mb-4">
+      <img src="assets/images/logo.png" alt="logo" class="logo">
+    </div>
+
+    <!-- Titre -->
+    <h3 class="text-center mb-3 fw-bold text-primary">Bienvenue à nouveau !</h3>
+    <p class="text-center text-muted mb-4">Connectez-vous pour continuer</p>
+
+    <!-- Formulaire -->
+    <form (ngSubmit)="onSubmit()">
+
+      <!-- Email -->
+      <div class="form-group mb-3 position-relative">
+        <i class="mdi mdi-email-outline input-icon"></i>
+        <input 
+          type="email"
+          [(ngModel)]="model.email"
+          name="email"
+          class="form-control form-control-lg ps-5"
+          placeholder="Adresse email"
+          required>
+      </div>
+
+      <!-- Mot de passe -->
+      <div class="form-group mb-4 position-relative">
+        <i class="mdi mdi-lock-outline input-icon"></i>
+        <input 
+          [type]="showPassword ? 'text' : 'password'"
+          [(ngModel)]="model.password"
+          name="password"
+          class="form-control form-control-lg ps-5 pe-5"
+          placeholder="Mot de passe"
+          required>
+
+        <!-- Bouton œil -->
+        <button 
+          type="button"
+          (click)="togglePasswordVisibility()"
+          class="btn btn-link password-toggle">
+          <i class="mdi" [ngClass]="showPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"></i>
+        </button>
+      </div>
+
+      <!-- Message d'erreur -->
+      <div *ngIf="error" class="alert alert-danger text-center py-2">
+        {{ error }}
+      </div>
+
+      <!-- Bouton connexion -->
+      <div class="d-grid mb-3">
+        <button 
+          type="submit"
+          class="btn btn-primary-gradient btn-lg"
+          [disabled]="loading">
+          <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+          Se connecter
+        </button>
+      </div>
+
+      <!-- Lien mot de passe oublié -->
+      <div class="text-center">
+        <a href="#" class="text-muted small hover-underline">Mot de passe oublié ?</a>
+      </div>
+
+    </form>
+  </div>
+</div>

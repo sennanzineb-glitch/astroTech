@@ -1,0 +1,78 @@
+/* ====== PAGE PRINCIPALE ====== */
+.login-page {
+  height: 100vh;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* ====== LOGO ====== */
+.logo {
+  width: 120px;
+  height: auto;
+}
+
+/* ====== INPUTS ====== */
+/* Icône à gauche */
+.input-icon {
+  position: absolute;
+  top: 50%;
+  left: 1rem;
+  transform: translateY(-50%);
+  color: #6c757d;
+  font-size: 1.2rem;
+}
+
+/* Bouton œil à droite */
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  transform: translateY(-50%);
+  color: #6c757d;
+  border: none;
+  background: none;
+  padding: 0;
+}
+
+/* ====== BOUTON CONNEXION ====== */
+/* ====== CARTE ====== */
+.login-card {
+  background: #ffffff;
+  width: 100%;
+  max-width: 420px;
+  border-radius: 20px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* ====== LOGO ====== */
+.logo {
+  width: 120px;
+  height: auto;
+}
+
+/* ====== BOUTON CONNEXION ====== */
+.btn-primary-gradient {
+  background: linear-gradient(to right, #17a2b8, #007b8a);
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-weight: 600;
+  transition: 0.3s ease-in-out;
+}
+
+.btn-primary-gradient:hover {
+  background: linear-gradient(to right, #138496, #006d77);
+  transform: scale(1.02);
+}
+
+.form-control {
+  border-radius: 10px;
+  padding: 0.6rem 1rem; /* plus compact */
+  border: 1px solid #dee2e6;
+  font-size: 0.9rem; /* taille du texte plus petite */
+  transition: all 0.3s ease;
+}
+
+.form-control:focus {
+  border-color: #17a2b8;
+  box-shadow: 0 0 0 0.2rem rgba(23, 162, 184, 0.25);
+}

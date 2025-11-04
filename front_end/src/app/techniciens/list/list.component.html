@@ -1,0 +1,63 @@
+<!-- *** Titre *** -->
+<div class="page-header">
+    <h3 class="page-title">Technicien</h3>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="#">Technicien</a></li>
+            <li class="breadcrumb-item active" aria-current="page">liste des techniciens</li>
+        </ol>
+    </nav>
+</div>
+
+<!-- *** Contenu *** -->
+<div class="row">
+   <div class="col-md-12">
+    <button type="button" class="btn btn-gradient-success btn-fw mb-3" [routerLink]="['/techniciens/edit']">
+        Nouveau technicien
+    </button>
+
+    <table class="table" *ngIf="techniciens?.length > 0; else noTechniciens">
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Prénom</th>
+                <th>Téléphone</th>
+                <th>Email</th>
+                <th>Mot de passe</th>
+                <th>Spécialité</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let technicien of techniciens; let i = index">
+                <td>{{technicien.nom}}</td>
+                <td>{{technicien.prenom}}</td>
+                <td>{{technicien.telephone}}</td>
+                <td>{{technicien.email}}</td>
+                <td>
+                    {{ technicien.showPassword ? technicien.pwd : '••••••••' }}
+                    <button type="button" class="btn btn-sm btn-outline-secondary border-0" (click)="togglePassword(technicien)">
+                        <i class="mdi" [ngClass]="technicien.showPassword ? 'mdi-eye-off' : 'mdi-eye'"></i>
+                    </button>
+                </td>
+                <td>{{technicien.specialite}}</td>
+                <td>
+                    <button class="btn btn-sm btn-warning me-2" [routerLink]="['/techniciens/edit', technicien.id]">
+                        <i class="fa fa-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" (click)="deleteTechnicien(technicien.id)">
+                        <i class="fa fa-trash-o"></i>
+                    </button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <ng-template #noTechniciens>
+        <div class="alert alert-secondary">
+            Aucun technicien trouvé.
+        </div>
+    </ng-template>
+</div>
+
+</div>

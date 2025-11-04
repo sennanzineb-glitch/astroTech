@@ -1,0 +1,149 @@
+<!-- *** Titre *** -->
+<div class="page-header">
+  <h3 class="page-title"> Equipe </h3>
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="#">Techniciens</a></li>
+      <li class="breadcrumb-item active" aria-current="page">La gestion des equipes</li>
+    </ol>
+  </nav>
+</div>
+
+
+<div class="container mt-4">
+  <div class="row">
+    <!-- 🟣 Formulaire de création -->
+    <div class="col-lg-5 mb-4">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">
+            <i class="bi bi-people-fill me-2"></i>
+            Créer une équipe de techniciens
+          </h5>
+        </div>
+
+        <div class="card-body">
+          <form [formGroup]="formEquipe" (ngSubmit)="onSubmit()">
+            <!-- Nom équipe -->
+            <div class="mb-3">
+              <label for="nomEquipe" class="form-label fw-semibold">
+                Nom de l'équipe
+                <strong class="text-danger">*</strong>
+              </label>
+              <input id="nomEquipe" type="text" formControlName="nomEquipe" class="form-control"
+                placeholder="Saisir le nom de l'équipe" />
+            </div>
+
+            <!-- Chef d'équipe -->
+            <div class="mb-3">
+              <label for="chefId" class="form-label fw-semibold">
+                Chef d'équipe (Digne)
+                <strong class="text-danger">*</strong>
+              </label>
+              <select id="chefId" formControlName="chefId" class="form-select">
+                <option value="">-- Sélectionner le digne --</option>
+                <option *ngFor="let t of techniciens || []" [value]="t.id">
+                  {{ t.nom }} {{ t.prenom }}
+                </option>
+              </select>
+              <small class="text-muted">
+                Choisissez le technicien responsable de cette équipe.
+              </small>
+            </div>
+
+            <!-- Techniciens -->
+            <div class="mb-3">
+              <label for="techniciensIds" class="form-label fw-semibold">
+                Techniciens de l'équipe
+                <strong class="text-danger">*</strong>
+              </label>
+              <select id="techniciensIds" multiple formControlName="techniciensIds" class="form-select" size="6">
+                <option *ngFor="let t of techniciens || []" [value]="t.id">
+                  {{ t.nom }} {{ t.prenom }}
+                </option>
+              </select>
+              <small class="text-muted">
+                Maintenez Ctrl (ou Cmd sur Mac) pour sélectionner plusieurs techniciens.
+              </small>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100" [disabled]="loading">
+              <i class="bi bi-check-circle me-2"></i>
+              {{ loading ? 'Création...' : 'Créer l’équipe' }}
+            </button>
+          </form>
+
+          <div *ngIf="message" class="alert alert-info mt-3 text-center">
+            {{ message }}
+          </div>
+        </div>
+      </div>
+      <p class="small text-muted mt-3">
+        Les champs marqués d'un <span class="text-danger">*</span> sont obligatoires.
+      </p>
+    </div>
+
+    <!-- 🟢 Liste des équipes -->
+    <div class="col-lg-7">
+      <div class="d-flex align-items-center mb-3">
+        <h4 class="mb-0 text-primary">
+          <i class="bi bi-list-check me-2"></i> Liste des équipes
+        </h4>
+      </div>
+
+      <div *ngIf="equipes && equipes.length > 0; else noEquipe">
+        <div *ngFor="let equipe of equipes" class="card shadow-sm mb-3 border-0">
+          <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <div>
+              <h5 class="mb-0 text-dark">
+                <i class="bi bi-people-fill me-2 text-primary"></i>
+                {{ equipe.nom }}
+              </h5>
+              <small *ngIf="equipe.chef" class="text-muted">
+                Digne : {{ equipe.chef.prenom }} {{ equipe.chef.nom }}
+              </small>
+            </div>
+
+            <!-- Bouton supprimer aligné à droite -->
+            <button class="btn btn-sm btn-danger" (click)="deleteEquipe(equipe.id)">
+              <i class="fa fa-trash"></i>
+            </button>
+          </div>
+
+
+          <div class="card-body">
+            <p *ngIf="equipe.description" class="text-muted fst-italic">
+              {{ equipe.description }}
+            </p>
+
+            <h6 class="fw-semibold">Techniciens :</h6>
+            <ul *ngIf="equipe.techniciens && equipe.techniciens.length > 0; else noTech"
+              class="list-group list-group-flush">
+              <li *ngFor="let tech of equipe.techniciens"
+                class="list-group-item d-flex justify-content-between align-items-center">
+                <span>
+                  <i class="bi bi-person-circle me-2 text-secondary"></i>
+                  {{ tech.prenom }} {{ tech.nom }}
+                </span>
+                <span *ngIf="tech.dateAffectation" class="text-muted small">
+                  Affecté le : {{ tech.dateAffectation | date: 'shortDate' }}
+                </span>
+              </li>
+            </ul>
+
+            <ng-template #noTech>
+              <em class="text-secondary">Aucun technicien assigné.</em>
+            </ng-template>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #noEquipe>
+        <div class="alert alert-secondary">
+          <i class="bi bi-exclamation-circle me-2"></i>
+          Aucune équipe disponible pour le moment.
+        </div>
+      </ng-template>
+    </div>
+  </div>
+</div>

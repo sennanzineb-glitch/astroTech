@@ -1,0 +1,58 @@
+<nav class="sidebar sidebar-offcanvas" id="sidebar">
+  <ul class="nav">
+    <li class="nav-item nav-profile">
+      <a href="#" class="nav-link">
+        <div class="avatar-container">
+          <div class="avatar-circle">{{ initials }}</div>
+        </div>
+
+        <div class="nav-profile-text d-flex flex-column">
+          <span class="font-weight-bold mb-2">{{currentUser?.full_name}}</span>
+          <span class="font-weight-bold text-small mb-2">{{currentUser?.email}}</span>
+          <span class="text-secondary text-small">{{currentUser?.role}}</span>
+        </div>
+
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" routerLink="affaires/list" routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }">
+        <span class="menu-title">Affaires</span>
+        <i class="mdi mdi-book-multiple menu-icon"></i>
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" routerLink="clients/list" routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }">
+        <span class="menu-title">Clients</span>
+        <i class="mdi mdi-account-multiple menu-icon"></i>
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" routerLink="techniciens/list" routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }">
+        <span class="menu-title">Techniciens</span>
+        <i class="mdi mdi-account-group menu-icon"></i>
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" routerLink="techniciens/equipe" routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }">
+        <span class="menu-title">Equipe Techniciens</span>
+        <i class="mdi mdi-account-group menu-icon"></i>
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" routerLink="referents/list" routerLinkActive="active">
+        <span class="menu-title">Référents</span>
+        <i class="mdi mdi-account-tie menu-icon"></i>
+      </a>
+    </li>
+
+  </ul>
+</nav>

@@ -1,0 +1,140 @@
+<!-- *** Titre *** -->
+<div class="page-header">
+    <h3 class="page-title">Technicien</h3>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a [routerLink]="['/techniciens/list']">Technicien</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Nouveau technicien</li>
+        </ol>
+    </nav>
+</div>
+
+<!-- *** Contenu *** -->
+<div class="row">
+    <div class="col-md-12">
+        <form [formGroup]="technicienForm" class="shadow p-3 mb-2 bg-body rounded">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">
+                        Nom
+                        <strong class="text-danger">*</strong>
+                    </label>
+                    <input type="text" class="form-control form-control-sm" formControlName="nom">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">
+                        Prénom
+                        <strong class="text-danger">*</strong>
+                    </label>
+                    <input type="text" class="form-control form-control-sm" formControlName="prenom">
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Date de naissance</label>
+                    <input type="date" class="form-control form-control-sm" formControlName="dateNaissance">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">
+                        Spécialité
+                        <strong class="text-danger">*</strong>
+                    </label>
+                    <input type="text" class="form-control form-control-sm" formControlName="specialite">
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Adresse</label>
+                    <textarea class="form-control form-control-sm" formControlName="adresse"></textarea>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Certifications</label>
+                    <textarea class="form-control form-control-sm" formControlName="certifications"></textarea>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label class="form-label">
+                        Téléphone
+                        <strong class="text-danger">*</strong>
+                    </label>
+                    <input type="tel" class="form-control form-control-sm" formControlName="telephone">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control form-control-sm" formControlName="email">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">
+                        Mot de passe
+                        <strong class="text-danger">*</strong>
+                    </label>
+                    <div class="input-group mb-3">
+                        <input [type]="showPassword ? 'text' : 'password'" class="form-control form-control-sm" formControlName="pwd"
+                            aria-describedby="btn-show-pwd">
+                        <button class="btn btn-sm btn-outline-secondary border-0"
+                            (click)="showPassword = !showPassword" type="button" id="btn-show-pwd">
+                            <i class="mdi" [ngClass]="showPassword ? 'mdi-eye-off' : 'mdi-eye'"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label class="form-label">Expérience (années)</label>
+                    <input type="number" class="form-control form-control-sm" formControlName="experience">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Zone d’intervention</label>
+                    <input type="text" class="form-control form-control-sm" formControlName="zoneIntervention">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Date d’embauche</label>
+                    <input type="date" class="form-control form-control-sm" formControlName="dateEmbauche">
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label class="form-label">Type de contrat</label>
+                    <select class="form-select form-select-sm" formControlName="typeContrat">
+                        <option value="">Sélectionner</option>
+                        <option value="CDI">CDI</option>
+                        <option value="CDD">CDD</option>
+                        <option value="Freelance">Freelance</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Salaire</label>
+                    <input type="number" class="form-control form-control-sm" formControlName="salaire" step="0.01">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Statut</label>
+                    <select class="form-select form-select-sm" formControlName="statut">
+                        <option value="Actif">Actif</option>
+                        <option value="Inactif">Inactif</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="btns-eng" class="card card-nav shadow-sm">
+                <div class="card-body text-center">
+                    <button type="button" class="btn btn-light w-100 mb-2 btn-sm" [routerLink]="['/techniciens/list']">
+                        Annuler
+                    </button>
+                    <button class="btn btn-success w-100 mb-2 btn-sm" (click)="onSubmit()">
+                        Sauvegarder
+                    </button>
+                </div>
+            </div>
+
+        </form>
+        <p class="small text-muted">
+           Les champs marqués d'un <span class="text-danger">*</span> sont obligatoires.
+        </p>
+    </div>
+</div>

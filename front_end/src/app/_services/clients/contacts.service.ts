@@ -1,0 +1,32 @@
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ContactsService {
+
+  constructor(private http: HttpClient) { }
+
+  create(record: any) {
+    return this.http.post<any>(environment.url_client + '/clients/contact', record)
+  }
+
+  update(record: any) {
+    return this.http.put(environment.url_client + '/clients/contact' + record.id, record)
+  }
+
+  getAll() {
+    return this.http.get(environment.url_client + '/clients/contact')
+  }
+
+  getItemById(id: number) {
+    return this.http.get<any>(environment.url_client + '/clients/contact' + id )
+  }
+
+  delete(id: any) {
+    return this.http.delete(environment.url_client + '/clients/contact/' + id)
+  }
+
+}

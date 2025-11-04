@@ -1,0 +1,132 @@
+<div class="grid-margin stretch-card d-block">
+    <div class="card">
+        <div class="card-body">
+            <h4 class="card-title">Données initiales</h4>
+            <p class="card-description">
+                Lorem ipsum dolor sit amet consectetur adipisicing elit. Suscipit enim rem.
+            </p>
+            <!-- *** *** *** -->
+            <form [formGroup]="form" (ngSubmit)="saveStep()">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="reference">Référence de l'affaire</label>
+                            <strong class="text-danger">*</strong>
+                            <input type="text" class="form-control" formControlName="reference"
+                                placeholder="AAA-111-BBB">
+                        </div>
+                        <div class="mb-3">
+                            <label for="titre">Titre de l'affaire</label>
+                            <strong class="text-danger">*</strong>
+                            <input type="text" class="form-control" formControlName="titre"
+                                placeholder="Indiquer le nom de l'affaire">
+                        </div>
+                        <div class="mb-3">
+                            <label for="clientId">Client</label>
+                            <strong class="text-danger">*</strong>
+                            <div class="input-group mb-3">
+                                <select class="form-select" (change)="onClientChange($event)"
+                                    formControlName="clientId">
+                                    <option value="" disabled selected>Sélectionner client</option>
+                                    <option *ngFor="let client of clients" [value]="client.id">
+                                        {{ client.nom }}
+                                    </option>
+                                </select>
+                                <div class="input-group-append">
+                                    <button class="btn btn-gradient-info" type="button" (click)="open(content)">Créer
+                                        client</button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- *** *** -->
+                        <ng-container *ngTemplateOutlet="clientInfoTemplate; context:{ client: clientSelected }"></ng-container>
+                        <!-- *** *** -->
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="typeZone">Zone d'intervention</label>
+                            <strong class="text-danger">*</strong>
+                            <div class="row">
+                                <div class="form-check col-md-6">
+                                    <input class="form-check-input" type="radio" value="autre_zone"
+                                        (click)="open(content)">
+                                    <label class="form-check-label" for="radio-btn1">
+                                        Ajouter une zone
+                                    </label>
+                                </div>
+                                <div class="form-check col-md-6">
+                                    <input class="form-check-input" type="radio" value="meme_zone"
+                                        (change)="onZoneChange($event)" checked>
+                                    <label class="form-check-label" for="radio-btn2">
+                                        Intervenir à la même adresse
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- *** *** -->
+                        <ng-container *ngTemplateOutlet="clientInfoTemplate; context:{ client: clientSelected }"></ng-container>
+                        <!-- *** *** -->
+                        <div class="mb-3">
+                            <label for="description">Description de l'affaire</label>
+                            <strong class="text-danger">*</strong>
+                            <textarea class="form-control" formControlName="description" rows="5"
+                                placeholder="Décrivez rapidement votre affaire."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<ng-template #content let-modal>
+    <div class="modal-header">
+        <h4 class="modal-title">Client</h4>
+        <button type="button" class="btn btn-gradient-primary close" aria-label="Close" (click)="modal.dismiss()">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    <div class="modal-body">
+        <p>Contenu du modal ici</p>
+    </div>
+</ng-template>
+
+
+<ng-template #clientInfoTemplate let-client="client">
+  <div *ngIf="client" class="bg-white border rounded-3 shadow-sm p-3 m-0"
+       style="max-width: 420px; font-size: 0.85rem; line-height: 1.2;">
+    <h6 class="text-primary fw-semibold mb-3">{{ client.nomClient }}</h6>
+    <div class="row g-3">
+      <!-- Contacts -->
+      <div class="col-auto">
+        <strong>Contacts :</strong>
+        <div *ngIf="client.contacts.length > 0; else noContacts">
+          <div *ngFor="let contact of client.contacts" class="border-start ps-2 mb-2">
+            <span class="fw-semibold">{{ contact.nomComplet }}</span>
+            <span *ngIf="contact.poste" class="text-muted small">({{ contact.poste }})</span><br>
+            <span *ngIf="contact.emails.length > 0" class="text-muted">📧 {{ contact.emails[0].email }}</span><br>
+            <span *ngIf="contact.telephones.length > 0" class="text-muted">📞 {{ contact.telephones[0].tel }}</span>
+          </div>
+        </div>
+      </div>
+      <!-- Adresse -->
+      <div class="col-auto">
+        <strong>Adresse :</strong>
+        <div *ngIf="client.adresse?.adresse; else noAddress" class="text-muted">
+          {{ client.adresse.adresse }}<br>
+          {{ client.adresse.ville }}<br>
+          {{ client.adresse.pays }}
+        </div>
+      </div>
+    </div>
+    <ng-template #noContacts>
+      <span class="text-muted fst-italic small">Aucun contact disponible</span>
+    </ng-template>
+    <ng-template #noAddress>
+      <p class="text-muted fst-italic small">Aucune adresse disponible</p>
+    </ng-template>
+  </div>
+</ng-template>

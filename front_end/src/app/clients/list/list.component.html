@@ -1,0 +1,60 @@
+<!-- Titre -->
+<div class="page-header mb-4">
+  <h3 class="page-title">Clients</h3>
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="#">Clients</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Liste des clients</li>
+    </ol>
+  </nav>
+</div>
+
+<!-- Bouton Ajouter -->
+<div class="mb-3">
+  <button type="button" class="btn btn-gradient-success btn-fw mb-3" data-bs-toggle="modal" data-bs-target="#saveModal">
+    Ajouter un client
+  </button>
+</div>
+
+<!-- Liste des clients -->
+<div class="row g-3">
+  <div class="col-md-6 col-lg-4" *ngFor="let client of clients">
+    <div class="card shadow-sm h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>{{ client.nomClient }} - {{ client.numero }}</span>
+        <button class="btn btn-sm btn-danger" (click)="deleteClient(client.id)">
+          <i class="fa fa-trash"></i>
+        </button>
+      </div>
+      <div class="card-body">
+        <h6 class="card-subtitle mb-2 text-muted">Contacts</h6>
+        <div *ngIf="client.contacts?.length > 0; else noContacts">
+          <ul class="list-unstyled">
+            <li *ngFor="let contact of client.contacts" class="mb-2 p-2 border rounded">
+              <strong>{{ contact.nomComplet }}</strong> - <em>{{ contact.poste }}</em>
+              <div class="mt-1">
+                <span *ngFor="let email of contact.listEmails" class="badge bg-info text-dark me-1">
+                  <i class="fa fa-envelope"></i> {{ email.email }}
+                </span>
+              </div>
+              <div class="mt-1">
+                <span *ngFor="let tel of contact.listTels" class="badge bg-success me-1">
+                  <i class="fa fa-phone"></i> {{ tel.tel }}
+                </span>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <ng-template #noContacts>
+          <span class="alert alert-secondary">Aucun contact</span>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+  <div *ngIf="clients.length === 0" class="col-12 alert alert-secondary mt-3">
+    Aucun client trouvé.
+  </div>
+</div>
+
+<!-- Modal d'ajout -->
+<app-modal-save (clientAdded)="getAllClients()"></app-modal-save>

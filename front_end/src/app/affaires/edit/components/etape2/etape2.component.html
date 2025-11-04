@@ -1,0 +1,207 @@
+<div class="grid-margin stretch-card d-block">
+    <div class="card">
+        <div class="card-body">
+            <h4 class="card-title">Données supplémentaires</h4>
+            <p class="card-description">
+                Lorem ipsum dolor sit amet consectetur adipisicing elit. Suscipit enim rem.
+            </p>
+            <form [formGroup]="form">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="etatLogement">État</label>
+                            <select id="etatLogement" class="form-select" formControlName="etatLogement">
+                                <option value="" disabled selected>Pas d'état</option>
+                                <option value="Logement bloque">Logement bloque</option>
+                                <option value="Logement en cours de travaux">Logement en cours de travaux</option>
+                                <option value="Logement ferme">Logement ferme</option>
+                                <option value="Logement termine">Logement termine</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="referentId">Référents de l'affaire</label>
+                            <select id="referentId" class="form-select" formControlName="referentId" multiple>
+                                <option *ngFor="let item of referents" [value]="item.id">
+                                    {{ item.prenom }} {{ item.nom }}
+                                </option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="exampleInputName1">Mots-clés liés</label>
+                            <input type="text" class="form-control" id="exampleInputName1" placeholder="Name"
+                                [(ngModel)]="enteredKeyword" (keyup.enter)="addKeyword()"
+                                [ngModelOptions]="{standalone: true}">
+
+                            <div class="mt-2">
+                                <span class="badge bg-primary me-2 mb-2"
+                                    *ngFor="let keyword of keywords; let i = index">
+                                    {{ keyword }}
+                                    <button type="button" class="btn-close btn-close-white btn-sm ms-2"
+                                        aria-label="Close" (click)="deleteKeyword(i)">
+                                    </button>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Technicien prévu</label>
+
+                            <!-- Choix entre technicien ou équipe -->
+                            <div class="row mb-2">
+                                <div class="form-check col-md-6">
+                                    <input class="form-check-input" type="radio" name="choixTechnicien"
+                                        id="radioTechnicien" value="individuel" (change)="onTechnicienChange($event)"
+                                        [checked]="selectedType === 'individuel'" />
+                                    <label class="form-check-label" for="radioTechnicien">
+                                        Choisir un technicien
+                                    </label>
+                                </div>
+
+                                <div class="form-check col-md-6">
+                                    <input class="form-check-input" type="radio" name="choixTechnicien" id="radioEquipe"
+                                        value="equipe" (change)="onTechnicienChange($event)"
+                                        [checked]="selectedType === 'equipe'" />
+                                    <label class="form-check-label" for="radioEquipe">
+                                        Choisir une équipe
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- ✅ Affichage du technicien -->
+                            <select *ngIf="selectedType === 'individuel'" id="technicienId" class="form-select mb-2"
+                                formControlName="technicienId">
+                                <option value="" disabled selected>Sélectionner un technicien</option>
+                                <option *ngFor="let item of techniciens" [value]="item.id">
+                                    {{ item.prenom }} {{ item.nom }}
+                                </option>
+                            </select>
+
+                            <!-- ✅ Affichage de l’équipe -->
+                            <select *ngIf="selectedType === 'equipe'" id="equipeId" class="form-select"
+                                formControlName="equipeId" (change)="onEquipeSelect($event)">
+                                <option value="" disabled selected>Sélectionner une équipe</option>
+                                <option *ngFor="let item of equipes" [value]="item.id">
+                                    {{ item.nom }}
+                                </option>
+                            </select>
+
+                            <!-- -->
+                            <div *ngIf="selectedEquipe; else noEquipe">
+                                <ng-container
+                                    *ngTemplateOutlet="equipeInfoTemplate; context: { equipe: selectedEquipe }">
+                                </ng-container>
+                            </div>
+
+                            <ng-template #noEquipe>
+                                <p class="text-muted fst-italic small">Aucune équipe sélectionnée</p>
+                            </ng-template>
+
+                        </div>
+
+
+                        <div class="mb-3">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="birthday" class="form-label">Date de début</label>
+                                    <input type="date" class="form-control" formControlName="dateDebut">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="birthday" class="form-label">Date de fin</label>
+                                    <input type="date" class="form-control" formControlName="dateFin">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="birthday" class="form-label">Durée prévue</label>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="input-group mb-3">
+                                        <input type="number" class="form-control" placeholder="0"
+                                            formControlName="dureePrevueHeures">
+                                        <span class="input-group-text" id="basic-addon2">heures</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="input-group mb-3">
+                                        <input type="number" class="form-control" placeholder="0"
+                                            formControlName="dureePrevueMinutes">
+                                        <span class="input-group-text" id="basic-addon2">minutes</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="exampleTextarea1">Mémo</label>
+                        <textarea class="form-control" id="exampleTextarea1" rows="2" formControlName="memo"></textarea>
+                    </div>
+
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<button type="button" (click)="test()">test</button>
+
+<ng-template #equipeInfoTemplate let-equipe="equipe">
+  <div *ngIf="equipe" class="bg-white border rounded-3 shadow-sm p-3 m-0 mt-2"
+       style="font-size: 0.85rem; line-height: 1.3;">
+
+    <div class="row">
+
+      <!-- 🔹 Colonne gauche : infos de l’équipe -->
+      <div class="col-md-6 ps-3">
+        <!-- Nom de l’équipe -->
+        <h6 class="text-primary fw-semibold mb-3">
+          {{ equipe.nomEquipe }}
+        </h6>
+
+        <!-- Chef d’équipe -->
+        <div class="mb-2">
+          <strong>Chef d’équipe :</strong><br />
+          <span *ngIf="equipe.chef; else noChef">
+            {{ equipe.chef.prenom }} {{ equipe.chef.nom }}
+          </span>
+          <ng-template #noChef>
+            <span class="text-muted fst-italic small">Aucun chef défini</span>
+          </ng-template>
+        </div>
+
+        <!-- Description -->
+        <div class="mb-2">
+          <strong>Description :</strong><br />
+          <span *ngIf="equipe.description; else noDesc">
+            {{ equipe.description }}
+          </span>
+          <ng-template #noDesc>
+            <span class="text-muted fst-italic small">Pas de description</span>
+          </ng-template>
+        </div>
+      </div>
+
+      <!-- 🔸 Colonne droite : liste des techniciens -->
+      <div class="col-md-6 border-end pe-3">
+        <strong>Techniciens :</strong>
+        <ul *ngIf="equipe.techniciens?.length; else noTechniciens" 
+            class="list-unstyled mt-2 mb-0 ps-2">
+          <li *ngFor="let tech of equipe.techniciens" class="mb-1">
+            👷 {{ tech.prenom }} {{ tech.nom }}
+            <span *ngIf="tech.dateAffectation" class="text-muted small">
+              — Affecté le {{ tech.dateAffectation | date:'shortDate' }}
+            </span>
+          </li>
+        </ul>
+        <ng-template #noTechniciens>
+          <span class="text-muted fst-italic small">Aucun technicien dans cette équipe</span>
+        </ng-template>
+      </div>
+
+    </div>
+  </div>
+</ng-template>

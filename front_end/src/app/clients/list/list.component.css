@@ -1,0 +1,17 @@
+.table thead th {
+  font-weight: bold;
+}
+
+.table tbody tr:hover {
+  background-color: #f1f7ff; /* léger bleu au survol */
+}
+
+.btn-danger i {
+  margin-right: 5px;
+}
+
+.list-unstyled li {
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px dashed #ddd;
+}

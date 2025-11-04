@@ -1,0 +1,126 @@
+<div class="row">
+    <div class="col-md-10 mx-auto">
+
+        <!-- Nav Tabs -->
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="infos-generale-tab" data-bs-toggle="tab"
+                    data-bs-target="#infos-generale" type="button" role="tab" aria-controls="infos-generale"
+                    aria-selected="true">
+                    Informations Générales
+                </button>
+            </li>
+            <li class="nav-item" role="pieces-jointes">
+                <button class="nav-link" id="pieces-jointes-tab" data-bs-toggle="tab" data-bs-target="#pieces-jointes"
+                    type="button" role="tab" aria-controls="pieces-jointes" aria-selected="true">
+                    Pièces jointes
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content" id="myTabContent">
+
+            <div class="tab-pane fade show active p-3 bg-white" id="infos-generale" role="tabpanel"
+                aria-labelledby="infos-generale-tab">
+                <form [formGroup]="referentForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                Nom <strong class="text-danger">*</strong>
+                            </label>
+                            <input type="text" class="form-control form-control-sm" formControlName="nom">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                Prénom <strong class="text-danger">*</strong>
+                            </label>
+                            <input type="text" class="form-control form-control-sm" formControlName="prenom">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                Téléphone
+                                <strong class="text-danger">*</strong>
+                            </label>
+                            <input type="text" class="form-control form-control-sm" formControlName="telephone">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                Email
+                                <strong class="text-danger">*</strong>
+                            </label>
+                            <input type="email" class="form-control form-control-sm" formControlName="email">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">Date naissance</label>
+                            <input type="date" class="form-control form-control-sm" formControlName="dateNaissance">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Poste</label>
+                            <input type="text" class="form-control form-control-sm" formControlName="poste">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="mb-3">
+                            <label for="message" class="form-label">Adresse</label>
+                            <textarea class="form-control" id="message" rows="3" formControlName="adresse"
+                                placeholder="Écrivez adresse ici..."></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="tab-pane fade p-3 bg-white" id="pieces-jointes" role="tabpanel"
+                aria-labelledby="pieces-jointes-tab">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Pièces jointes</h5>
+                        <div class="shadow-sm bg-body rounded">
+                            <div class="file-drop-zone d-flex justify-content-center align-items-center"
+                                (click)="fileInput.click()" (dragover)="onDragOver($event)"
+                                (dragleave)="onDragLeave($event)" (drop)="onDrop($event)" [class.dragover]="isDragOver">
+                                <p>Déposer ici vos fichiers, ou cliquer ici</p>
+                                <input type="file" #fileInput multiple hidden (change)="onFileSelected($event)">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Liste des fichiers</h5>
+                        <ul *ngIf="selectedFiles.length > 0" class="mt-2">
+                            <li *ngFor="let f of selectedFiles; let i = index">
+                                {{ f.name }}
+                                <button type="button" class="btn btn-sm btn-link"
+                                    (click)="removeFileByIndex(i)">supprimer</button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <p class="small text-muted mt-2">
+                Les champs marqués d'un <span class="text-danger">*</span> sont obligatoires.
+            </p>
+
+        </div>
+
+        <div class="card card-nav shadow-sm" style="width: 250px;">
+            <div class="card-body text-center">
+                <button (click)="annuler()" type="button" class="btn btn-light w-100 mb-2 btn-sm">
+                    Annuler
+                </button>
+                <button (click)="save()" class="btn btn-success w-100 mb-2 btn-sm"
+                    style="background-color: #5cc6b4; border:none;">
+                    Sauvegarder
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>

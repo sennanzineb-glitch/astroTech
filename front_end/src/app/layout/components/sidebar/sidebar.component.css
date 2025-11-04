@@ -1,0 +1,43 @@
+.avatar-container {
+  text-align: center;
+  border-radius: 8px;
+}
+
+.avatar-circle {
+  width: 50px;
+  height: 50px;
+  background-color: #00b4f1;
+  color: white;
+  font-weight: bold;
+  font-size: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  margin: 0 auto 10px;
+}
+
+.avatar-name {
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+/*** *** ***  */
+/* Style de base des liens */
+.sidebar .nav-link {
+  color: #555;             /* couleur normale */
+  padding: 10px 15px;
+  display: flex;
+  align-items: center;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+/* Lien actif */
+.sidebar .nav-link.active {
+  color: #007BFF;          /* bleu pour le texte actif */
+  background-color: #E3F2FD; /* léger fond bleu */
+  border-left: 4px solid #007BFF; /* accent sur le côté */
+  font-weight: bold;
+}
