@@ -71,63 +71,66 @@ export class ModalSaveComponent {
     else this.listContacts.splice(index, 1);
   }
 
-  save() {
-    this.truncateFields();
+async save() {
+  this.truncateFields();
 
-    this.clientsService.create(this.singleClient).subscribe(result => {
-      this.singleClient.id = result.data.id;
+  try {
+    // 1️⃣ Créer le client
+    const result: any = await lastValueFrom(this.clientsService.create(this.singleClient));
+    this.singleClient.id = result.data.id;
 
-      // Your existing logic
-      if (this.typeClient === 'organisation') {
-        this.singleOrganisation.idClient = this.singleClient.id;
-        this.organisationsService.create(this.singleOrganisation).subscribe(res => {
-          this.singleOrganisation.id = res.data.id;
-        });
-      } else if (this.typeClient === 'particulier') {
-        this.singleParticulier.idClient = this.singleClient.id;
-        this.adressesService.create(this.singleAdresse).subscribe(res => {
-          this.singleParticulier.idAdresse = res.data.id;
-          this.particuliersService.create(this.singleParticulier).subscribe(res => {
-            this.singleParticulier.id = res.data.id;
-          });
-        });
-      } else {
-        this.singleAgence.idClient = this.singleClient.id;
-        this.adressesService.create(this.singleAdresse).subscribe(res => {
-          this.singleAgence.idAdresse = res.data.id;
-          this.agencesService.create(this.singleAgence).subscribe(res => {
-            this.singleAgence.id = res.data.id;
-          });
-        });
-      }
+    // 2️⃣ Créer les entités liées selon le type de client
+    if (this.typeClient === 'organisation') {
+      this.singleOrganisation.idClient = this.singleClient.id;
+      const resOrg: any = await lastValueFrom(this.organisationsService.create(this.singleOrganisation));
+      this.singleOrganisation.id = resOrg.data.id;
 
-      this.saveAllContacts(result.data.id);
+    } else if (this.typeClient === 'particulier') {
+      this.singleParticulier.idClient = this.singleClient.id;
+      const resAdresse: any = await lastValueFrom(this.adressesService.create(this.singleAdresse));
+      this.singleParticulier.idAdresse = resAdresse.data.id;
 
-      // Emit event to parent
-      this.clientAdded.emit();
+      const resPart: any = await lastValueFrom(this.particuliersService.create(this.singleParticulier));
+      this.singleParticulier.id = resPart.data.id;
 
-      // Close the modal
-      const modalEl = document.getElementById('saveModal');
-      if (modalEl) {
-        const modalInstance =
-          bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-        modalInstance.hide();
-      }
+    } else { // agence
+      this.singleAgence.idClient = this.singleClient.id;
+      const resAdresse: any = await lastValueFrom(this.adressesService.create(this.singleAdresse));
+      this.singleAgence.idAdresse = resAdresse.data.id;
 
-      // ✅ Remove remaining backdrop manually
-      const backdrop = document.querySelector('.modal-backdrop');
-      if (backdrop) {
-        backdrop.remove();
-      }
+      const resAgence: any = await lastValueFrom(this.agencesService.create(this.singleAgence));
+      this.singleAgence.id = resAgence.data.id;
+    }
 
-      // ✅ Also remove body class if still present
-      document.body.classList.remove('modal-open');
-      document.body.style.removeProperty('overflow');
-      document.body.style.removeProperty('padding-right');
+    // 3️⃣ Sauvegarder tous les contacts et leurs emails / téléphones
+    await this.saveAllContacts(result.data.id);
 
-      this.clear();
-    });
+    // 4️⃣ Émettre l’événement pour que la liste se rafraîchisse
+    this.clientAdded.emit();
+
+    // 5️⃣ Fermer le modal correctement
+    const modalEl = document.getElementById('saveModal');
+    if (modalEl) {
+      const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+      modalInstance.hide();
+    }
+
+    // Supprimer le backdrop et nettoyer le body
+    const backdrop = document.querySelector('.modal-backdrop');
+    if (backdrop) backdrop.remove();
+    document.body.classList.remove('modal-open');
+    document.body.style.removeProperty('overflow');
+    document.body.style.removeProperty('padding-right');
+
+    // 6️⃣ Réinitialiser les formulaires
+    this.clear();
+
+  } catch (err) {
+    console.error('Erreur lors de la sauvegarde du client :', err);
+    alert('Une erreur est survenue lors de la sauvegarde du client.');
   }
+}
+
 
 
   toggleDiv() {
