@@ -49,6 +49,8 @@ app.post(uri + '/num_tel', controllerNumTel.apiCreate);
 app.put(uri + '/num_tel/:id', controllerNumTel.apiUpdateById);
 app.get(uri + '/num_tel/:id', controllerNumTel.apiGetById);
 app.delete(uri + '/num_tel/:id', controllerNumTel.apiDeleteById);
+// Vérifie si un numéro de téléphone existe déjà pour un contact
+app.get(uri + '/num_tel/byTel/:idContact', controllerNumTel.apiGetByTelAndContact);
 
 /*** adresse_email ***/
 app.get(uri + '/adresse_email', controllerAdresseEmail.apiGetAll);
@@ -56,6 +58,8 @@ app.post(uri + '/adresse_email', controllerAdresseEmail.apiCreate);
 app.put(uri + '/adresse_email/:id', controllerAdresseEmail.apiUpdateById);
 app.get(uri + '/adresse_email/:id', controllerAdresseEmail.apiGetById);
 app.delete(uri + '/adresse_email/:id', controllerAdresseEmail.apiDeleteById);
+// Vérifie si un email existe déjà pour un contact
+app.get(uri + '/adresse_email/byEmail/:idContact', controllerAdresseEmail.apiGetByEmailAndContact);
 
 /***contact ***/
 app.get(uri + '/contact', controllerContact.apiGetAll);
@@ -63,6 +67,7 @@ app.post(uri + '/contact', controllerContact.apiCreate);
 app.put(uri + '/contact/:id', controllerContact.apiUpdateById);
 app.get(uri + '/contact/:id', controllerContact.apiGetById);
 app.delete(uri + '/contact/:id', controllerContact.apiDeleteById);
+app.get(uri + "/contact/byNameAndPoste/:idClient", controllerContact.apiGetByNameAndPoste);
 
 /*** Adresse ***/
 app.get(uri + '/adresse', controllerAdresse.apiGetAll);

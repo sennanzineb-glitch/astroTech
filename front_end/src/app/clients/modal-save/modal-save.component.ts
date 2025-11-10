@@ -1,3 +1,4 @@
+
 import { Component, Renderer2, EventEmitter, Output } from '@angular/core';
 import { lastValueFrom } from 'rxjs';
 import { SharedModule } from '../../_globale/shared/shared.module';
@@ -53,6 +54,7 @@ export class ModalSaveComponent {
 
   isFirstVisible = false;
   isContactValidate = true;
+  isEditMode = false;
 
   addItem(type: string) {
     if (type === 'tous') {
@@ -71,66 +73,83 @@ export class ModalSaveComponent {
     else this.listContacts.splice(index, 1);
   }
 
-async save() {
-  this.truncateFields();
+  async save() {
+    this.truncateFields();
+    console.log(this.isEditMode);
+    try {
 
-  try {
-    // 1️⃣ Créer le client
-    const result: any = await lastValueFrom(this.clientsService.create(this.singleClient));
-    this.singleClient.id = result.data.id;
+      if (this.isEditMode) {
+        // 1️⃣ Créer le client
+        await lastValueFrom(this.clientsService.update(this.singleClient));
+        // 2️⃣ Créer les entités liées selon le type de client
+        if (this.typeClient === 'organisation') {
+          await lastValueFrom(this.organisationsService.update(this.singleOrganisation));
+        } else if (this.typeClient === 'particulier') {
+          await lastValueFrom(this.adressesService.update(this.singleAdresse));
+          await lastValueFrom(this.particuliersService.update(this.singleParticulier));
+        } else { // agence
+          await lastValueFrom(this.adressesService.update(this.singleAdresse));
+          await lastValueFrom(this.agencesService.update(this.singleAgence));
+        }
+      }
+      else {
+        // 1️⃣ Créer le client
+        const result: any = await lastValueFrom(this.clientsService.create(this.singleClient));
+        this.singleClient.id = result.data.id;
+        // 2️⃣ Créer les entités liées selon le type de client
+        if (this.typeClient === 'organisation') {
+          this.singleOrganisation.idClient = this.singleClient.id;
+          const resOrg: any = await lastValueFrom(this.organisationsService.create(this.singleOrganisation));
+          this.singleOrganisation.id = resOrg.data.id;
+        } else if (this.typeClient === 'particulier') {
+          this.singleParticulier.idClient = this.singleClient.id;
+          const resAdresse: any = await lastValueFrom(this.adressesService.create(this.singleAdresse));
+          this.singleParticulier.idAdresse = resAdresse.data.id;
 
-    // 2️⃣ Créer les entités liées selon le type de client
-    if (this.typeClient === 'organisation') {
-      this.singleOrganisation.idClient = this.singleClient.id;
-      const resOrg: any = await lastValueFrom(this.organisationsService.create(this.singleOrganisation));
-      this.singleOrganisation.id = resOrg.data.id;
+          const resPart: any = await lastValueFrom(this.particuliersService.create(this.singleParticulier));
+          this.singleParticulier.id = resPart.data.id;
 
-    } else if (this.typeClient === 'particulier') {
-      this.singleParticulier.idClient = this.singleClient.id;
-      const resAdresse: any = await lastValueFrom(this.adressesService.create(this.singleAdresse));
-      this.singleParticulier.idAdresse = resAdresse.data.id;
+        } else { // agence
+          this.singleAgence.idClient = this.singleClient.id;
+          const resAdresse: any = await lastValueFrom(this.adressesService.create(this.singleAdresse));
+          this.singleAgence.idAdresse = resAdresse.data.id;
 
-      const resPart: any = await lastValueFrom(this.particuliersService.create(this.singleParticulier));
-      this.singleParticulier.id = resPart.data.id;
+          const resAgence: any = await lastValueFrom(this.agencesService.create(this.singleAgence));
+          this.singleAgence.id = resAgence.data.id;
+        }
 
-    } else { // agence
-      this.singleAgence.idClient = this.singleClient.id;
-      const resAdresse: any = await lastValueFrom(this.adressesService.create(this.singleAdresse));
-      this.singleAgence.idAdresse = resAdresse.data.id;
+        // 3️⃣ Sauvegarder tous les contacts et leurs emails / téléphones
+        //await this.saveAllContacts(this.singleClient.id);
+      }
 
-      const resAgence: any = await lastValueFrom(this.agencesService.create(this.singleAgence));
-      this.singleAgence.id = resAgence.data.id;
+      // 3️⃣ Sauvegarder tous les contacts et leurs emails / téléphones
+      await this.saveAllContacts(this.singleClient.id);
+
+      // 4️⃣ Émettre l’événement pour que la liste se rafraîchisse
+      this.clientAdded.emit();
+
+      // 5️⃣ Fermer le modal correctement
+      const modalEl = document.getElementById('saveModal');
+      if (modalEl) {
+        const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modalInstance.hide();
+      }
+
+      // Supprimer le backdrop et nettoyer le body
+      const backdrop = document.querySelector('.modal-backdrop');
+      if (backdrop) backdrop.remove();
+      document.body.classList.remove('modal-open');
+      document.body.style.removeProperty('overflow');
+      document.body.style.removeProperty('padding-right');
+
+      // 6️⃣ Réinitialiser les formulaires
+      this.clear();
+
+    } catch (err) {
+      console.error('Erreur lors de la sauvegarde du client :', err);
+      alert('Une erreur est survenue lors de la sauvegarde du client.');
     }
-
-    // 3️⃣ Sauvegarder tous les contacts et leurs emails / téléphones
-    await this.saveAllContacts(result.data.id);
-
-    // 4️⃣ Émettre l’événement pour que la liste se rafraîchisse
-    this.clientAdded.emit();
-
-    // 5️⃣ Fermer le modal correctement
-    const modalEl = document.getElementById('saveModal');
-    if (modalEl) {
-      const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-      modalInstance.hide();
-    }
-
-    // Supprimer le backdrop et nettoyer le body
-    const backdrop = document.querySelector('.modal-backdrop');
-    if (backdrop) backdrop.remove();
-    document.body.classList.remove('modal-open');
-    document.body.style.removeProperty('overflow');
-    document.body.style.removeProperty('padding-right');
-
-    // 6️⃣ Réinitialiser les formulaires
-    this.clear();
-
-  } catch (err) {
-    console.error('Erreur lors de la sauvegarde du client :', err);
-    alert('Une erreur est survenue lors de la sauvegarde du client.');
   }
-}
-
 
 
   toggleDiv() {
@@ -150,16 +169,84 @@ async save() {
     } else this.isContactValidate = false;
   }
 
+  // async saveAllContacts(idClient: number) {
+  //   for (const contact of this.listContacts) {
+  //     contact.idClient = idClient;
+  //     try {
+  //       const result: any = await lastValueFrom(this.contactsService.create(contact));
+  //       contact.id = result.data.id;
+  //       await this.saveAllEmails([...contact.listEmails], contact.idClient, contact.id);
+  //       await this.saveAllTels([...contact.listTels], contact.idClient, contact.id);
+  //     } catch (err) {
+  //       console.error(err);
+  //     }
+  //   }
+  // }
+
   async saveAllContacts(idClient: number) {
     for (const contact of this.listContacts) {
       contact.idClient = idClient;
+
       try {
-        const result: any = await lastValueFrom(this.contactsService.create(contact));
-        contact.id = result.data.id;
-        await this.saveAllEmails([...contact.listEmails], contact.idClient, contact.id);
-        await this.saveAllTels([...contact.listTels], contact.idClient, contact.id);
+        // 🔍 Vérification du contact (nom + poste)
+        let record: any = {
+          nomComplet: contact.nomComplet,
+          poste: contact.poste
+        };
+        console.log("***",record);
+        
+        const existing: any = await lastValueFrom(
+          this.contactsService.getByNameAndPoste(idClient,record)
+        );
+
+        if (existing && existing.data) {
+          contact.id = existing.data.id;
+          await lastValueFrom(this.contactsService.update(contact));
+        } else {
+          const result: any = await lastValueFrom(this.contactsService.create(contact));
+          contact.id = result.data.id;
+        }
+
+        // ✅ Vérification des emails avant insertion
+        for (const email of contact.listEmails) {
+          const existsEmail: any = await lastValueFrom(
+            this.adresseEmailService.getByEmailAndContact(contact.id, email.email)
+          );
+
+          if (existsEmail && existsEmail.data) {
+            // Email déjà existant → on ignore
+            console.log(`Email déjà existant : ${email.email}`);
+          } else {
+            await lastValueFrom(this.adresseEmailService.create({
+              idContact: contact.id,
+              idClient: contact.idClient,
+              email: email.email,
+              type: email.type
+            }));
+          }
+        }
+
+        // ✅ Vérification des téléphones avant insertion
+        for (const tel of contact.listTels) {
+          const existsTel: any = await lastValueFrom(
+            this.numTelService.getByTelAndContact(contact.id, tel.tel)
+          );
+
+          if (existsTel && existsTel.data) {
+            // Tel déjà existant → on ignore
+            console.log(`Téléphone déjà existant : ${tel.tel}`);
+          } else {
+            await lastValueFrom(this.numTelService.create({
+              idContact: contact.id,
+              idClient: contact.idClient,
+              tel: tel.tel,
+              type: tel.type
+            }));
+          }
+        }
+
       } catch (err) {
-        console.error(err);
+        console.error('Erreur lors de la sauvegarde du contact :', err);
       }
     }
   }
@@ -208,6 +295,7 @@ async save() {
   }
 
   clear() {
+    this.isEditMode = false;
     this.singleAdresse = { id: null, adresse: null, codePostal: null, ville: null, province: null, pays: null, etage: null, appartementLocal: null, batiment: null, interphoneDigicode: null, escalier: null, porteEntree: null };
     this.singleContact = { id: null, nomComplet: null, poste: null, dateDu: null, dateAu: null, memoNote: null, idClient: null };
     this.singleParticulier = { id: null, nomComplet: null, email: null, telephone: null, idAdresse: null, idClient: null };
@@ -226,4 +314,84 @@ async save() {
     this.listEmails = [{ ...this.singleAdresseEmail }];
     this.listTels = [{ ...this.singleNumTel }];
   }
+
+  private getEmptyAdresse() {
+    return {
+      id: null, adresse: null, codePostal: null, ville: null, province: null,
+      pays: null, etage: null, appartementLocal: null, batiment: null,
+      interphoneDigicode: null, escalier: null, porteEntree: null
+    };
+  }
+
+  editClient(client: any) {
+    console.log('***', client);
+
+    this.isEditMode = true;
+    this.isFirstVisible = true;
+
+    this.singleClient = { id: client.id || null, numero: client.numero || '', compte: client.compte || '' };
+
+    switch (client.typeClient) {
+      case 'organisation':
+        this.typeClient = 'organisation';
+        this.singleOrganisation = {
+          id: client.organisationId || client.organisation?.id || null,
+          idClient: client.id || null,
+          nomEntreprise: client.nomClient || client.organisation?.nomEntreprise || ''
+        };
+        this.singleAdresse = client.adresse ? { ...client.adresse } : this.getEmptyAdresse();
+        break;
+
+      case 'particulier':
+        this.typeClient = 'particulier';
+        this.singleParticulier = {
+          id: client.particulierId || client.particulier?.id || null,
+          idClient: client.id || null,
+          nomComplet: client.nomClient || '',
+          email: client.email || '',
+          telephone: client.telephone || '',
+          idAdresse: client.adresse?.id || null
+        };
+        this.singleAdresse = client.adresse ? { ...client.adresse } : this.getEmptyAdresse();
+        break;
+
+      case 'agence':
+        this.typeClient = 'agence';
+        this.singleAgence = {
+          id: client.agenceId || client.agence?.id || null,
+          idClient: client.id || null,
+          nomAgence: client.nomClient || client.agence?.nomAgence || '',
+          idAdresse: client.adresse?.id || null
+        };
+        this.singleAdresse = client.adresse ? { ...client.adresse } : this.getEmptyAdresse();
+        break;
+
+      default:
+        this.typeClient = 'inconnu';
+        this.singleAdresse = this.getEmptyAdresse();
+        break;
+    }
+
+    this.listContacts = client.contacts?.map((c: any) => ({
+      ...c,
+      listEmails: c.listEmails?.length ? [...c.listEmails] : [{ ...this.singleAdresseEmail }],
+      listTels: c.listTels?.length ? [...c.listTels] : [{ ...this.singleNumTel }]
+    })) || [];
+
+    if (this.listContacts.length === 0) {
+      this.listEmails = [{ ...this.singleAdresseEmail }];
+      this.listTels = [{ ...this.singleNumTel }];
+    }
+
+    const modalEl = document.getElementById('saveModal');
+    if (modalEl) {
+      const modalInstance = new bootstrap.Modal(modalEl);
+      modalInstance.show();
+    }
+  }
+
+
+
+
+
 }

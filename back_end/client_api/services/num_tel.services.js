@@ -31,6 +31,14 @@ class NumTelService {
     const [rows] = await db.execute(query, [id]);
     return rows[0];
   }
+
+  static async getByTelAndContact(idContact, tel) {
+    const [rows] = await db.execute(
+      `SELECT * FROM num_tel WHERE idContact = ? AND tel = ? LIMIT 1`,
+      [idContact, tel]
+    );
+    return rows.length > 0 ? rows[0] : null;
+  }
 }
 
 module.exports = NumTelService;

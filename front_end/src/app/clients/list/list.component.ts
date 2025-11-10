@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild, AfterViewInit } from '@angular/core';
 import { SharedModule } from '../../_globale/shared/shared.module';
 import { ModalSaveComponent } from '../modal-save/modal-save.component';
 import { ClientsService } from '../../_services/clients/clients.service';
@@ -10,6 +10,9 @@ import { ClientsService } from '../../_services/clients/clients.service';
   styleUrls: ['./list.component.css']
 })
 export class ListComponent {
+
+  @ViewChild('modalSave') modalSave!: ModalSaveComponent;
+
   clients: any[] = [];
 
   constructor(private clientsService: ClientsService) {
@@ -47,5 +50,15 @@ deleteClient(id: number) {
     });
   }
 }
+
+  // méthode pour ouvrir le modal et éditer un client
+  editClient(client: any) {
+    if (this.modalSave) {
+      this.modalSave.editClient(client);
+    } else {
+      console.error('ModalSaveComponent non initialisé !');
+    }
+  }
+
 
 }

@@ -4,7 +4,7 @@ class Contact {
 
     static async apiCreate(req, res) {
         try {
-            
+
             const { nomComplet, poste, dateDu, dateAu, memoNote, idClient } = req.body;
             if (!nomComplet || !poste || !dateDu || !dateAu || !memoNote || !idClient)
                 return res.status(400).json({ error: "nomComplet, poste, dateDu, dateAu, memoNote and idClient are required" });
@@ -78,6 +78,43 @@ class Contact {
             res.status(500).send();
         }
     }
+
+    static async apiGetByNameAndPoste(req, res) {
+        try {
+            const { idClient } = req.params;
+            const { nomComplet, poste } = req.query;
+
+            console.log(idClient,nomComplet,poste);
+            
+
+            // Vérifier les entrées
+            if (!idClient || !nomComplet || !poste) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Champs manquants : idClient, nomComplet ou poste.",
+                });
+            }
+
+            const contact = await ContactService.getByNameAndPoste(
+                idClient,
+                nomComplet,
+                poste
+            );
+
+            if (contact) {
+                return res.json({ success: true, data: contact });
+            } else {
+                return res.json({ success: false, data: null });
+            }
+        } catch (err) {
+            console.error("Erreur apiGetByNameAndPoste:", err);
+            res.status(500).json({
+                success: false,
+                message: "Erreur interne du serveur",
+            });
+        }
+    }
+
 
 }
 

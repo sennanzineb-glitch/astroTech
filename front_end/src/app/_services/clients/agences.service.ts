@@ -14,7 +14,7 @@ export class AgencesService {
   }
 
   update(record: any) {
-    return this.http.put(environment.url_client + '/clients/agence' + record.id, record)
+    return this.http.put(environment.url_client + '/clients/agence/' + record.id, record)
   }
 
   getAll() {

@@ -14,7 +14,7 @@ export class AdressesService {
   }
 
   update(record: any) {
-    return this.http.put(environment.url_client + '/clients/adresse' + record.id, record)
+    return this.http.put(environment.url_client + '/clients/adresse/' + record.id, record)
   }
 
   getAll() {
@@ -22,7 +22,7 @@ export class AdressesService {
   }
 
   getItemById(id: number) {
-    return this.http.get<any>(environment.url_client + '/clients/adresse' + id )
+    return this.http.get<any>(environment.url_client + '/clients/adresse/' + id )
   }
 
   delete(id: any) {

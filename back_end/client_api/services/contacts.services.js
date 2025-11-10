@@ -29,6 +29,25 @@ class ContactService {
     const [rows] = await db.execute(query, [id]);
     return rows[0];
   }
+
+  static async getByNameAndPoste(idClient, nomComplet, poste) {
+    try {
+      const [rows] = await db.execute(
+        `SELECT * FROM contact WHERE idClient = ? AND nomComplet = ? AND poste = ? LIMIT 1`,
+        [idClient, nomComplet, poste]
+      );
+
+      if (rows.length > 0) {
+        return rows[0];
+      }
+      return null;
+    } catch (err) {
+      console.error("Erreur getByNameAndPoste:", err);
+      throw err;
+    }
+  }
+
+
 }
 
 module.exports = ContactService;

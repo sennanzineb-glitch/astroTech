@@ -14,7 +14,7 @@ export class ParticuliersService {
   }
 
   update(record: any) {
-    return this.http.put(environment.url_client + '/clients/particulier' + record.id, record)
+    return this.http.put(environment.url_client + '/clients/particulier/' + record.id, record)
   }
 
   getAll() {

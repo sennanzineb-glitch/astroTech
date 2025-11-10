@@ -28,4 +28,12 @@ export class AdresseEmailService {
   delete(id: any) {
     return this.http.delete(environment.url_client + '/clients/adresse_email/' + id)
   }
+
+  // Vérifie si un email existe pour un contact donné
+  getByEmailAndContact(idContact: number, email: string) {
+    return this.http.get(
+      environment.url_client + '/clients/adresse_email/byEmail/' + idContact + '?email=' + encodeURIComponent(email)
+    );
+  }
+
 }

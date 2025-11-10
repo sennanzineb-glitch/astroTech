@@ -102,9 +102,4 @@ export class Etape2Component {
     this.selectedEquipe = this.equipes.find((eq: any) => eq.id === selectedId) || null;
   }
 
-  test(){
-    console.log("c'est un test !");
-    console.log(this.form);
-  }
-
 }

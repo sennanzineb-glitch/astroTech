@@ -2,28 +2,40 @@ const db = require("../db"); // <-- IMPORT DU POOL MYSQL
 
 class ClientService {
 
-  // Récupérer tous les clients avec une seule colonne "nomClient"
+
+  // Récupérer tous les clients avec une seule colonne "nomClient" et typeClient
   static async getAllRecords() {
     const query = `
-      SELECT 
-        c.id,
-        c.numero,
-        c.compte,
-        COALESCE(p.nomComplet, a.nomAgence, o.nomEntreprise) AS nom
-      FROM client c
-      LEFT JOIN particulier p ON p.idClient = c.id
-      LEFT JOIN agence a ON a.idClient = c.id
-      LEFT JOIN organisation o ON o.idClient = c.id
-      ORDER BY nom ASC
-    `;
+    SELECT 
+      c.id,
+      c.numero,
+      c.compte,
+      COALESCE(p.nomComplet, a.nomAgence, o.nomEntreprise) AS nomClient,
+      CASE
+        WHEN p.idClient IS NOT NULL THEN 'particulier'
+        WHEN a.idClient IS NOT NULL THEN 'agence'
+        WHEN o.idClient IS NOT NULL THEN 'organisation'
+        ELSE 'inconnu'
+      END AS typeClient
+    FROM client c
+    LEFT JOIN particulier p ON p.idClient = c.id
+    LEFT JOIN agence a ON a.idClient = c.id
+    LEFT JOIN organisation o ON o.idClient = c.id
+    ORDER BY nomClient ASC
+  `;
 
     try {
       const [rows] = await db.query(query);
       return rows;
     } catch (error) {
-      console.error('Erreur ClientService.getAllClients:', error);
+      console.error('Erreur ClientService.getAllRecords:', error);
       throw error;
     }
+  }
+
+  static async updateRecordById(record) {
+    const query = `UPDATE client SET numero = ?, compte = ? WHERE id = ?`;
+    await db.execute(query, [record.numero, record.compte, record.id]);
   }
 
   // Récupérer tous les clients avec contacts, emails et téléphones
@@ -33,6 +45,19 @@ class ClientService {
       SELECT 
         c.id AS clientId, c.numero, c.compte,
         COALESCE(p.nomComplet, a.nomAgence, o.nomEntreprise) AS nomClient,
+        CASE
+          WHEN p.idClient IS NOT NULL THEN 'particulier'
+          WHEN a.idClient IS NOT NULL THEN 'agence'
+          WHEN o.idClient IS NOT NULL THEN 'organisation'
+          ELSE 'inconnu'
+        END AS typeClient,
+        p.id AS particulierId, p.email AS particulierEmail, p.telephone AS particulierTel,
+        a.id AS agenceId,
+        o.id AS organisationId,
+        ad.id AS adresseId,
+        ad.adresse, ad.codePostal, ad.ville, ad.province, ad.pays,
+        ad.etage, ad.appartementLocal, ad.batiment, ad.interphoneDigicode,
+        ad.escalier, ad.porteEntree,
         ct.id AS contactId, ct.nomComplet AS contactNomComplet, ct.poste, ct.dateDu, ct.dateAu, ct.memoNote,
         e.id AS emailId, e.email, e.type AS emailType,
         t.id AS telId, t.tel, t.type AS telType
@@ -40,6 +65,7 @@ class ClientService {
       LEFT JOIN particulier p ON p.idClient = c.id
       LEFT JOIN agence a ON a.idClient = c.id
       LEFT JOIN organisation o ON o.idClient = c.id
+      LEFT JOIN adresse ad ON ad.id = p.idAdresse OR ad.id = a.idAdresse
       LEFT JOIN contact ct ON ct.idClient = c.id
       LEFT JOIN adresse_email e ON e.idContact = ct.id
       LEFT JOIN num_tel t ON t.idContact = ct.id
@@ -48,22 +74,48 @@ class ClientService {
 
       const [rows] = await db.execute(query);
 
-      // Transformer le résultat en structure hiérarchique
       const clientsMap = new Map();
 
       rows.forEach(row => {
         if (!clientsMap.has(row.clientId)) {
-          clientsMap.set(row.clientId, {
+          const clientData = {
             id: row.clientId,
             numero: row.numero,
             compte: row.compte,
-            nomClient: row.nomClient,   // nom unique pour tous les types
+            nomClient: row.nomClient,
+            typeClient: row.typeClient,
+            particulierId: row.particulierId,
+            agenceId: row.agenceId,
+            organisationId: row.organisationId,
+            adresse: row.adresseId ? {
+              id: row.adresseId,
+              adresse: row.adresse,
+              codePostal: row.codePostal,
+              ville: row.ville,
+              province: row.province,
+              pays: row.pays,
+              etage: row.etage,
+              appartementLocal: row.appartementLocal,
+              batiment: row.batiment,
+              interphoneDigicode: row.interphoneDigicode,
+              escalier: row.escalier,
+              porteEntree: row.porteEntree
+            } : null,
             contacts: []
-          });
+          };
+
+          // ✅ Ajouter email & tel si c’est un particulier
+          if (row.typeClient === 'particulier') {
+            clientData.email = row.particulierEmail;
+            clientData.telephone = row.particulierTel;
+          }
+
+          clientsMap.set(row.clientId, clientData);
         }
 
         const client = clientsMap.get(row.clientId);
 
+        // Ajout des contacts (inchangé)
         if (row.contactId) {
           let contact = client.contacts.find(c => c.id === row.contactId);
           if (!contact) {
@@ -105,7 +157,6 @@ class ClientService {
       throw err;
     }
   }
-
 
   static async createRecord(record) {
     try {
@@ -292,6 +343,7 @@ class ClientService {
 
     return client;
   }
+
 
 }
 

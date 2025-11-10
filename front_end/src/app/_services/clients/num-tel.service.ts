@@ -22,10 +22,18 @@ export class NumTelService {
   }
 
   getItemById(id: number) {
-    return this.http.get<any>(environment.url_client + '/clients/num_tel/' + id )
+    return this.http.get<any>(environment.url_client + '/clients/num_tel/' + id)
   }
 
   delete(id: any) {
     return this.http.delete(environment.url_client + '/clients/num_tel/' + id)
   }
+
+  // Vérifie si un numéro existe pour un contact donné
+  getByTelAndContact(idContact: number, tel: string) {
+    return this.http.get(
+      environment.url_client + '/clients/num_tel/byTel/' + idContact + '?tel=' + encodeURIComponent(tel)
+    );
+  }
+
 }

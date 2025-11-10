@@ -73,6 +73,35 @@ class AdresseEmail {
         }
     }
 
+    // 🔍 Vérifier si un email existe déjà pour un contact
+  static async apiGetByEmailAndContact(req, res) {
+    try {
+      const { idContact } = req.params;
+      const { email } = req.query;
+
+      if (!idContact || !email) {
+        return res.status(400).json({
+          success: false,
+          message: "Paramètres manquants : idContact ou email.",
+        });
+      }
+
+      const existing = await AdresseEmailService.getByEmailAndContact(idContact, email);
+
+      if (existing) {
+        return res.json({ success: true, data: existing });
+      } else {
+        return res.json({ success: false, data: null });
+      }
+    } catch (err) {
+      console.error("Erreur apiGetByEmailAndContact:", err);
+      res.status(500).json({
+        success: false,
+        message: "Erreur interne du serveur",
+      });
+    }
+  }
+
 }
 
 module.exports = AdresseEmail;

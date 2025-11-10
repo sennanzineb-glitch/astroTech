@@ -90,96 +90,83 @@ class AffaireService {
   /**
    * 🔹 Récupérer toutes les affaires
    */
-  // Récupération des affaires avec fichiers comme tableau
+  // Récupération des affaires avec fichiers, référents et équipe
 static async apiGetAll() {
-  const sql = `
-    SELECT 
-      a.id AS affaireId,
-      a.reference,
-      a.titre,
-      a.dateDebut,
-      a.dateFin,
-      a.etatLogement,
-      a.dureePrevueHeures,
-      a.dureePrevueMinutes,
-      a.memo,
-      COALESCE(p.nomComplet, o.nomEntreprise, 'Client inconnu') AS nomClient,
-      
-      -- Technicien individuel
-      t.id AS technicienId,
-      t.nom AS technicienNom,
-      t.prenom AS technicienPrenom,
-      
-      -- Équipe
-      e.id AS equipeId,
-      e.nom AS equipeNom,
-      e.description AS equipeDescription,
-      
-      -- Chef d'équipe
-      tc.id AS chefId,
-      tc.nom AS chefNom,
-      tc.prenom AS chefPrenom
+  try {
+    // 🔹 Récupérer toutes les affaires distinctes
+    const sql = `
+      SELECT DISTINCT
+        a.id AS affaireId,
+        a.reference,
+        a.titre,
+        a.dateDebut,
+        a.dateFin,
+        a.etatLogement,
+        a.dureePrevueHeures,
+        a.dureePrevueMinutes,
+        a.memo,
+        COALESCE(p.nomComplet, o.nomEntreprise, 'Client inconnu') AS nomClient,
+        e.id AS equipeId,
+        e.nom AS equipeNom,
+        e.description AS equipeDescription,
+        tc.id AS chefEquipeId,
+        tc.nom AS chefEquipeNom,
+        tc.prenom AS chefEquipePrenom
+      FROM affaire a
+      LEFT JOIN client c ON a.clientId = c.id
+      LEFT JOIN particulier p ON p.idClient = c.id
+      LEFT JOIN organisation o ON o.idClient = c.id
+      LEFT JOIN equipe_technicien e ON a.equipeTechnicienId = e.id
+      LEFT JOIN technicien tc ON e.chefId = tc.id
+      ORDER BY a.id DESC;
+    `;
 
-    FROM affaire a
-    LEFT JOIN client c ON a.clientId = c.id
-    LEFT JOIN particulier p ON p.idClient = c.id
-    LEFT JOIN organisation o ON o.idClient = c.id
-    LEFT JOIN technicien t ON a.technicienId = t.id
-    LEFT JOIN equipe_technicien e ON a.equipeTechnicienId = e.id
-    LEFT JOIN technicien tc ON e.chefId = tc.id
-  `;
+    const [rows] = await pool.execute(sql);
 
-  const [rows] = await pool.execute(sql);
+    for (const affaire of rows) {
+      const affaireId = affaire.affaireId;
 
-  for (const affaire of rows) {
-    const affaireId = affaire.affaireId;
+      // 🔹 Fichiers associés
+      const [fichiers] = affaireId
+        ? await pool.execute(
+            `SELECT nom, chemin FROM fichier WHERE idAffaire = ?`,
+            [affaireId]
+          )
+        : [];
+      affaire.fichiers = fichiers || [];
 
-    // Récupérer les fichiers associés
-    const [fichiers] = affaireId
-      ? await pool.execute(
-          `SELECT nom, chemin FROM fichier WHERE idAffaire = ?`,
-          [affaireId]
-        )
-      : [];
-    affaire.fichiers = fichiers || [];
+      // 🔹 Référents associés
+      const [referents] = affaireId
+        ? await pool.execute(
+            `SELECT r.id, r.nom, r.prenom, r.email, r.telephone
+             FROM referent r
+             JOIN affaire_referent ar ON r.id = ar.idReferent
+             WHERE ar.idAffaire = ?`,
+            [affaireId]
+          )
+        : [];
+      affaire.referents = referents.length > 0 ? referents : [{ message: 'Aucun référent assigné' }];
 
-    // Récupérer les référents associés via affaire_referent
-    const [referents] = affaireId
-      ? await pool.execute(
-          `SELECT r.id, r.nom, r.prenom, r.email, r.telephone
-           FROM referent r
-           JOIN affaire_referent ar ON r.id = ar.idReferent
-           WHERE ar.idAffaire = ?`,
-          [affaireId]
-        )
-      : [];
-    // Si aucun référent, renvoyer un objet vide avec un message
-    affaire.referents = referents.length > 0 ? referents : [{ message: 'Aucun référent assigné' }];
+      // 🔹 Membres de l'équipe
+      const [membres] = affaire.equipeId
+        ? await pool.execute(
+            `SELECT t.id, t.nom, t.prenom
+             FROM technicien t
+             JOIN technicien_equipe te ON t.id = te.technicienId
+             WHERE te.equipeId = ?`,
+            [affaire.equipeId]
+          )
+        : [];
+      affaire.membresEquipe = membres || [];
+    }
 
-    // Récupérer les membres de l'équipe si l'affaire a une équipe
-    const [membres] = affaire.equipeId
-      ? await pool.execute(
-          `SELECT t.id, t.nom, t.prenom
-           FROM technicien t
-           JOIN technicien_equipe te ON t.id = te.technicienId
-           WHERE te.equipeId = ?`,
-          [affaire.equipeId]
-        )
-      : [];
-    affaire.membresEquipe = membres || [];
+    return rows;
+  } catch (err) {
+    console.error('Erreur apiGetAll:', err);
+    throw err;
   }
-
-  return rows;
 }
 
-
-  /**
-   * 🔹 Récupérer une affaire par ID
-   */
-  static async apiGetById(id) {
-    const [rows] = await pool.query('SELECT * FROM affaire WHERE id = ?', [id]);
-    return rows[0];
-  }
 
   /**
    * 🔹 Modifier une affaire

@@ -73,6 +73,35 @@ class NumTel {
         }
     }
 
+      // 🔍 Vérifier si un téléphone existe déjà pour un contact
+  static async apiGetByTelAndContact(req, res) {
+    try {
+      const { idContact } = req.params;
+      const { tel } = req.query;
+
+      if (!idContact || !tel) {
+        return res.status(400).json({
+          success: false,
+          message: "Paramètres manquants : idContact ou tel.",
+        });
+      }
+
+      const existing = await NumTelService.getByTelAndContact(idContact, tel);
+
+      if (existing) {
+        return res.json({ success: true, data: existing });
+      } else {
+        return res.json({ success: false, data: null });
+      }
+    } catch (err) {
+      console.error("Erreur apiGetByTelAndContact:", err);
+      res.status(500).json({
+        success: false,
+        message: "Erreur interne du serveur",
+      });
+    }
+  }
+
 }
 
 module.exports = NumTel;
