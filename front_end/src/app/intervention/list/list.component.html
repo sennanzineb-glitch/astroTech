@@ -1,0 +1,66 @@
+<!-- *** Titre *** -->
+<div class="page-header mb-4 d-flex justify-content-between align-items-center">
+  <div>
+    <h3 class="page-title mb-1">Intervention</h3>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="#">intervention</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Liste des intervention</li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+
+    <!-- Table -->
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Titre</th>
+          <th>Type</th>
+          <th>État</th>
+          <th>Date création</th>
+          <th class="text-center">Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let i of interventions">
+          <td>{{ i.numero }}</td>
+          <td>{{ i.titre }}</td>
+          <td>{{ i.type }}</td>
+          <td>
+            <span class="badge bg-primary">{{ i.etat }}</span>
+          </td>
+          <td>{{ i.date_creation | date:'dd/MM/yyyy' }}</td>
+
+          <td class="text-center">
+            <!-- Bouton Détail -->
+            <button 
+              class="btn btn-sm btn-primary me-2"
+              (click)="openDetail(i.id)">
+              <i class="fa fa-eye"></i>
+            </button>
+
+            <!-- Bouton Modifier -->
+            <button 
+              class="btn btn-sm btn-warning me-2"
+              (click)="editIntervention(i.id)">
+              <i class="fa fa-pencil"></i>
+            </button>
+
+            <!--Button delete-->
+            <button class="btn btn-sm btn-danger">
+                <i class="fa fa-trash-o"></i>
+            </button>
+          </td>
+
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+</div>

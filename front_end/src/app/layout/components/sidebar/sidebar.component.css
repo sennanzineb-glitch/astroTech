@@ -41,3 +41,45 @@
   border-left: 4px solid #007BFF; /* accent sur le côté */
   font-weight: bold;
 }
+
+
+/*** *** *** **** ***/
+/* Titres personnalisés */
+.custom-title {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.95rem;
+  color: #4f46e5;
+  letter-spacing: 0.5px;
+}
+
+/* Icônes personnalisées */
+.custom-icon {
+  font-size: 1.3rem;
+  color: #1f2937;
+  margin-right: 0.8rem;
+  transition: transform 0.2s, color 0.2s;
+}
+
+/* Effet hover */
+.nav-link:hover .custom-icon {
+  color: #4f46e5;
+  transform: scale(1.1);
+}
+
+/* Item actif */
+.nav-link.active .custom-title {
+  color: #1f2937;
+}
+
+
+
+/**********************************************************/
+.custom-label {
+  font-weight: 700;           /* Texte en gras */
+  text-transform: uppercase;  /* Tout en majuscules */
+  font-size: 0.85rem;         /* Taille du texte */
+  color: #00b4f1;             /* Couleur personnalisée */
+  letter-spacing: 1px;        /* Espacement entre lettres */
+  padding-left: 1rem;         /* Décalage par rapport au bord */
+}

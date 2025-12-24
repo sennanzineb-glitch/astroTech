@@ -16,6 +16,10 @@
     </li>
 
     <li class="nav-item">
+      <span class="sidebar-label custom-label">LISTING</span>
+    </li>
+
+    <li class="nav-item">
       <a class="nav-link" routerLink="affaires/list" routerLinkActive="active"
         [routerLinkActiveOptions]="{ exact: true }">
         <span class="menu-title">Affaires</span>
@@ -24,10 +28,25 @@
     </li>
 
     <li class="nav-item">
+      <a class="nav-link" routerLink="interventions/list" routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }">
+        <span class="menu-title">Intervention</span>
+        <i class="mdi mdi-book-multiple menu-icon"></i>
+      </a>
+    </li>
+
+    <li class="nav-item">
       <a class="nav-link" routerLink="clients/list" routerLinkActive="active"
         [routerLinkActiveOptions]="{ exact: true }">
-        <span class="menu-title">Clients</span>
+        <span class="menu-title">Annuaire</span>
         <i class="mdi mdi-account-multiple menu-icon"></i>
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" routerLink="referents/list" routerLinkActive="active">
+        <span class="menu-title">Référents</span>
+        <i class="mdi mdi-account-tie menu-icon"></i>
       </a>
     </li>
 
@@ -47,10 +66,33 @@
       </a>
     </li>
 
+   <!-- *** *** *** **** **** *** -->
+
     <li class="nav-item">
-      <a class="nav-link" routerLink="referents/list" routerLinkActive="active">
-        <span class="menu-title">Référents</span>
-        <i class="mdi mdi-account-tie menu-icon"></i>
+      <span class="sidebar-label custom-label">ACTIONS</span>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" routerLink="affaires/edit" routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }">
+        <span class="menu-title">Nouvelle Affaire</span>
+        <i class="mdi mdi-book-multiple menu-icon"></i>
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" routerLink="interventions" routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }">
+        <span class="menu-title">Intervention</span>
+        <i class="mdi mdi-book-multiple menu-icon"></i>
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" routerLink="interventions/planning" routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }">
+        <span class="menu-title">Planning</span>
+        <i class="mdi mdi-book-multiple menu-icon"></i>
       </a>
     </li>
 

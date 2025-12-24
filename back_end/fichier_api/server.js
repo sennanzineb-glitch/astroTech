@@ -1,55 +1,51 @@
+// server.js
 const express = require("express");
 const app = express();
-app.use(express.json());
 require("dotenv").config();
 const path = require('path');   // ← important
-const PORT = process.env.PORT || 3000;
-const uri = process.env.URI;
-
 const bodyParser = require('body-parser');
 const cors = require('cors');
 
+const PORT = process.env.PORT || 3000;
+const URI = process.env.URI || "/api/v1/fichiers"; // préfixe pour les fichiers
+
+// Middleware global
 app.disable('x-powered-by');
-app.use(express.json());
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-/** **/
+// === Auth ===
 const { register, login, me } = require('./controllers/_auth.controller');
 const { authenticateToken } = require('./middlewares/auth.js');
 
-app.use(cors());
-app.use(bodyParser.json());
-
+// Routes publiques (Auth)
 app.post('/api/v1/auth/register', register);
 app.post('/api/v1/auth/login', login);
+
+// Route sécurisée (Auth)
 app.get('/api/v1/auth/me', authenticateToken, me);
 
-const port = process.env.PORT || 3000;
-app.listen(port, () => console.log(`Server started on ${port}`));
-/** **/
-
+// === Fichiers ===
 const controllerFichier = require('./controllers/fichiers.controller.js');
 
-// 🔹 Récupérer tous les fichiers
-app.get(uri +'/', controllerFichier.apiGetAll);
+// 🔹 Récupérer tous les fichiers (sécurisé)
+app.get(`${URI}/`, authenticateToken, controllerFichier.apiGetAll);
 
-// 🔹 Télécharger / uploader des fichiers
-app.post(uri +'/upload', controllerFichier.apiUploadFiles);
+// 🔹 Télécharger / uploader des fichiers (sécurisé)
+app.post(`${URI}/upload`, authenticateToken, controllerFichier.apiUploadFiles);
 
-// 🔹 Supprimer un fichier par id
-app.delete(uri +'/:id', controllerFichier.apiDeleteById);
+// 🔹 Supprimer un fichier par id (sécurisé)
+app.delete(`${URI}/:id`, authenticateToken, controllerFichier.apiDeleteById);
 
-// 🔹 Récupérer tous les fichiers by Referent
-app.get(uri +'/referent/:id', controllerFichier.getRecordsByReferent);
+// 🔹 Récupérer tous les fichiers par référent (sécurisé)
+app.get(`${URI}/referent/:id`, authenticateToken, controllerFichier.getRecordsByReferent);
 
+// Rendre le dossier uploads accessible publiquement
 const UPLOAD_DIR = path.join(__dirname, 'uploads');
-// rendre le dossier uploads accessible publiquement
 app.use('/uploads', express.static(UPLOAD_DIR));
 
-
-// Start the server
+// Démarrage du serveur
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running at http://0.0.0.0:${PORT}`);
 });

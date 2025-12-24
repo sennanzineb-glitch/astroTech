@@ -1,0 +1,152 @@
+<!-- Page header -->
+<div class="page-header mb-4 d-flex justify-content-between align-items-center">
+  <div>
+    <h3 class="page-title mb-1">Intervention</h3>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="#">Intervention</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Détails intervention</li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<div class="container mt-4" *ngIf="intervention">
+  <h3 class="mb-4">
+    <strong>Détail de l'intervention</strong> — N° {{ intervention.numero }}
+  </h3>
+
+  <div class="row">
+
+    <!-- ===== COLONNE GAUCHE ===== -->
+    <div class="col-md-6">
+
+      <!-- Informations générales -->
+      <div class="card mb-4">
+        <div class="card-header bg-white shadow-sm text-primary">
+          <h5 class="mb-0"><i class="fa fa-info-circle me-2"></i>Informations générales</h5>
+        </div>
+        <div class="card-body">
+          <p><strong>Titre :</strong> {{ intervention.titre }}</p>
+          <p><strong>Type :</strong> {{ intervention.type }}</p>
+          <p><strong>Priorité :</strong> {{ intervention.priorite }}</p>
+          <p><strong>État :</strong> {{ intervention.etat }}</p>
+          <p><strong>Adresse client :</strong> {{ intervention.adresse_facturation }}</p>
+          <p><strong>Zone d'intervention :</strong> {{ intervention.zone_intervention }}</p>
+          <p><strong>Date de création :</strong> {{ intervention.date_creation | date }}</p>
+
+          <div class="mb-3 p-3 bg-light rounded">
+            <strong>Description :</strong>
+            <p class="mb-0">{{ intervention.description }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Planning -->
+      <div class="card mb-4" *ngIf="intervention.plannings?.length">
+        <div class="card-header bg-white shadow-sm text-success">
+          <h5 class="mb-0"><i class="fa fa-calendar me-2"></i>Planning</h5>
+        </div>
+        <div class="card-body">
+          <ul class="list-group list-group-flush">
+            <li *ngFor="let p of intervention.plannings" class="list-group-item">
+              {{ p.date | date }} — {{ p.heure }}
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Techniciens -->
+      <div class="card mb-4" *ngIf="intervention.techniciens?.length">
+        <div class="card-header bg-white shadow-sm text-info">
+          <h5 class="mb-0"><i class="fa fa-users me-2"></i>Techniciens affectés</h5>
+        </div>
+        <div class="card-body">
+          <ul class="list-group list-group-flush">
+            <li *ngFor="let tech of intervention.techniciens" class="list-group-item">
+              {{ tech.nom }} {{ tech.prenom }}
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Référents -->
+      <div class="card mb-4" *ngIf="intervention.referents?.length">
+        <div class="card-header bg-white shadow-sm text-warning">
+          <h5 class="mb-0"><i class="fa fa-address-book me-2"></i>Référents</h5>
+        </div>
+        <div class="card-body">
+          <div class="d-flex flex-column gap-3">
+            <div *ngFor="let ref of intervention.referents" class="p-3 bg-white rounded shadow-sm border">
+              <p class="mb-1"><strong>Nom :</strong> {{ ref.nom }} {{ ref.prenom }}</p>
+              <p class="mb-1">
+                <strong>Email :</strong>
+                <a class="text-decoration-none" href="mailto:{{ ref.email }}">{{ ref.email }}</a>
+              </p>
+              <p class="mb-0"><strong>Téléphone :</strong> {{ ref.telephone }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div> <!-- Fin colonne gauche -->
+
+    <!-- ===== COLONNE DROITE ===== -->
+    <div class="col-md-6">
+
+      <!-- Affecter des techniciens -->
+      <div class="card mb-4">
+        <div class="card-header bg-white shadow-sm text-danger">
+          <h5 class="mb-0"><i class="fa fa-user-plus me-2"></i>Affecter des techniciens</h5>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="assignForm" (ngSubmit)="assignTechniciens()">
+            <div class="mb-3">
+              <label for="techniciens" class="form-label">Techniciens disponibles</label>
+              <select id="techniciens" formControlName="selectedTechniciens" class="form-select" multiple style="height: 269px;">
+                <option *ngFor="let tech of techniciens" [value]="tech.id">
+                  {{ tech.nom }} {{ tech.prenom }}
+                </option>
+              </select>
+            </div>
+            <div class="d-flex justify-content-center">
+              <button class="btn btn-outline-primary btn-sm rounded-pill px-4 w-50" type="submit">
+                <i class="fa fa-user-plus me-1"></i>Affecter
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Ajouter un planning -->
+      <div class="card mb-4">
+        <div class="card-header bg-white shadow-sm text-secondary">
+          <h5 class="mb-0"><i class="fa fa-plus-circle me-2"></i>Ajouter un planning</h5>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="planningForm" (ngSubmit)="addPlanning()">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="date" class="form-label">Date</label>
+                <input id="date" type="date" class="form-control" formControlName="date">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="heure" class="form-label">Heure</label>
+                <input id="heure" type="time" class="form-control" formControlName="heure">
+              </div>
+            </div>
+            <div class="d-flex justify-content-center">
+              <button class="btn btn-outline-success btn-sm rounded-pill px-4 w-50" type="submit">
+                <i class="fa fa-plus me-1"></i>Ajouter
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+
+    </div> <!-- Fin colonne droite -->
+
+  </div> <!-- Fin row -->
+
+</div>

@@ -7,25 +7,32 @@ import { environment } from '../../../environments/environment';
 })
 export class AdressesService {
 
+  private baseUrl = `${environment.url_client}/clients/adresse`;
+
   constructor(private http: HttpClient) { }
 
+  /** Créer une adresse */
   create(record: any) {
-    return this.http.post<any>(environment.url_client + '/clients/adresse', record)
+    return this.http.post<any>(`${this.baseUrl}`, record);
   }
 
+  /** Mettre à jour une adresse */
   update(record: any) {
-    return this.http.put(environment.url_client + '/clients/adresse/' + record.id, record)
+    return this.http.put(`${this.baseUrl}/${record.id}`, record);
   }
 
+  /** Récupérer toutes les adresses */
   getAll() {
-    return this.http.get(environment.url_client + '/clients/adresse')
+    return this.http.get<any[]>(`${this.baseUrl}`);
   }
 
+  /** Récupérer une adresse par id */
   getItemById(id: number) {
-    return this.http.get<any>(environment.url_client + '/clients/adresse/' + id )
+    return this.http.get<any>(`${this.baseUrl}/${id}`);
   }
 
+  /** Supprimer une adresse par id */
   delete(id: any) {
-    return this.http.delete(environment.url_client + '/clients/adresse/' + id)
+    return this.http.delete(`${this.baseUrl}/${id}`);
   }
 }

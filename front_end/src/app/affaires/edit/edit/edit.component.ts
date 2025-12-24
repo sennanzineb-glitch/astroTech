@@ -8,7 +8,7 @@ import { MultiStepFormService } from '../../../_services/multi-step-form.service
 import { AffairesService } from '../../../_services/affaires/affaires.service';
 import { FichiersService } from '../../../_services/fichiers/fichiers.service';
 import { lastValueFrom } from 'rxjs';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-edit',
@@ -16,6 +16,7 @@ import { Router } from '@angular/router';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    RouterModule,
     Etape1Component,
     Etape2Component,
     Etape3Component
@@ -24,74 +25,137 @@ import { Router } from '@angular/router';
   styleUrls: ['./edit.component.css']
 })
 export class EditComponent {
+
   step = 1;
   loading = false;
-  successMessage = '';
-  errorMessage = '';
+  isEdit = false;
+  affaireId!: number;
 
   constructor(
     public formService: MultiStepFormService,
     private affairesService: AffairesService,
     private fichiersService: FichiersService,
+    private route: ActivatedRoute,
     private router: Router
   ) { }
+
+  async ngOnInit() {
+    this.formService.resetAllForms();
+
+    const idParam = this.route.snapshot.paramMap.get('id');
+    if (idParam) {
+      this.isEdit = true;
+      this.affaireId = Number(idParam);
+      await this.loadAffaireData();
+    }
+  }
 
   nextStep() { if (this.step < 3) this.step++; }
   previousStep() { if (this.step > 1) this.step--; }
 
+  /** Charger l'affaire en modification */
+  async loadAffaireData() {
+    try {
+      const res: any = await lastValueFrom(this.affairesService.getItemById(this.affaireId));
+      const a = res.data;
+
+      const formatDate = (d: string | null) => d ? d.split('T')[0] : '';
+
+      // Patcher directement les FormGroup du service
+      this.formService.formStep1.patchValue({
+        reference: a.reference || null,
+        titre: a.titre || null,
+        clientId: a.clientId || null,
+        adresse_id: Number(a.adresse_id) || null,
+        type_client_adresse: a.type_client_adresse || null,
+        client_adresse_id: Number(a.client_adresse_id) || null,
+        description: a.description || null
+      });
+
+      this.formService.formStep2.patchValue({
+        etatLogement: a.etatLogement || null,
+        referentId: a.referents || [],
+        motsCles: a.motsCles ? a.motsCles.split(',') : [],
+        technicienId: Number(a.technicienId) || null,
+        equipeTechnicienId: Number(a.equipeTechnicienId) || null,
+        dateDebut: formatDate(a.dateDebut),
+        dateFin: formatDate(a.dateFin),
+        dureePrevueHeures: a.dureePrevueHeures || null,
+        dureePrevueMinutes: a.dureePrevueMinutes || null,
+        memo: a.memo || null
+      });
+
+
+      this.formService.formStep3.patchValue({
+        fichiers: a.fichiers || [],
+        memoPiecesJointes: a.memoPiecesJointes || null
+      });
+
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  /** Ajouter ou modifier */
   async submit() {
-    const formData = this.formService.getFormData();
-    const allData = { ...formData.step1, ...formData.step2, ...formData.step3 };
-    //const referents = allData.referentId ? [Number(allData.referentId)] : [];
-    //console.log(referents, allData.referentId);
-    
+    const data = this.formService.getFormData();
+    const all = { ...data.step1, ...data.step2, ...data.step3 };
 
     const affaireData = {
-      reference: allData.reference || '',
-      titre: allData.titre || '',
-      zoneIntervention: allData.zoneIntervention || '',
-      description: allData.description || '',
-      clientId: allData.clientId ? Number(allData.clientId) : null,
-      etatLogement: allData.etatLogement || '',
-      technicienId: allData.technicienId ? Number(allData.technicienId) : null,
-      equipeTechnicienId: allData.equipeTechnicienId ? Number(allData.equipeTechnicienId) : null,
-      referents: allData.referentId,
-      dateDebut: allData.dateDebut || null,
-      dateFin: allData.dateFin || null,
-      motsCles: Array.isArray(allData.motsCles) ? allData.motsCles.join(',') : allData.motsCles || '',
-      dureePrevueHeures: allData.dureePrevueHeures || null,
-      dureePrevueMinutes: allData.dureePrevueMinutes || null,
-      memo: allData.memo || '',
-      memoPiecesJointes: allData.memoPiecesJointes || ''
+      reference: all.reference,
+      titre: all.titre,
+      clientId: Number(all.clientId),
+      adresse_id: Number(all.adresse_id),
+      client_adresse_id: Number(all.client_adresse_id),
+      type_client_adresse: all.type_client_adresse,
+      description: all.description,
+
+      etatLogement: all.etatLogement,
+      technicienId: Number(all.technicienId),
+      equipeTechnicienId: Number(all.equipeId),
+      referents: all.referentId,
+
+      dateDebut: all.dateDebut,
+      dateFin: all.dateFin,
+      motsCles: Array.isArray(all.motsCles) ? all.motsCles.join(',') : '',
+      dureePrevueHeures: all.dureePrevueHeures,
+      dureePrevueMinutes: all.dureePrevueMinutes,
+      memo: all.memo,
+
+      memoPiecesJointes: all.memoPiecesJointes
     };
 
     this.loading = true;
-    this.successMessage = '';
-    this.errorMessage = '';
 
     try {
-      // 1️⃣ Création de l'affaire
-      const res: any = await lastValueFrom(this.affairesService.create(affaireData));
-      const idAffaire = res.data.id;
+      let affaireId = this.affaireId;
 
-      // 2️⃣ Upload fichiers de l'étape 3
-      if (allData.fichiers && allData.fichiers.length > 0) {
-        for (const file of allData.fichiers) {
-          const formData = new FormData();
-          formData.append('files', file);
-          formData.append('idAffaire', idAffaire.toString());  // ✅ Utilisation de l'ID de l'affaire
-          try { await lastValueFrom(this.fichiersService.uploadFiles(formData)); }
-          catch (err) { console.error(err); }
+
+      if (!this.isEdit) {
+        const res: any = await lastValueFrom(this.affairesService.create(affaireData));
+        affaireId = res.data.id;
+        // Upload fichiers
+        if (all.fichiers && all.fichiers.length > 0) {
+          for (const file of all.fichiers) {
+            const fd = new FormData();
+            fd.append('files', file);
+            fd.append('idAffaire', affaireId.toString());
+            await lastValueFrom(this.fichiersService.uploadFiles(fd));
+          }
         }
+      } else {
+        await lastValueFrom(this.affairesService.update(affaireId, affaireData));
       }
-      this.successMessage = '✅ Affaire et fichiers ajoutés avec succès !';
+
+      this.formService.resetAllForms();
       this.router.navigate(['/affaires/list']);
+
     } catch (err) {
       console.error(err);
-      this.errorMessage = '❌ Erreur lors de l\'ajout de l\'affaire.';
     } finally {
       this.loading = false;
     }
   }
+
 
 }

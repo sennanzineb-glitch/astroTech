@@ -300,14 +300,14 @@ CREATE TABLE `users` (
   `password_hash` varchar(255) NOT NULL,
   `full_name` varchar(255) DEFAULT NULL,
   `role` varchar(50) DEFAULT 'user',
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+  `date_creation` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
 --
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `email`, `password_hash`, `full_name`, `role`, `created_at`) VALUES
+INSERT INTO `users` (`id`, `email`, `password_hash`, `full_name`, `role`, `date_creation`) VALUES
 (3, 'user@example.com', '$2b$10$z874c9g0wr7a8Kezbvv.suA/A/A86Jedi7colIGIhku5DbRV0vXoW', 'SENNAN Zineb', 'user', '2025-10-30 16:07:32');
 
 --

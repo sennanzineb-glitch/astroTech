@@ -8,7 +8,9 @@ class AffaireService {
     const safeData = {
       reference: data.reference || '',
       titre: data.titre || '',
-      zoneIntervention: data.zoneIntervention || '',
+      adresse_id: data.adresse_id != null ? Number(data.adresse_id) : null,
+      client_adresse_id: data.client_adresse_id != null ? Number(data.client_adresse_id) : null,
+      type_client_adresse: data.type_client_adresse || '',
       description: data.description || '',
       clientId: data.clientId != null ? Number(data.clientId) : null,
       etatLogement: data.etatLogement || '',
@@ -31,17 +33,16 @@ class AffaireService {
       // 🔹 1. Insertion dans affaire
       const insertAffaireQuery = `
       INSERT INTO affaire (
-        reference, titre, zoneIntervention, description, clientId,
+        reference, titre, description, clientId,
         etatLogement, technicienId, equipeTechnicienId,
         dateDebut, dateFin, motsCles, dureePrevueHeures, dureePrevueMinutes,
-        memo, memoPiecesJointes
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        memo, memoPiecesJointes, adresse_id, client_adresse_id, type_client_adresse
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
       const values = [
         safeData.reference,
         safeData.titre,
-        safeData.zoneIntervention,
         safeData.description,
         safeData.clientId,
         safeData.etatLogement,
@@ -53,12 +54,14 @@ class AffaireService {
         safeData.dureePrevueHeures,
         safeData.dureePrevueMinutes,
         safeData.memo,
-        safeData.memoPiecesJointes
+        safeData.memoPiecesJointes,
+        safeData.adresse_id,
+        safeData.client_adresse_id,
+        safeData.type_client_adresse
       ];
 
       const [result] = await connection.query(insertAffaireQuery, values);
       const affaireId = result.insertId;
-      console.log("✅ Affaire créée avec ID:", affaireId);
 
       // 🔹 2. Insertion dans affaire_referent
       if (safeData.referents && safeData.referents.length > 0) {
@@ -91,11 +94,11 @@ class AffaireService {
    * 🔹 Récupérer toutes les affaires
    */
   // Récupération des affaires avec fichiers, référents et équipe
-static async apiGetAll() {
-  try {
-    // 🔹 Récupérer toutes les affaires distinctes
-    const sql = `
-      SELECT DISTINCT
+  static async apiGetAll() {
+    try {
+      // 🔹 Requête principale : récupère les affaires avec le nom exact du client
+      const sql = `
+      SELECT
         a.id AS affaireId,
         a.reference,
         a.titre,
@@ -105,7 +108,8 @@ static async apiGetAll() {
         a.dureePrevueHeures,
         a.dureePrevueMinutes,
         a.memo,
-        COALESCE(p.nomComplet, o.nomEntreprise, 'Client inconnu') AS nomClient,
+        -- Nom du client : particulier > agence > organisation
+        COALESCE(p.nom_complet, ag.nom_agence, o.nom_entreprise, 'Client inconnu') AS nomClient,
         e.id AS equipeId,
         e.nom AS equipeNom,
         e.description AS equipeDescription,
@@ -114,83 +118,159 @@ static async apiGetAll() {
         tc.prenom AS chefEquipePrenom
       FROM affaire a
       LEFT JOIN client c ON a.clientId = c.id
-      LEFT JOIN particulier p ON p.idClient = c.id
-      LEFT JOIN organisation o ON o.idClient = c.id
+      LEFT JOIN particulier p ON p.client_id = c.id
+      LEFT JOIN agence ag ON ag.client_id = c.id
+      LEFT JOIN organisation o ON o.client_id = c.id
       LEFT JOIN equipe_technicien e ON a.equipeTechnicienId = e.id
       LEFT JOIN technicien tc ON e.chefId = tc.id
       ORDER BY a.id DESC;
     `;
 
-    const [rows] = await pool.execute(sql);
+      const [rows] = await pool.execute(sql);
 
-    for (const affaire of rows) {
-      const affaireId = affaire.affaireId;
+      for (const affaire of rows) {
+        const affaireId = affaire.affaireId;
 
-      // 🔹 Fichiers associés
-      const [fichiers] = affaireId
-        ? await pool.execute(
-            `SELECT nom, chemin FROM fichier WHERE idAffaire = ?`,
+        // 🔹 Fichiers associés
+        affaire.fichiers = affaireId
+          ? (await pool.execute(
+            `SELECT id, nom, chemin FROM fichier WHERE idAffaire = ?`,
             [affaireId]
-          )
-        : [];
-      affaire.fichiers = fichiers || [];
+          ))[0]
+          : [];
 
-      // 🔹 Référents associés
-      const [referents] = affaireId
-        ? await pool.execute(
+        // 🔹 Référents associés
+        const referents = affaireId
+          ? (await pool.execute(
             `SELECT r.id, r.nom, r.prenom, r.email, r.telephone
              FROM referent r
              JOIN affaire_referent ar ON r.id = ar.idReferent
              WHERE ar.idAffaire = ?`,
             [affaireId]
-          )
-        : [];
-      affaire.referents = referents.length > 0 ? referents : [{ message: 'Aucun référent assigné' }];
+          ))[0]
+          : [];
+        affaire.referents = referents.length > 0 ? referents : [{ message: 'Aucun référent assigné' }];
 
-      // 🔹 Membres de l'équipe
-      const [membres] = affaire.equipeId
-        ? await pool.execute(
+        // 🔹 Membres de l'équipe
+        const membres = affaire.equipeId
+          ? (await pool.execute(
             `SELECT t.id, t.nom, t.prenom
              FROM technicien t
              JOIN technicien_equipe te ON t.id = te.technicienId
              WHERE te.equipeId = ?`,
             [affaire.equipeId]
-          )
-        : [];
-      affaire.membresEquipe = membres || [];
+          ))[0]
+          : [];
+        affaire.membresEquipe = membres || [];
+      }
+
+      return rows;
+
+    } catch (err) {
+      console.error('Erreur apiGetAll:', err);
+      throw err;
     }
-
-    return rows;
-  } catch (err) {
-    console.error('Erreur apiGetAll:', err);
-    throw err;
   }
-}
-
 
   /**
    * 🔹 Modifier une affaire
    */
-  static async updateAffaire(id, data) {
-    const fields = [];
-    const values = [];
+  // Exemple de service basique pour mettre à jour une affaire
+  static async updateAffaire(record) {
+    const connection = await pool.getConnection();
 
-    for (const [key, value] of Object.entries(data)) {
-      if (value !== undefined) {
-        fields.push(`${key} = ?`);
-        values.push(value);
+    try {
+      await connection.beginTransaction();
+
+      // 🔹 Helper : convertir '' en NULL (important pour MySQL DATE)
+      const cleanDate = (value) =>
+        value && value !== '' ? value : null;
+
+      // 🔹 1. Mise à jour de l'affaire
+      const query = `
+      UPDATE affaire 
+      SET 
+        reference = ?, 
+        titre = ?, 
+        description = ?, 
+        clientId = ?, 
+        etatLogement = ?, 
+        technicienId = ?, 
+        equipeTechnicienId = ?, 
+        dateDebut = ?, 
+        dateFin = ?, 
+        motsCles = ?, 
+        dureePrevueHeures = ?, 
+        dureePrevueMinutes = ?, 
+        memo = ?, 
+        memoPiecesJointes = ?, 
+        adresse_id = ?, 
+        client_adresse_id = ?,
+        type_client_adresse = ?
+      WHERE id = ?
+    `;
+
+      const values = [
+        record.reference ?? null,
+        record.titre ?? null,
+        record.description ?? null,
+        record.clientId ?? null,
+        record.etatLogement ?? null,
+        record.technicienId ?? null,
+        record.equipeTechnicienId ?? null,
+
+        // ✅ correction dates
+        cleanDate(record.dateDebut),
+        cleanDate(record.dateFin),
+
+        record.motsCles ?? null,
+        record.dureePrevueHeures ?? null,
+        record.dureePrevueMinutes ?? null,
+        record.memo ?? null,
+        record.memoPiecesJointes ?? null,
+        record.adresse_id ?? null,
+        record.client_adresse_id ?? null,
+        record.type_client_adresse ?? null,
+        record.id
+      ];
+
+      await connection.execute(query, values);
+
+      // 🔹 2. Mise à jour des référents
+      if (Array.isArray(record.referents)) {
+
+        // Supprimer les anciens référents
+        await connection.execute(
+          `DELETE FROM affaire_referent WHERE idAffaire = ?`,
+          [record.id]
+        );
+
+        // Réinsérer les nouveaux référents
+        if (record.referents.length > 0) {
+          const valuesRef = record.referents.map(refId => [
+            record.id,
+            Number(refId)
+          ]);
+
+          await connection.query(
+            `INSERT INTO affaire_referent (idAffaire, idReferent) VALUES ?`,
+            [valuesRef]
+          );
+        }
       }
+
+      await connection.commit();
+      return { success: true };
+
+    } catch (error) {
+      await connection.rollback();
+      console.error('❌ Erreur updateAffaire:', error);
+      throw error;
+    } finally {
+      connection.release();
     }
-
-    if (fields.length === 0) return null;
-
-    const query = `UPDATE affaire SET ${fields.join(', ')} WHERE id = ?`;
-    values.push(id);
-
-    await pool.query(query, values);
-    const [updated] = await pool.query('SELECT * FROM affaire WHERE id = ?', [id]);
-    return updated[0];
   }
+
 
   /**
    * 🔹 Supprimer une affaire
@@ -199,6 +279,53 @@ static async apiGetAll() {
     const [result] = await pool.query('DELETE FROM affaire WHERE id = ?', [id]);
     return result.affectedRows > 0;
   }
+
+  /** 🔹 Récupérer une affaire par son ID */
+  static async apiGetById(id) {
+    try {
+      const [rows] = await pool.query(
+        `SELECT 
+        a.id, a.reference, a.titre, a.description, a.clientId, a.adresse_id, a.client_adresse_id, a.type_client_adresse,
+        a.etatLogement, a.technicienId, a.equipeTechnicienId, a.dateDebut, a.dateFin,
+        a.dureePrevueHeures, a.dureePrevueMinutes, a.motsCles, a.memo, a.memoPiecesJointes
+      FROM affaire a
+      WHERE a.id = ?`,
+        [id]
+      );
+
+      if (!rows || rows.length === 0) {
+        return { success: false, message: 'Affaire non trouvée' };
+      }
+
+      const affaire = rows[0];
+
+      // 🔹 Charger uniquement les IDs des référents
+      const [referents] = await pool.query(
+        `SELECT r.id
+       FROM referent r
+       JOIN affaire_referent ar ON r.id = ar.idReferent
+       WHERE ar.idAffaire = ?`,
+        [id]
+      );
+      // Tableau vide si aucun référent
+      affaire.referents = referents ? referents.map(r => r.id) : [];
+
+      // 🔹 Charger les fichiers associés (optionnel)
+      const [files] = await pool.query(
+        `SELECT id, nom, chemin FROM fichier WHERE idAffaire = ?`,
+        [id]
+      );
+      affaire.fichiers = files || [];
+
+      return { success: true, data: affaire };
+
+    } catch (error) {
+      console.error('Erreur apiGetById:', error);
+      return { success: false, message: 'Erreur serveur' };
+    }
+  }
+
+
 }
 
 module.exports = AffaireService;

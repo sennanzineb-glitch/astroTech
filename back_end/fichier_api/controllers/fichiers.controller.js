@@ -64,9 +64,6 @@ class FichierController {
       try {
         const { idReferent, idAffaire } = req.body;
 
-        console.log("📨 idReferent:", idReferent);
-        console.log("📨 idAffaire:", idAffaire);
-
         // Vérification qu’au moins un id est fourni
         if (!idReferent && !idAffaire) {
           return res.status(400).json({ message: "⚠️ Vous devez fournir idReferent ou idAffaire" });

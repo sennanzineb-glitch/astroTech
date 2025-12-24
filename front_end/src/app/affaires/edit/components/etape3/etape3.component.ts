@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { SharedModule } from '../../../../_globale/shared/shared.module';
 import { MultiStepFormService } from '../../../../_services/multi-step-form.service';
@@ -13,8 +13,10 @@ import { lastValueFrom } from 'rxjs';
   styleUrls: ['./etape3.component.css']
 })
 export class Etape3Component {
-  form: FormGroup = new FormGroup({});
-  files: File[] = [];
+
+  @Input() form!: FormGroup;  // ✅ REÇU DU PARENT
+
+  files: any[] = [];
   isDragOver = false;
 
   constructor(
@@ -23,16 +25,33 @@ export class Etape3Component {
     private fichiersService: FichiersService
   ) { }
 
-  ngOnInit() {
-    this.form = this.fb.group({
-      fichiers: new FormControl([]),
-      memoPiecesJointes: ['', Validators.required]
-    });
+ngOnInit() {
+  if (!this.form) return;
 
-    const savedData = this.formService.getFormData()['step3'];
-    if (savedData) this.form.patchValue(savedData);
-    this.form.valueChanges.subscribe(val => this.formService.setStepData('step3', val));
+  // 🔹 Synchroniser le FormGroup avec le service
+  this.form.valueChanges.subscribe(val => {
+    this.formService.setStepData('step3', val);
+  });
+
+  // 🔹 Récupérer les fichiers existants dans le form
+  const fichiers = this.form.get('fichiers')?.value;
+
+  if (Array.isArray(fichiers) && fichiers.length > 0) {
+    // 🔹 Vérifier si ce sont des objets File ou JSON depuis le backend
+    this.files = fichiers.map(f => {
+      // Si c'est déjà un File, on le garde
+      if (f instanceof File) return f;
+      // Sinon, créer un objet "File-like" pour l'affichage
+      return {
+        name: f.nom || 'Fichier',
+        id: f.id || null,
+        url: f.url || null,
+        // Si tu veux gérer le drag & drop, tu peux ajouter "file: null"
+        file: null
+      };
+    });
   }
+}
 
   onDragOver(event: DragEvent) { event.preventDefault(); this.isDragOver = true; }
   onDragLeave(event: DragEvent) { event.preventDefault(); this.isDragOver = false; }
@@ -50,7 +69,7 @@ export class Etape3Component {
     this.form.get('fichiers')?.setValue([...this.files]);
   }
 
-    /** 🔹 Supprimer un fichier avant upload */
+  /** 🔹 Supprimer un fichier avant upload */
   removeFileByIndex(index: number) {
     this.files.splice(index, 1);
     this.form.get('fichiers')?.setValue([...this.files]);

@@ -1,0 +1,142 @@
+<div class="grid-margin stretch-card d-block">
+  <div class="card">
+    <div class="card-body">
+      <h4 class="card-title">Données initiales</h4>
+      <p class="card-description">
+        Lorem ipsum dolor sit amet consectetur adipisicing elit. Suscipit enim rem.
+      </p>
+
+      <form [formGroup]="form" (ngSubmit)="saveStep()">
+        <div class="row">
+          <!-- Colonne gauche -->
+          <div class="col-sm-6">
+            <div class="mb-3">
+              <label class="form-label">
+                Numéro d'intervention :
+              </label>
+              <div class="d-flex align-items-center">
+                <!-- Icône à gauche du numéro -->
+                <i class="fa fa-hashtag me-2" style="font-size:1.2rem;"></i>
+                <!-- Valeur du numéro -->
+                <span>{{ form.get('numero')?.value || 'AAA-111-BBB' }}</span>
+              </div>
+              <!-- Input caché pour garder formControlName -->
+              <input type="hidden" formControlName="numero">
+            </div>
+
+            <div class="mb-3">
+              <label for="titre">Titre de l'intervention</label>
+              <strong class="text-danger">*</strong>
+              <input type="text" class="form-control form-control-sm" formControlName="titre"
+                placeholder="Indiquer le nom de l'intervention">
+            </div>
+
+            <div class="mb-3">
+              <label for="type">Type d'intervention</label>
+              <strong class="text-danger">*</strong>
+              <select id="typeIntervention" class="form-control form-control-sm" formControlName="type">
+                <option value="">-- Sélectionner un type --</option>
+                <option *ngFor="let type of typesIntervention" [value]="type">{{ type }}</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label for="client_id">Adresse de facturation (Client)</label>
+              <strong class="text-danger">*</strong>
+              <select class="form-select form-select-sm" formControlName="client_id" (change)="onClientSelect($event)">
+                <option value="" disabled>Sélectionner client</option>
+                <option *ngFor="let client of clients" [value]="client.id">{{ client.nom_client }}</option>
+              </select>
+              <ng-container
+                            *ngTemplateOutlet="clientInfoTemplate; context:{ client: clientSelected }"></ng-container>
+            </div>
+
+          </div>
+
+          <!-- Colonne droite -->
+          <div class="col-sm-6">
+            <div class="mb-3">
+              <label for="typeZone" class="form-label">Zone d'intervention</label>
+              <strong class="text-danger">*</strong>
+
+              <div class="row g-2 mt-2">
+
+                <div class="col-md-6">
+                  <button type="button" class="btn btn-sm w-100 py-2"
+                    [ngClass]="typeZone === 'autre_zone' ? 'btn-primary' : 'btn-outline-primary'"
+                    (click)="onZoneChange('autre_zone')" [disabled]="!clientSelected || !modalSave">
+                    ➕ Ajouter une zone
+                  </button>
+                </div>
+
+                <div class="col-md-6">
+                  <button type="button" class="btn btn-sm w-100 py-2"
+                    [ngClass]="typeZone === 'meme_zone' ? 'btn-primary' : 'btn-outline-primary'"
+                    (click)="onZoneChange('meme_zone')" [disabled]="!clientSelected">
+                    📍 Intervenir à la même adresse
+                  </button>
+                </div>
+
+              </div>
+            </div>
+            <ng-container *ngTemplateOutlet="clientInfoTemplate; context:{ client: zoneSelected }">
+            </ng-container>
+
+            <div class="mb-3 mt-3">
+              <label for="description">Description de l'intervention</label>
+              <strong class="text-danger">*</strong>
+              <textarea class="form-control form-control-sm" formControlName="description" rows="7"
+                placeholder="Décrivez rapidement votre intervention."></textarea>
+            </div>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+<ng-template #clientInfoTemplate let-client="client">
+    <div *ngIf="client" class="bg-white border rounded-3 shadow-sm p-3 m-0"
+        style="max-width: 420px; font-size: 0.85rem; line-height: 1.2; margin-top: 20px !important;">
+       <h6 class="text-primary fw-semibold mb-3" *ngIf="client?.nom_client || client?.reference">
+  {{ client.nom_client || client.reference }}
+</h6>
+
+        <div class="row g-3">
+            <!-- Contacts -->
+            <div class="col-auto">
+                <strong *ngIf="client?.contacts?.length > 0">Contacts :</strong>
+                <div *ngIf="client?.contacts?.length > 0">
+                    <div *ngFor="let contact of client.contacts" class="border-start ps-2 mb-2">
+                        <span class="fw-semibold">{{ contact.nom_complet }}</span>
+                        <span *ngIf="contact.poste" class="text-muted small">({{ contact.poste }})</span><br>
+                        <span *ngIf="contact.emails?.length > 0" class="text-muted">📧 {{ contact.emails[0].email
+                            }}</span><br>
+                        <span *ngIf="contact.telephones?.length > 0" class="text-muted">📞 {{ contact.telephones[0].tel
+                            }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Adresse -->
+            <div class="col-auto">
+                <strong>Adresse :</strong>
+                <div *ngIf="client.adresse?.adresse; else noAddress" class="d-flex flex-column gap-1 text-secondary">
+                    <span class="fw-medium">{{ client.adresse.adresse }}</span>
+                    <span class="small text-muted">{{ client.adresse.ville }}{{ client.adresse.province ? ', ' +
+                        client.adresse.province : '' }}</span>
+                    <span class="small text-muted">{{ client.adresse.pays }}</span>
+                </div>
+            </div>
+        </div>
+        <ng-template #noContacts>
+            <span class="text-muted fst-italic small">Aucun contact disponible</span>
+        </ng-template>
+        <ng-template #noAddress>
+            <p class="text-muted fst-italic small">Aucune adresse disponible</p>
+        </ng-template>
+    </div>
+</ng-template>
+
+<app-modal-save #modalSave (clientAdded)="onClientAdded($event)"></app-modal-save>

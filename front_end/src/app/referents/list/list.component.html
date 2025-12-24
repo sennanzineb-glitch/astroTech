@@ -1,65 +1,91 @@
-<!-- Titre de la page -->
-<div class="page-header mb-4">
-  <h3 class="page-title">Référents</h3>
-  <nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-      <li class="breadcrumb-item"><a href="#">Référents</a></li>
-      <li class="breadcrumb-item active" aria-current="page">Liste des référents</li>
-    </ol>
-  </nav>
-</div>
+<div class="container mt-3">
 
-<!-- Bouton ajouter -->
-<div class="mb-1">
-  <button type="button" class="btn btn-gradient-success btn-fw mb-3" [routerLink]="['/referents/edit']">
-    Ajouter un référent
+  <!-- ================= PAGE HEADER ================= -->
+  <div class="page-header mb-3">
+    <h3 class="page-title mb-1">Référents</h3>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="#">Référents</a></li>
+        <li class="breadcrumb-item">liste des référents</li>
+      </ol>
+    </nav>
+  </div>
+
+  <!-- ================= AJOUT AFFAIRE ================= -->
+  <button type="button" class="btn btn-gradient-success mb-3" (click)="addReferent()">
+    ➕ Ajouter un référent
   </button>
-</div>
 
-<!-- Liste des référents -->
-<div class="row g-3">
-  <div class="col-md-6" *ngFor="let referent of referents">
-    <div class="card h-100 p-3">
-      <!-- Header de la carte avec boutons -->
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <h5 class="card-title mb-0">{{ referent.nom }} {{ referent.prenom }}</h5>
-        <div>
-          <button
-            [routerLink]="['/referents/edit', referent.id]"
-            class="btn btn-sm btn-outline-warning me-1"
-            title="Modifier"
-          >
-            <i class="mdi mdi-pencil"></i>
-          </button>
-          <button
-            (click)="deleteReferent(referent.id)"
-            class="btn btn-sm btn-outline-danger"
-            title="Supprimer"
-          >
-            <i class="mdi mdi-delete"></i>
-          </button>
+  <div class="row g-3">
+    <!-- CHAQUE REFERENT DANS UNE CARD -->
+    <div class="col-md-6" *ngFor="let ref of referents">
+      <div class="card shadow-sm p-3 h-100">
+
+        <!-- HEADER CARD -->
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h5 class="mb-0">{{ ref.nom }} {{ ref.prenom }}</h5>
+          <div class="d-flex gap-1">
+            <!-- Bouton Edit -->
+            <button class="btn btn-sm btn-outline-warning" [routerLink]="['/referents/edit', ref.id]">
+              ✏️ Modifier
+            </button>
+            <!-- Bouton Supprimer -->
+            <button class="btn btn-sm btn-outline-danger" (click)="deleteReferent(ref.id)">
+              🗑 Supprimer
+            </button>
+          </div>
         </div>
+
+        <!-- INFOS CONTACT -->
+        <p class="mb-2" style="font-size: 0.9rem;">
+          <strong>Email:</strong> {{ ref.email }}<br>
+          <strong>Téléphone:</strong> {{ ref.telephone }}
+        </p>
+
+        <!-- AJOUT FICHIERS -->
+        <div class="mb-2">
+          <label class="form-label" style="font-size: 0.85rem;">Fichiers à ajouter</label>
+          <div class="border rounded p-2 d-flex align-items-center justify-content-between gap-2">
+
+            <button class="btn btn-outline-primary btn-sm" type="button" (click)="fileInput.click()">
+              📂 Choisir des fichiers
+            </button>
+
+            <div class="flex-grow-1 ms-2 text-truncate" style="max-width: 50%; font-size: 0.75rem;">
+              {{ newFilesNames }}
+            </div>
+
+            <button class="btn btn-success btn-sm ms-2" type="button" [disabled]="newFiles.length === 0"
+              (click)="uploadFiles(ref)">
+              📤 Upload
+            </button>
+
+            <input type="file" #fileInput class="d-none" multiple (change)="onFileSelected($event)" />
+          </div>
+
+          <!-- Fichiers sélectionnés avant upload -->
+          <ul class="list-group mt-2" *ngIf="newFiles.length > 0">
+            <li class="list-group-item d-flex justify-content-between align-items-center py-1"
+              *ngFor="let file of newFiles; let i = index">
+              {{ file.name }}
+              <button class="btn btn-sm btn-outline-danger" (click)="removeNewFile(i)">✕</button>
+            </li>
+          </ul>
+        </div>
+
+        <!-- FICHIERS UPLOADES -->
+        <h6 style="font-size: 0.85rem;">Fichiers associés</h6>
+        <ul class="list-group" *ngIf="ref.fichiers?.length > 0">
+          <li class="list-group-item d-flex justify-content-between align-items-center" *ngFor="let f of ref.fichiers">
+            <a [href]="url_upload + '/' + f.chemin" target="_blank">{{ f.nom }}</a>
+            <button class="btn btn-sm btn-outline-danger" (click)="removeUploadedFile(f.id, ref)">🗑</button>
+          </li>
+        </ul>
+        <div class="text-muted mt-2" *ngIf="!ref.fichiers?.length">
+          Aucun fichier associé
+        </div>
+
       </div>
-
-      <!-- Infos contact -->
-      <p class="mb-2">
-        <strong>Email:</strong> {{ referent.email }} <br>
-        <strong>Téléphone:</strong> {{ referent.telephone }}
-      </p>
-
-      <!-- Fichiers associés -->
-      <ul class="mb-0">
-        <li *ngFor="let f of referent.fichiers">
-          {{ f.nom }} -
-          <a [href]="'http://localhost:3002/uploads/' + f.chemin" target="_blank">Voir</a>
-        </li>
-      </ul>
     </div>
   </div>
-
-  <!-- Si la liste est vide -->
-  <div *ngIf="referents.length === 0" class="alert alert-secondary text-center">
-    Aucun référent trouvé.
-  </div>
-
 </div>

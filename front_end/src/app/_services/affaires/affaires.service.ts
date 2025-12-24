@@ -13,16 +13,16 @@ export class AffairesService {
     return this.http.post<any>(environment.url_affaire + '/affaires', record)
   }
 
-  update(record: any) {
-    return this.http.put(environment.url_affaire + '/affaires' + record.id, record)
-  }
+  update(id: number, record: any) {
+  return this.http.put(`${environment.url_affaire}/affaires/${id}`, record);
+}
 
   getAll() {
     return this.http.get(environment.url_affaire + '/affaires')
   }
 
   getItemById(id: number) {
-    return this.http.get<any>(environment.url_affaire + '/affaires' + id )
+    return this.http.get<any>(environment.url_affaire + '/affaires/' + id )
   }
 
   delete(id: any) {

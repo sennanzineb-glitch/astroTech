@@ -53,7 +53,7 @@ async function login(req, res) {
 async function me(req, res) {
   try {
     const userId = req.user.id;
-    const [rows] = await pool.query('SELECT id, email, full_name, role, created_at FROM users WHERE id = ?', [userId]);
+    const [rows] = await pool.query('SELECT id, email, full_name, role, date_creation FROM users WHERE id = ?', [userId]);
     if (!rows.length) return res.status(404).json({ message: 'Utilisateur introuvable' });
     res.json({ user: rows[0] });
   } catch (err) {

@@ -1,0 +1,60 @@
+/* ===== calendrier ===== */
+.fc {
+  font-size: 13px;
+}
+
+.fc-daygrid-day-number {
+  font-weight: 600;
+  font-size: 12px;
+}
+
+/* ===== barres bleues ===== */
+.fc-custom-event {
+  background: #79b7f2;
+  padding: 2px 6px;
+  border-radius: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* ===== tooltip ===== */
+.fc-tooltip {
+  position: absolute;
+  width: 320px;
+  background: #ffffff;
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+  padding: 12px;
+  z-index: 9999;
+  font-size: 13px;
+}
+
+.tooltip-section {
+  margin-bottom: 10px;
+}
+
+.tooltip-title {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.tooltip-box {
+  background: #b56bcf;
+  color: #ffffff;
+  padding: 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.tooltip-grid {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.tooltip-status.success {
+  margin-top: 10px;
+  color: #2e7d32;
+  font-weight: 700;
+}

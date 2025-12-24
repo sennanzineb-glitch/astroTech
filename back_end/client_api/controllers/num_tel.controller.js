@@ -4,11 +4,11 @@ class NumTel {
 
     static async apiCreate(req, res) {
         try {
-            const { tel, type, idContact } = req.body;
-            if (!tel || !type || !idContact)
-                return res.status(400).json({ error: "tel, type and idContact are required" });
+            const { tel, type, contact_id } = req.body;
+            if (!tel || !type || !contact_id)
+                return res.status(400).json({ error: "tel, type and contact_id are required" });
 
-            const record = { tel, type, idContact };
+            const record = { tel, type, contact_id };
             const response = await NumTelService.createRecord(record);
 
             res.status(201).json({ success: true, data: response });
@@ -21,10 +21,10 @@ class NumTel {
     static async apiUpdateById(req, res) {
         try {
             const { id } = req.params;
-            const { tel, type, idContact } = req.body;
+            const { tel, type, contact_id } = req.body;
 
-            if (!tel || !type || !idContact)
-                return res.status(400).json({ error: "tel, type and idContact are required" });
+            if (!tel || !type || !contact_id)
+                return res.status(400).json({ error: "tel, type and contact_id are required" });
 
             const record = { tel, nomEntreprise, id };
             const response = await NumTelService.updateRecordById(record);
@@ -76,17 +76,17 @@ class NumTel {
       // 🔍 Vérifier si un téléphone existe déjà pour un contact
   static async apiGetByTelAndContact(req, res) {
     try {
-      const { idContact } = req.params;
+      const { contact_id } = req.params;
       const { tel } = req.query;
 
-      if (!idContact || !tel) {
+      if (!contact_id || !tel) {
         return res.status(400).json({
           success: false,
-          message: "Paramètres manquants : idContact ou tel.",
+          message: "Paramètres manquants : contact_id ou tel.",
         });
       }
 
-      const existing = await NumTelService.getByTelAndContact(idContact, tel);
+      const existing = await NumTelService.getByTelAndContact(contact_id, tel);
 
       if (existing) {
         return res.json({ success: true, data: existing });

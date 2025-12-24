@@ -1,45 +1,59 @@
+// server.js
 const express = require("express");
 const app = express();
-app.use(express.json());
 require("dotenv").config();
-const PORT = process.env.PORT || 3000;
-const uri = process.env.URI;
-
 const bodyParser = require('body-parser');
 const cors = require('cors');
 
+// Configuration
+const PORT = process.env.PORT || 3000;
+const URI = process.env.URI || "/api/v1";
+
+// Middleware global
 app.disable('x-powered-by');
-app.use(express.json());
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-/** **/
+// === Auth ===
 const { register, login, me } = require('./controllers/_auth.controller');
 const { authenticateToken } = require('./middlewares/auth.js');
 
-app.use(cors());
-app.use(bodyParser.json());
+app.post(`${URI}/auth/register`, register);
+app.post(`${URI}/auth/login`, login);
+app.get(`${URI}/auth/me`, authenticateToken, me);
 
-app.post('/api/v1/auth/register', register);
-app.post('/api/v1/auth/login', login);
-app.get('/api/v1/auth/me', authenticateToken, me);
-
-const port = process.env.PORT || 3000;
-app.listen(port, () => console.log(`Server started on ${port}`));
-/** **/
-
+// === Interventions ===
+const InterventionController = require('./controllers/intervention.controller.js');
+const PlanningController = require('./controllers/planning.controller.js');
 const controllerAffaire = require('./controllers/affaires.controller.js');
 
-/*** technicien ***/
+// GET nextNumero avans GET by id
+app.get(`${URI}/interventions/nextNumero`, authenticateToken, InterventionController.apiGetNextNumero);
 
-app.put(uri + '/:id', controllerAffaire.apiUpdateById);
-app.get(uri + '/:id', controllerAffaire.apiGetById);
-app.delete(uri + '/:id', controllerAffaire.apiDeleteById);
-app.get(uri + '', controllerAffaire.apiGetAll);
-app.post(uri + '', controllerAffaire.apiCreate);
+// Routes interventions
+app.post(`${URI}/interventions`, authenticateToken, InterventionController.apiCreate);
+app.put(`${URI}/interventions/:id`, authenticateToken, InterventionController.apiUpdateById);
+app.delete(`${URI}/interventions/:id`, authenticateToken, InterventionController.apiDeleteById);
+app.get(`${URI}/interventions`, authenticateToken, InterventionController.apiGetAll);
+app.get(`${URI}/interventions/:id`, authenticateToken, InterventionController.apiGetById);
+app.post(`${URI}/interventions/:id/assign-techniciens`, authenticateToken, InterventionController.assignTechniciens);
+app.post(`${URI}/interventions/:id/add-planning`, authenticateToken, InterventionController.addPlanning);
 
-// Start the server
+// ➕ Ajouter une planification pour une intervention
+app.post(`${URI}/interventions/:interventionId/planning`, authenticateToken, PlanningController.addPlanning);
+app.get(`${URI}/planning`, authenticateToken, PlanningController.getAll);
+app.put(`${URI}/planning/:id`, authenticateToken, PlanningController.updatePlanning);
+app.delete(`${URI}/planning/:id`, authenticateToken, PlanningController.deletePlanning);
+
+// === Affaires ===
+app.post(`${URI}`, authenticateToken, controllerAffaire.apiCreate);
+app.get(`${URI}`, authenticateToken, controllerAffaire.apiGetAll);
+app.get(`${URI}/:id`, authenticateToken, controllerAffaire.apiGetById);
+app.put(`${URI}/:id`, authenticateToken, controllerAffaire.apiUpdateById);
+app.delete(`${URI}/:id`, authenticateToken, controllerAffaire.apiDeleteById);
+
+// === Start the server ===
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running at http://0.0.0.0:${PORT}`);
 });

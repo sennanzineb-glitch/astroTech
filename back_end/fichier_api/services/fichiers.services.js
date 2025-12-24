@@ -43,8 +43,6 @@ class FichierService {
 
   // 🔹 Upload plusieurs fichiers avec idReferent
   static async uploadFiles(files, idReferent = null, idAffaire = null) {
-    console.log('*** service uploadFiles ***', { idReferent, idAffaire, files });
-
     if (!files || files.length === 0) {
       throw new Error('Aucun fichier reçu');
     }
@@ -54,11 +52,12 @@ class FichierService {
     VALUES (?, ?, ?, ?, NOW(), ?, ?)
   `;
 
-    await Promise.all(
-      files.map(file => {
+    const results = await Promise.all(
+      files.map(async (file) => {
         const safeReferentId = idReferent ?? null;
         const safeAffaireId = idAffaire ?? null;
-        return db.execute(sql, [
+
+        const [result] = await db.execute(sql, [
           file.originalname,
           file.filename,
           file.size,
@@ -66,17 +65,20 @@ class FichierService {
           safeReferentId,
           safeAffaireId
         ]);
+
+        return {
+          id: result.insertId,   // ✅ ID du fichier inséré
+          originalname: file.originalname,
+          filename: file.filename,
+          size: file.size,
+          mimetype: file.mimetype,
+          idReferent: safeReferentId,
+          idAffaire: safeAffaireId
+        };
       })
     );
 
-    return files.map(file => ({
-      originalname: file.originalname,
-      filename: file.filename,
-      size: file.size,
-      mimetype: file.mimetype,
-      idReferent: idReferent ?? null,
-      idAffaire: idAffaire ?? null
-    }));
+    return results;
   }
 
 }

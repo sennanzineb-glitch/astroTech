@@ -9,9 +9,9 @@ class Affaire {
                 reference, titre, zoneIntervention, description, clientId,
                 etatLogement, technicienId, equipeTechnicienId, referents,
                 dateDebut, dateFin, motsCles, dureePrevueHeures, dureePrevueMinutes,
-                memo, memoPiecesJointes
+                memo, memoPiecesJointes, adresse_id, client_adresse_id, type_client_adresse
             } = req.body;
-            
+
             // Vérification basique
             if (!reference || !titre || !clientId)
                 return res.status(400).json({ error: "reference, titre et clientId sont requis" });
@@ -33,6 +33,9 @@ class Affaire {
                 dureePrevueMinutes,
                 memo,
                 memoPiecesJointes,
+                adresse_id,
+                client_adresse_id,
+                type_client_adresse
             };
 
             const response = await AffaireService.apiCreate(record);
@@ -51,8 +54,8 @@ class Affaire {
             const { id } = req.params;
             const {
                 reference, titre, zoneIntervention, description, clientId,
-                etat, technicienId, equipeTechnicienId, referentId,
-                dateDebut, dateFin, motsClesId, dureeHeures, dureeMinutes
+                etatLogement, technicienId, equipeTechnicienId, referents, memo, memoPiecesJointes,
+                dateDebut, dateFin, motsClesId, dureePrevueHeures, dureePrevueMinutes, adresse_id, client_adresse_id, type_client_adresse
             } = req.body;
 
             if (!reference || !titre || !clientId)
@@ -60,8 +63,8 @@ class Affaire {
 
             const record = {
                 reference, titre, zoneIntervention, description, clientId,
-                etat, technicienId, equipeTechnicienId, referentId,
-                dateDebut, dateFin, motsClesId, dureeHeures, dureeMinutes, id
+                etatLogement, technicienId, equipeTechnicienId, referents, memo, memoPiecesJointes,
+                dateDebut, dateFin, motsClesId, dureePrevueHeures, dureePrevueMinutes, adresse_id, client_adresse_id,type_client_adresse, id
             };
 
             const response = await AffaireService.updateAffaire(record, id);

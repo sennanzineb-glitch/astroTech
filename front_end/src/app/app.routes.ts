@@ -20,10 +20,12 @@ export const routes: Routes = [
         children: [
             /** Affaires **/
             { path: 'affaires/edit', loadComponent: () => import('./affaires/edit/edit/edit.component').then(c => c.EditComponent) },
+            { path: 'affaires/edit/:id', loadComponent: () => import('./affaires/edit/edit/edit.component').then(c => c.EditComponent) },
             { path: 'affaires/list', loadComponent: () => import('./affaires/list/list.component').then(c => c.ListComponent) },
 
             /** Clients **/
-            { path: 'clients/list', loadComponent: () => import('./clients/list/list.component').then(c => c.ListComponent) },
+            { path: 'clients/list', loadComponent: () => import('./annuaire/list/list.component').then(c => c.ListComponent) },
+             { path: 'clients/details/:id', loadComponent: () => import('./annuaire/details/details.component').then(c => c.DetailsComponent) },
 
             /** Techniciens **/
             { path: 'techniciens/list', loadComponent: () => import('./techniciens/list/list.component').then(c => c.ListComponent) },
@@ -35,7 +37,15 @@ export const routes: Routes = [
             { path: 'referents/list', loadComponent: () => import('./referents/list/list.component').then(c => c.ListComponent) },
             { path: 'referents/edit', loadComponent: () => import('./referents/edit/edit.component').then(c => c.EditComponent) },
             { path: 'referents/edit/:id', loadComponent: () => import('./referents/edit/edit.component').then(c => c.EditComponent) },
-        
+
+            /** Intervention **/
+            { path: 'interventions/edit', loadComponent: () => import('./intervention/edit/edit/edit.component').then(c => c.EditComponent) },
+            { path: 'interventions/edit/:id', loadComponent: () => import('./intervention/edit/edit/edit.component').then(c => c.EditComponent) },
+            { path: 'interventions/list', loadComponent: () => import('./intervention/list/list.component').then(c => c.ListComponent) },
+            { path: 'interventions/details/:id', loadComponent: () => import('./intervention/details/details.component').then(c => c.DetailsComponent) },
+            { path: 'interventions/planning', loadComponent: () => import('./intervention/planning/planning.component').then(c => c.PlanningComponent) },
+            //
+            { path: 'interventions', loadComponent: () => import('./intervention/choix-intervention/choix-intervention.component').then(c => c.ChoixInterventionComponent) },
         ]
     },
 

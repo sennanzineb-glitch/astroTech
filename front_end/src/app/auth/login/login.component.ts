@@ -15,7 +15,7 @@ export class LoginComponent {
   model = { email: '', password: '' };
   error?: string;
   showPassword = false;
-  loading = false; // 👈 pour afficher un spinner pendant la connexion
+  loading = false; // spinner pendant la connexion
 
   constructor(private auth: AuthService, private router: Router) {}
 
@@ -28,14 +28,26 @@ export class LoginComponent {
     this.loading = true;
 
     this.auth.login(this.model).subscribe({
-      next: () => {
+      next: (response: any) => {
         this.loading = false;
+
+        // ✅ Stockage du token JWT dans localStorage
+        if (response.token) {
+          localStorage.setItem('token', response.token);
+        }
+
+        // ✅ Stockage des informations utilisateur si disponibles
+        if (response.user) {
+          localStorage.setItem('user', JSON.stringify(response.user));
+        }
+
+        // Redirection après connexion
         this.router.navigate(['/clients/list']);
       },
       error: (err) => {
         this.loading = false;
 
-        // Gestion des différents cas d'erreur
+        // Gestion des erreurs
         if (err.status === 401) {
           this.error = 'Adresse email ou mot de passe incorrect.';
         } else if (err.status === 0) {
@@ -47,4 +59,3 @@ export class LoginComponent {
     });
   }
 }
-

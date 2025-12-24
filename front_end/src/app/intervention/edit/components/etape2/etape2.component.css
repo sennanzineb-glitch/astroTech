@@ -1,0 +1,4 @@
+.small-multiselect {
+  height: 65px !important;      /* Hauteur fixée */
+  overflow-y: auto !important;  /* Permet le scroll si plus d’options */
+}

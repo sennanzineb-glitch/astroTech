@@ -69,8 +69,6 @@ export class EquipeComponent implements OnInit {
     this.equipeService.createEquipe(equipeData).subscribe({
       next: (equipe: any) => {
         const equipeId = equipe.data.id;
-        console.log(equipeId, equipe);
-
         // Étape 2 : Ajouter les techniciens sélectionnés
         const ajoutPromises = formValue.techniciensIds.map((techId: number) =>
           this.equipeService.addTechnicienToEquipe(equipeId, techId).toPromise()

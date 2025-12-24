@@ -1,39 +1,33 @@
+// server.js
 const express = require("express");
 const app = express();
-app.use(express.json());
 require("dotenv").config();
-const PORT = process.env.PORT || 3000;
-const uri = process.env.URI;
-
 const bodyParser = require('body-parser');
 const cors = require('cors');
 
+// Configuration
+const PORT = process.env.PORT || 3000;
+const API_URI = "/api/v1"; // préfixe pour l'API
+const CLIENT_URI = process.env.URI || `${API_URI}/clients`; // routes clients
+
+// Middleware global
 app.disable('x-powered-by');
-app.use(express.json());
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-
-/** **/
+// === Auth ===
 const { register, login, me } = require('./controllers/_auth.controller');
 const { authenticateToken } = require('./middlewares/auth.js');
 
-app.use(cors());
-app.use(bodyParser.json());
+// Routes publiques (Auth)
+app.post(`${API_URI}/auth/register`, register);
+app.post(`${API_URI}/auth/login`, login);
 
-app.post('/api/v1/auth/register', register);
-app.post('/api/v1/auth/login', login);
-app.get('/api/v1/auth/me', authenticateToken, me);
+// Routes sécurisées (Auth)
+app.get(`${API_URI}/auth/me`, authenticateToken, me);
 
-
-// const port = process.env.PORT || 3000;
-// app.listen(port, () => console.log(`Server started on ${port}`));
-
-/** **/
-
-
-//const auth = require('./middlewares/auth');
+// === Controllers ===
 const controllerClient = require('./controllers/clients.controller');
 const controllerOrganisation = require('./controllers/organisations.controller');
 const controllerAgence = require('./controllers/agences.controller');
@@ -42,76 +36,93 @@ const controllerAdresse = require('./controllers/adresses.controller');
 const controllerContact = require('./controllers/contacts.controller');
 const controllerAdresseEmail = require('./controllers/adresse_email.controller');
 const controllerNumTel = require('./controllers/num_tel.controller');
+const controllerSecteur = require('./controllers/secteur.controller.js');
+const controllerHabitation = require('./controllers/habitation.controller.js');
 
 /*** num_tel ***/
-app.get(uri + '/num_tel', controllerNumTel.apiGetAll);
-app.post(uri + '/num_tel', controllerNumTel.apiCreate);
-app.put(uri + '/num_tel/:id', controllerNumTel.apiUpdateById);
-app.get(uri + '/num_tel/:id', controllerNumTel.apiGetById);
-app.delete(uri + '/num_tel/:id', controllerNumTel.apiDeleteById);
-// Vérifie si un numéro de téléphone existe déjà pour un contact
-app.get(uri + '/num_tel/byTel/:idContact', controllerNumTel.apiGetByTelAndContact);
+app.get(`${CLIENT_URI}/num_tel`, authenticateToken, controllerNumTel.apiGetAll);
+app.post(`${CLIENT_URI}/num_tel`, authenticateToken, controllerNumTel.apiCreate);
+app.put(`${CLIENT_URI}/num_tel/:id`, authenticateToken, controllerNumTel.apiUpdateById);
+app.get(`${CLIENT_URI}/num_tel/:id`, authenticateToken, controllerNumTel.apiGetById);
+app.delete(`${CLIENT_URI}/num_tel/:id`, authenticateToken, controllerNumTel.apiDeleteById);
+app.get(`${CLIENT_URI}/num_tel/byTel/:contact_id`, authenticateToken, controllerNumTel.apiGetByTelAndContact);
 
 /*** adresse_email ***/
-app.get(uri + '/adresse_email', controllerAdresseEmail.apiGetAll);
-app.post(uri + '/adresse_email', controllerAdresseEmail.apiCreate);
-app.put(uri + '/adresse_email/:id', controllerAdresseEmail.apiUpdateById);
-app.get(uri + '/adresse_email/:id', controllerAdresseEmail.apiGetById);
-app.delete(uri + '/adresse_email/:id', controllerAdresseEmail.apiDeleteById);
-// Vérifie si un email existe déjà pour un contact
-app.get(uri + '/adresse_email/byEmail/:idContact', controllerAdresseEmail.apiGetByEmailAndContact);
+app.get(`${CLIENT_URI}/adresse_email`, authenticateToken, controllerAdresseEmail.apiGetAll);
+app.post(`${CLIENT_URI}/adresse_email`, authenticateToken, controllerAdresseEmail.apiCreate);
+app.put(`${CLIENT_URI}/adresse_email/:id`, authenticateToken, controllerAdresseEmail.apiUpdateById);
+app.get(`${CLIENT_URI}/adresse_email/:id`, authenticateToken, controllerAdresseEmail.apiGetById);
+app.delete(`${CLIENT_URI}/adresse_email/:id`, authenticateToken, controllerAdresseEmail.apiDeleteById);
+app.get(`${CLIENT_URI}/adresse_email/byEmail/:contact_id`, authenticateToken, controllerAdresseEmail.apiGetByEmailAndContact);
 
-/***contact ***/
-app.get(uri + '/contact', controllerContact.apiGetAll);
-app.post(uri + '/contact', controllerContact.apiCreate);
-app.put(uri + '/contact/:id', controllerContact.apiUpdateById);
-app.get(uri + '/contact/:id', controllerContact.apiGetById);
-app.delete(uri + '/contact/:id', controllerContact.apiDeleteById);
-app.get(uri + "/contact/byNameAndPoste/:idClient", controllerContact.apiGetByNameAndPoste);
+/*** contact ***/
+app.get(`${CLIENT_URI}/contact`, authenticateToken, controllerContact.apiGetAll);
+app.post(`${CLIENT_URI}/contact`, authenticateToken, controllerContact.apiCreate);
+app.get(`${CLIENT_URI}/contact/byNameAndPoste`, authenticateToken, controllerContact.apiGetByNameAndPoste);
+app.put(`${CLIENT_URI}/contact/:id`, authenticateToken, controllerContact.apiUpdateById);
+app.get(`${CLIENT_URI}/contact/:id`, authenticateToken, controllerContact.apiGetById);
+app.delete(`${CLIENT_URI}/contact/:id`, authenticateToken, controllerContact.apiDeleteById);
 
-/*** Adresse ***/
-app.get(uri + '/adresse', controllerAdresse.apiGetAll);
-app.post(uri + '/adresse', controllerAdresse.apiCreate);
-app.put(uri + '/adresse/:id', controllerAdresse.apiUpdateById);
-app.get(uri + '/adresse/:id', controllerAdresse.apiGetById);
-app.delete(uri + '/adresse/:id', controllerAdresse.apiDeleteById);
+/*** adresse ***/
+app.get(`${CLIENT_URI}/adresse`, authenticateToken, controllerAdresse.apiGetAll);
+app.post(`${CLIENT_URI}/adresse`, authenticateToken, controllerAdresse.apiCreate);
+app.put(`${CLIENT_URI}/adresse/:id`, authenticateToken, controllerAdresse.apiUpdateById);
+app.get(`${CLIENT_URI}/adresse/:id`, authenticateToken, controllerAdresse.apiGetById);
+app.delete(`${CLIENT_URI}/adresse/:id`, authenticateToken, controllerAdresse.apiDeleteById);
 
-/*** Particulier ***/
-app.get(uri + '/particulier', controllerParticulier.apiGetAll);
-app.post(uri + '/particulier', controllerParticulier.apiCreate);
-app.put(uri + '/particulier/:id', controllerParticulier.apiUpdateById);
-app.get(uri + '/particulier/:id', controllerParticulier.apiGetById);
-app.delete(uri + '/particulier/:id', controllerParticulier.apiDeleteById);
+/*** habitation ***/
+app.get(`${CLIENT_URI}/habitation`, authenticateToken, controllerHabitation.apiGetAll);
+app.post(`${CLIENT_URI}/habitation`, authenticateToken, controllerHabitation.apiCreate);
+app.get(`${CLIENT_URI}/habitation/details/:id`, authenticateToken, controllerHabitation.apiGetRecordDetails);
+app.put(`${CLIENT_URI}/habitation/:id`, authenticateToken, controllerHabitation.apiUpdateById);
+app.get(`${CLIENT_URI}/habitation/:id`, authenticateToken, controllerHabitation.apiGetById);
+app.delete(`${CLIENT_URI}/habitation/:id`, authenticateToken, controllerHabitation.apiDeleteById);
+app.put(`${CLIENT_URI}/habitation/:id/note`, controllerHabitation.setRecordNote);
 
-/*** Agence ***/
-app.get(uri + '/agence', controllerAgence.apiGetAll);
-app.post(uri + '/agence', controllerAgence.apiCreate);
-app.put(uri + '/agence/:id', controllerAgence.apiUpdateById);
-app.get(uri + '/agence/:id', controllerAgence.apiGetById);
-app.delete(uri + '/agence/:id', controllerAgence.apiDeleteById);
+/*** secteur ***/
+app.get(`${CLIENT_URI}/secteur`, authenticateToken, controllerSecteur.apiGetAll);
+app.post(`${CLIENT_URI}/secteur`, authenticateToken, controllerSecteur.apiCreate);
+app.put(`${CLIENT_URI}/secteur/:id`, authenticateToken, controllerSecteur.apiUpdateById);
+app.get(`${CLIENT_URI}/secteur/:id`, authenticateToken, controllerSecteur.apiGetById);
+app.delete(`${CLIENT_URI}/secteur/:id`, authenticateToken, controllerSecteur.apiDeleteById);
+app.get(`${CLIENT_URI}/secteur/details/:id`, authenticateToken, controllerSecteur.apiGetRecordDetails);
+app.put(`${CLIENT_URI}/secteur/:id/note`, controllerSecteur.setRecordNote);
 
-/*** Organisations ***/
-app.get(uri + '/organisation', controllerOrganisation.apiGetAll);
-app.post(uri + '/organisation', controllerOrganisation.apiCreate);
-app.put(uri + '/organisation/:id', controllerOrganisation.apiUpdateById);
-app.get(uri + '/organisation/:id', controllerOrganisation.apiGetById);
-app.delete(uri + '/organisation/:id', controllerOrganisation.apiDeleteById);
+/*** particulier ***/
+app.get(`${CLIENT_URI}/particulier`, authenticateToken, controllerParticulier.apiGetAll);
+app.post(`${CLIENT_URI}/particulier`, authenticateToken, controllerParticulier.apiCreate);
+app.put(`${CLIENT_URI}/particulier/:id`, authenticateToken, controllerParticulier.apiUpdateById);
+app.get(`${CLIENT_URI}/particulier/:id`, authenticateToken, controllerParticulier.apiGetById);
+app.delete(`${CLIENT_URI}/particulier/:id`, authenticateToken, controllerParticulier.apiDeleteById);
+app.put(`${CLIENT_URI}/particulier/:id/note`, controllerParticulier.setRecordNote);
 
-/*** Clients ***/
-app.get(uri + '', controllerClient.apiGetAll);
-app.get(uri + '/contacts', controllerClient.apigetAllClientsWithContacts);
-app.post(uri + '', controllerClient.apiCreate);
-app.put(uri + '/:id', controllerClient.apiUpdateById);
-app.get(uri + '/:id', controllerClient.apiGetById);
-app.get(uri + '/details/:id', controllerClient.getRecordDetails);
-app.delete(uri + '/:id', controllerClient.apiDeleteById);
+/*** agence ***/
+app.get(`${CLIENT_URI}/agence`, authenticateToken, controllerAgence.apiGetAll);
+app.post(`${CLIENT_URI}/agence`, authenticateToken, controllerAgence.apiCreate);
+app.put(`${CLIENT_URI}/agence/:id`, authenticateToken, controllerAgence.apiUpdateById);
+app.get(`${CLIENT_URI}/agence/:id`, authenticateToken, controllerAgence.apiGetById);
+app.delete(`${CLIENT_URI}/agence/:id`, authenticateToken, controllerAgence.apiDeleteById);
+app.put(`${CLIENT_URI}/agence/:id/note`, controllerAgence.setRecordNote);
 
+/*** organisations ***/
+app.get(`${CLIENT_URI}/organisation`, authenticateToken, controllerOrganisation.apiGetAll);
+app.post(`${CLIENT_URI}/organisation`, authenticateToken, controllerOrganisation.apiCreate);
+app.put(`${CLIENT_URI}/organisation/:id`, authenticateToken, controllerOrganisation.apiUpdateById);
+app.get(`${CLIENT_URI}/organisation/:id`, authenticateToken, controllerOrganisation.apiGetById);
+app.delete(`${CLIENT_URI}/organisation/:id`, authenticateToken, controllerOrganisation.apiDeleteById);
+app.put(`${CLIENT_URI}/organisation/:id/note`, controllerOrganisation.setRecordNote);
 
-// Start the server
-// app.listen(PORT, () => {
-//     console.log(`Server running at http://localhost:${PORT}`);
-// });
+/*** clients ***/
+app.get(`${CLIENT_URI}`, authenticateToken, controllerClient.apiGetAll);
+app.get(`${CLIENT_URI}/contacts`, authenticateToken, controllerClient.apigetAllClientsWithContacts);
+app.post(`${CLIENT_URI}`, authenticateToken, controllerClient.apiCreate);
+app.put(`${CLIENT_URI}/:id`, authenticateToken, controllerClient.apiUpdateById);
+app.get(`${CLIENT_URI}/:id`, authenticateToken, controllerClient.apiGetById);
+app.get(`${CLIENT_URI}/details/:id`, authenticateToken, controllerClient.getRecordDetails);
+app.delete(`${CLIENT_URI}/:id`, authenticateToken, controllerClient.apiDeleteById);
+app.get(`${CLIENT_URI}/parent/:parentId`, authenticateToken, controllerClient.getClientsByParentWithDetails);
 
+// Démarrage du serveur
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running at http://0.0.0.0:${PORT}`);
 });

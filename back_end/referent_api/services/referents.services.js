@@ -3,7 +3,7 @@ const db = require('../db');
 class ReferentService {
 
   static async createRecord(record) {
-    
+
     const query = `
       INSERT INTO referent 
       (nom, prenom, telephone, email, dateNaissance, poste, adresse)
@@ -49,12 +49,12 @@ class ReferentService {
   static async getAllRecords() {
     // 1️⃣ Récupérer référents et fichiers avec LEFT JOIN
     const query = `
-      SELECT r.id AS referentId, r.nom, r.prenom, r.email, r.telephone,
-             f.id AS fichierId, f.nom AS fichierNom, f.chemin AS fichierChemin
-      FROM referent r
-      LEFT JOIN fichier f ON f.idReferent = r.id
-      ORDER BY r.id, f.id
-    `;
+    SELECT r.id AS referentId, r.nom, r.prenom, r.email, r.telephone,
+           f.id AS fichierId, f.nom AS fichierNom, f.chemin AS fichierChemin
+    FROM referent r
+    LEFT JOIN fichier f ON f.idReferent = r.id
+    ORDER BY r.id, f.id
+  `;
     const [rows] = await db.execute(query);
 
     // 2️⃣ Organiser les fichiers par référent
@@ -73,6 +73,7 @@ class ReferentService {
 
       if (row.fichierId) {
         referentsMap.get(row.referentId).fichiers.push({
+          id: row.fichierId,       // ✅ Ajouter l’ID du fichier
           nom: row.fichierNom,
           chemin: row.fichierChemin
         });
@@ -82,6 +83,7 @@ class ReferentService {
     // 3️⃣ Retourner le résultat sous forme de tableau
     return Array.from(referentsMap.values());
   }
+
 
   static async getRecordById(id) {
     const query = `SELECT * FROM referent WHERE id = ?`;

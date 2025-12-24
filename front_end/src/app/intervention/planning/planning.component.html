@@ -1,0 +1,105 @@
+<div class="container py-4">
+  <h2 class="text-center mb-4">Planning des interventions</h2>
+
+  <!-- FullCalendar Card -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <full-calendar [options]="calendarOptions" [events]="events"></full-calendar>
+    </div>
+  </div>
+
+  <!-- Formulaire pour ajouter une planification -->
+  <div class="card shadow-sm p-4 mb-4">
+    <h4 class="mb-3">Ajouter une planification</h4>
+    <form (ngSubmit)="addPlanification()" #planForm="ngForm">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label for="interventionId" class="form-label">Intervention</label>
+          <select id="interventionId" class="form-select" required [(ngModel)]="newPlan.intervention_id"
+            name="interventionId">
+            <option value="" disabled>-- Sélectionnez une intervention --</option>
+            <option *ngFor="let i of interventions" [value]="i.interventionId">
+              #{{ i.interventionNumero }} - {{ i.interventionTitre }}
+            </option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label for="date" class="form-label">Date</label>
+          <input type="date" id="date" name="date" class="form-control" required [(ngModel)]="newPlan.date">
+        </div>
+        <div class="col-md-4">
+          <label for="heure" class="form-label">Heure</label>
+          <input type="time" id="heure" name="heure" class="form-control" required [(ngModel)]="newPlan.heure">
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary mt-3" [disabled]="planForm.invalid">Ajouter</button>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Bootstrap avec header blanc -->
+<div class="modal fade" id="eventModal" tabindex="-1" aria-labelledby="eventModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content" *ngIf="selectedEvent" style="border-radius: 15px; overflow: hidden;">
+
+      <!-- Header -->
+      <div class="modal-header" style="background-color: #ffffff; color: #000;">
+        <h5 class="modal-title">
+          #{{ selectedEvent.extendedProps.interventionNumero }} - {{ selectedEvent.extendedProps.interventionTitre }}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body p-4" style="background-color: #f4f6f8;">
+        <div class="row g-3">
+
+          <!-- Carte Informations générales -->
+          <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+              <div class="card-body">
+                <h6 class="card-title text-primary mb-3">Informations générales</h6>
+                <p><strong>Type :</strong> {{ selectedEvent.extendedProps.interventionType || 'N/A' }}</p>
+                <p><strong>Description :</strong> {{ selectedEvent.extendedProps.interventionDescription || 'N/A' }}</p>
+                <p><strong>Adresse :</strong> {{ selectedEvent.extendedProps.interventionAdresseFacturation || 'N/A' }}</p>
+                <p><strong>Date planifiée :</strong> 
+                  {{ selectedEvent.extendedProps.planningDate | date:'fullDate' }} à {{ selectedEvent.extendedProps.planningHeure }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Carte Détails financiers et durée -->
+          <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+              <div class="card-body">
+                <h6 class="card-title text-primary mb-3">Détails financiers & durée</h6>
+                <p>
+                  <strong>Priorité :</strong> 
+                  <span class="badge bg-warning text-dark">{{ selectedEvent.extendedProps.interventionPriorite || 'N/A' }}</span>
+                </p>
+                <p>
+                  <strong>État :</strong> 
+                  <span class="badge bg-info text-dark">{{ selectedEvent.extendedProps.interventionEtat || 'N/A' }}</span>
+                </p>
+                <p><strong>Montant :</strong> {{ selectedEvent.extendedProps.interventionMontant || '0.00' }} DH</p>
+                <p><strong>Durée :</strong> 
+                  {{ selectedEvent.extendedProps.interventionDureeHeures }}h {{ selectedEvent.extendedProps.interventionDureeMinutes }}min
+                </p>
+                <p><strong>Créé le :</strong> {{ selectedEvent.extendedProps.interventionDateCreation | date:'fullDate' }}</p>
+                <p><strong>Dernière modification :</strong> {{ selectedEvent.extendedProps.interventionDateModification | date:'fullDate' }}</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer" style="background-color: #e9ecef;">
+        <button type="button" class="btn btn-primary rounded-pill px-4" data-bs-dismiss="modal">Fermer</button>
+      </div>
+
+    </div>
+  </div>
+</div>

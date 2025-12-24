@@ -1,0 +1,63 @@
+<div class="container mt-5">
+    <div class="card shadow border-0">
+        <div class="card-header bg-white border-0 text-center">
+            <h4 class="fw-bold mb-1">Création d’une intervention</h4>
+            <small class="text-muted">
+                Choisissez la méthode de création
+            </small>
+        </div>
+
+        <div class="card-body">
+            <div class="row g-4">
+                <!-- Option rapide -->
+                <div class="col-md-6">
+                    <label class="w-100">
+                        <input type="radio" name="typeCreation" value="rapide" [(ngModel)]="typeCreation" hidden />
+
+                        <div class="option-box" [class.active]="typeCreation === 'rapide'">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="icon bg-primary">
+                                    <i class="bi bi-lightning-charge"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Création rapide</h6>
+                                    <p class="mb-0 text-muted small">
+                                        Créer une intervention sans la lier à une affaire
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Option affaire -->
+                <div class="col-md-6">
+                    <label class="w-100">
+                        <input type="radio" name="typeCreation" value="affaire" [(ngModel)]="typeCreation" hidden />
+
+                        <div class="option-box" [class.active]="typeCreation === 'affaire'">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="icon bg-success">
+                                    <i class="bi bi-briefcase"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Dans une affaire existante</h6>
+                                    <p class="mb-0 text-muted small">
+                                        Associer l’intervention à une affaire existante
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Bouton action -->
+            <div class="text-end mt-4">
+                <button class="btn btn-primary" [disabled]="!typeCreation" (click)="continuer()">
+                    Continuer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

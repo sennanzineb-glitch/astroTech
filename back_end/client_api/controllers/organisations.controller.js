@@ -4,11 +4,11 @@ class Organisation {
 
     static async apiCreate(req, res) {
       try {
-        const { idClient, nomEntreprise } = req.body;
-        if (!idClient || !nomEntreprise)
-            return res.status(400).json({ error: "idClient and nomEntreprise are required" });
+        const { client_id, nom_entreprise } = req.body;
+        if (!client_id || !nom_entreprise)
+            return res.status(400).json({ error: "client_id and nom_entreprise are required" });
 
-        const record = { idClient, nomEntreprise };
+        const record = { client_id, nom_entreprise };
         const response = await OrganisationService.createRecord(record);
 
         res.status(201).json({ success: true, data: response });
@@ -24,12 +24,12 @@ class Organisation {
             console.log("Request body:", req.body, req.params);
 
             const { id } = req.params;
-            const { idClient, nomEntreprise } = req.body;
+            const { client_id, nom_entreprise } = req.body;
 
-            if (!idClient || !nomEntreprise)
-               return res.status(400).json({ error: "idClient and nomEntreprise are required" });
+            if (!client_id || !nom_entreprise)
+               return res.status(400).json({ error: "client_id and nom_entreprise are required" });
 
-            const record = { idClient, nomEntreprise, id };
+            const record = { client_id, nom_entreprise, id };
             const response = await OrganisationService.updateRecordById(record);
             res.json(response);
         } catch (error) {
@@ -73,6 +73,64 @@ class Organisation {
         } catch (error) {
             console.error(error.message);
             res.status(500).send();
+        }
+    }
+
+      static async setRecordNote(req, res) {
+        try {
+            const agenceId = parseInt(req.params.id, 10);
+            const { note } = req.body;
+
+            // Validation basique
+            if (isNaN(agenceId)) {
+                return res.status(400).json({ message: 'ID invalide' });
+            }
+
+            if (!note || note.trim() === '') {
+                return res.status(400).json({ message: 'La note ne peut pas être vide' });
+            }
+
+            // Appel du service
+            const result = await OrganisationService.updateRecordNote(agenceId, note);
+
+            if (result.success) {
+                return res.status(200).json({ message: 'Note mise à jour', affectedRows: result.affectedRows });
+            } else {
+                return res.status(500).json({ message: 'Erreur lors de la mise à jour', error: result.error });
+            }
+
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: 'Erreur serveur', error: error.message });
+        }
+    }
+
+    static async setRecordNote(req, res) {
+        try {
+            const id = parseInt(req.params.id, 10);
+            const { note } = req.body;
+
+            // Validation basique
+            if (isNaN(id)) {
+                return res.status(400).json({ message: 'ID invalide' });
+            }
+
+            if (!note || note.trim() === '') {
+                return res.status(400).json({ message: 'La note ne peut pas être vide' });
+            }
+
+            // Appel du service
+            const result = await OrganisationService.updateRecordNote(id, note);
+
+            if (result.success) {
+                return res.status(200).json({ message: 'Note mise à jour', affectedRows: result.affectedRows });
+            } else {
+                return res.status(500).json({ message: 'Erreur lors de la mise à jour', error: result.error });
+            }
+
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: 'Erreur serveur', error: error.message });
         }
     }
 

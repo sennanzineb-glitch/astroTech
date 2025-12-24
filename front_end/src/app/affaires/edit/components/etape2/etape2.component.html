@@ -10,7 +10,7 @@
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label for="etatLogement">État</label>
-                            <select id="etatLogement" class="form-select" formControlName="etatLogement">
+                            <select id="etatLogement" class="form-select form-select-sm" formControlName="etatLogement">
                                 <option value="" disabled selected>Pas d'état</option>
                                 <option value="Logement bloque">Logement bloque</option>
                                 <option value="Logement en cours de travaux">Logement en cours de travaux</option>
@@ -18,10 +18,9 @@
                                 <option value="Logement termine">Logement termine</option>
                             </select>
                         </div>
-
                         <div class="mb-3">
                             <label for="referentId">Référents de l'affaire</label>
-                            <select id="referentId" class="form-select" formControlName="referentId" multiple>
+                            <select id="referentId" class="form-select form-select-sm" formControlName="referentId" multiple>
                                 <option *ngFor="let item of referents" [value]="item.id">
                                     {{ item.prenom }} {{ item.nom }}
                                 </option>
@@ -29,7 +28,7 @@
                         </div>
                         <div class="mb-3">
                             <label for="exampleInputName1">Mots-clés liés</label>
-                            <input type="text" class="form-control" id="exampleInputName1" placeholder="Name"
+                            <input type="text" class="form-control form-control-sm" id="exampleInputName1" placeholder="Name"
                                 [(ngModel)]="enteredKeyword" (keyup.enter)="addKeyword()"
                                 [ngModelOptions]="{standalone: true}">
 
@@ -71,7 +70,7 @@
                             </div>
 
                             <!-- ✅ Affichage du technicien -->
-                            <select *ngIf="selectedType === 'individuel'" id="technicienId" class="form-select mb-2"
+                            <select *ngIf="selectedType === 'individuel'" id="technicienId" class="form-select form-select-sm mb-2"
                                 formControlName="technicienId">
                                 <option value="" disabled selected>Sélectionner un technicien</option>
                                 <option *ngFor="let item of techniciens" [value]="item.id">
@@ -80,15 +79,14 @@
                             </select>
 
                             <!-- ✅ Affichage de l’équipe -->
-                            <select *ngIf="selectedType === 'equipe'" id="equipeId" class="form-select"
-                                formControlName="equipeId" (change)="onEquipeSelect($event)">
+                            <select *ngIf="selectedType === 'equipe'" id="equipeTechnicienId" class="form-select form-select-sm"
+                                formControlName="equipeTechnicienId" (change)="onEquipeSelect($event)">
                                 <option value="" disabled selected>Sélectionner une équipe</option>
                                 <option *ngFor="let item of equipes" [value]="item.id">
                                     {{ item.nom }}
                                 </option>
                             </select>
 
-                            <!-- -->
                             <div *ngIf="selectedEquipe; else noEquipe">
                                 <ng-container
                                     *ngTemplateOutlet="equipeInfoTemplate; context: { equipe: selectedEquipe }">
@@ -101,16 +99,15 @@
 
                         </div>
 
-
                         <div class="mb-3">
                             <div class="row">
                                 <div class="col-md-6">
                                     <label for="birthday" class="form-label">Date de début</label>
-                                    <input type="date" class="form-control" formControlName="dateDebut">
+                                    <input type="date" class="form-control form-control-sm" formControlName="dateDebut">
                                 </div>
                                 <div class="col-md-6">
                                     <label for="birthday" class="form-label">Date de fin</label>
-                                    <input type="date" class="form-control" formControlName="dateFin">
+                                    <input type="date" class="form-control form-control-sm" formControlName="dateFin">
                                 </div>
                             </div>
                         </div>
@@ -120,14 +117,14 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="input-group mb-3">
-                                        <input type="number" class="form-control" placeholder="0"
+                                        <input type="number" class="form-control form-control-sm" placeholder="0"
                                             formControlName="dureePrevueHeures">
                                         <span class="input-group-text" id="basic-addon2">heures</span>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="input-group mb-3">
-                                        <input type="number" class="form-control" placeholder="0"
+                                        <input type="number" class="form-control form-control-sm" placeholder="0"
                                             formControlName="dureePrevueMinutes">
                                         <span class="input-group-text" id="basic-addon2">minutes</span>
                                     </div>
@@ -137,8 +134,8 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="exampleTextarea1">Mémo</label>
-                        <textarea class="form-control" id="exampleTextarea1" rows="2" formControlName="memo"></textarea>
+                        <label for="memo">Mémo</label>
+                        <textarea class="form-control form-control-sm" rows="2" formControlName="memo"></textarea>
                     </div>
 
                 </div>

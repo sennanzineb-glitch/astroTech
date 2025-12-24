@@ -10,7 +10,8 @@ export const environment = {
   url_fichier: "http://localhost:3002/api/v1",
   url_referent: "http://localhost:3003/api/v1",
   url_technicien: "http://localhost:3004/api/v1",
-  url_affaire: "http://localhost:3005/api/v1"
+  url_affaire: "http://localhost:3005/api/v1",
+  url_upload: "http://localhost:3002/uploads"
 };
 
 /*

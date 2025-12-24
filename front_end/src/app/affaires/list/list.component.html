@@ -1,23 +1,26 @@
-<!-- Page Header -->
-<div class="page-header">
+<!-- ================= PAGE HEADER ================= -->
+<div class="page-header mb-3">
   <h3 class="page-title">Affaires</h3>
   <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
       <li class="breadcrumb-item"><a href="#">Affaires</a></li>
-      <li class="breadcrumb-item active" aria-current="page">Liste des affaires</li>
+      <li class="breadcrumb-item active">Liste des affaires</li>
     </ol>
   </nav>
 </div>
 
-<button class="btn btn-gradient-success btn-fw mb-3" [routerLink]="['/affaires/edit']">
-  Nouvelle affaire
-</button>
+<!-- ================= AJOUT AFFAIRE ================= -->
+  <button class="btn btn-gradient-success mb-3"
+          (click)="goToAddAffaire()">
+    ➕ Nouvelle affaire
+  </button>
 
 <div class="row">
-  <!-- Tableau des affaires -->
+
+  <!-- ================= TABLEAU ================= -->
   <div class="col-md-7 mb-3">
-    <table class="table table-bordered table-hover" *ngIf="affaires?.length > 0; else noAffaires">
-      <thead>
+    <table class="table table-bordered table-hover" *ngIf="affaires.length">
+      <thead class="table-light">
         <tr>
           <th>Référence</th>
           <th>Titre</th>
@@ -25,8 +28,10 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let a of affaires" (click)="selectAffaire(a)"
-          [ngClass]="{'table-selected': selectedAffaire?.id === a.id}" style="cursor: pointer;">
+        <tr *ngFor="let a of affaires"
+            (click)="selectAffaire(a)"
+            style="cursor:pointer"
+            [class.table-secondary]="selectedAffaire?.affaireId === a.affaireId">
           <td>{{ a.reference }}</td>
           <td>{{ a.titre }}</td>
           <td>{{ a.nomClient }}</td>
@@ -34,105 +39,183 @@
       </tbody>
     </table>
 
-    <ng-template #noAffaires>
-      <div class="alert alert-secondary">
-        Aucune affaire trouvée.
-      </div>
-    </ng-template>
+    <div *ngIf="!affaires.length" class="alert alert-secondary">
+      Aucune affaire trouvée
+    </div>
   </div>
 
-  <!-- Détails de l'affaire -->
+  <!-- ================= DETAILS ================= -->
   <div class="col-md-5">
-    <ng-container *ngIf="selectedAffaire; else noSelection">
-      <div class="card shadow-sm border-primary">
-        <div class="card-header d-flex justify-content-between align-items-center bg-primary text-white">
+
+    <div *ngIf="selectedAffaire; else noSelection"
+         class="card shadow-sm">
+
+      <!-- ================= HEADER – BARRE D’ACTIONS ================= -->
+      <div class="card-header bg-white border-bottom">
+
+        <!-- Ligne titre -->
+        <div class="mb-2">
           <h5 class="mb-0">{{ selectedAffaire.titre }}</h5>
-          <div class="btns-actions">
-            <button class="btn btn-sm btn-warning me-2">
-              <i class="fa fa-pencil"></i>
-            </button>
-            <button class="btn btn-sm btn-danger" (click)="deleteAffaire(selectedAffaire.affaireId)">
-              <i class="fa fa-trash-o"></i>
-            </button>
-          </div>
+          <small class="text-muted">
+            Client : {{ selectedAffaire.nomClient }}
+          </small>
         </div>
 
-        <div class="card-body">
-          <!-- Client -->
-          <p><strong>Client: </strong> <span class="text-info">{{ selectedAffaire.nomClient }}</span></p>
+        <!-- Barre actions -->
+        <div class="d-flex justify-content-between align-items-center bg-light rounded p-2">
 
-          <!-- Référents -->
-          <div *ngIf="selectedAffaire.referents?.length" class="mb-2">
-            <span class="badge bg-warning text-dark">Référents</span>
-            <ul class="mb-0">
-              <li *ngFor="let r of selectedAffaire.referents">
-                {{ r.prenom }} {{ r.nom }} - {{ r.email }}
-              </li>
-            </ul>
+          <button class="btn btn-success btn-sm"
+                  (click)="goToAddLinkedAffaire(selectedAffaire)">
+            ➕ Créer une affaire
+          </button>
+
+          <div class="d-flex gap-1">
+            <button class="btn btn-outline-primary btn-sm"
+                    (click)="goToEditAffaire(selectedAffaire)">
+              ✏ Modifier
+            </button>
+
+            <button class="btn btn-outline-danger btn-sm"
+                    (click)="deleteAffaire(selectedAffaire.affaireId)">
+              🗑 Supprimer
+            </button>
           </div>
 
-          <!-- Technicien individuel -->
-          <div *ngIf="selectedAffaire.technicienId" class="mb-2">
-            <span class="badge bg-success">Technicien</span>
-            <p class="mb-0">{{ selectedAffaire.technicienPrenom }} {{ selectedAffaire.technicienNom }}</p>
-          </div>
-
-          <!-- Équipe -->
-          <div *ngIf="selectedAffaire.equipeId" class="mb-2">
-            <span class="badge bg-secondary">Équipe</span>
-            <p class="mb-0">{{ selectedAffaire.equipeNom }}</p>
-            <small>{{ selectedAffaire.equipeDescription }}</small>
-          </div>
-
-          <!-- Chef d'équipe -->
-          <div *ngIf="selectedAffaire.chefId" class="mb-2">
-            <span class="badge bg-danger">Chef</span>
-            <p class="mb-0">{{ selectedAffaire.chefPrenom }} {{ selectedAffaire.chefNom }}</p>
-          </div>
-
-          <!-- Membres de l'équipe -->
-          <div *ngIf="selectedAffaire.membresEquipe?.length" class="mb-2">
-            <span class="badge bg-secondary text-white">Membres de l'équipe</span>
-            <ul class="mb-0">
-              <li *ngFor="let m of selectedAffaire.membresEquipe">
-                {{ m.prenom }} {{ m.nom }}
-              </li>
-            </ul>
-          </div>
-
-          <!-- Fichiers -->
-          <div *ngIf="selectedAffaire.fichiers?.length" class="mb-2">
-            <span class="badge bg-info text-dark">Fichiers</span>
-            <ul class="mb-0">
-              <li *ngFor="let f of selectedAffaire.fichiers">
-                {{ f.nom }} -
-                <a [href]="'http://localhost:3002/uploads/' + f.chemin" target="_blank">Voir</a>
-              </li>
-            </ul>
-          </div>
-
-          <!-- Dates et état -->
-          <div class="mt-3">
-            <p class="mb-1"><strong>Dates:</strong> {{ selectedAffaire.dateDebut | date:'shortDate' }} - {{
-              selectedAffaire.dateFin | date:'shortDate' }}</p>
-            <p class="mb-1"><strong>État logement:</strong> {{ selectedAffaire.etatLogement || '-' }}</p>
-            <p class="mb-0"><strong>Durée prévue:</strong> {{ selectedAffaire.dureePrevueHeures || 0 }}h {{
-              selectedAffaire.dureePrevueMinutes || 0 }}m</p>
-          </div>
-
-          <!-- Memo -->
-          <div class="mt-3">
-            <p><strong>Memo:</strong></p>
-            <p class="p-2 bg-light border rounded">{{ selectedAffaire.memo || '-' }}</p>
-          </div>
         </div>
       </div>
-    </ng-container>
+
+      <!-- ================= BODY ================= -->
+      <div class="card-body">
+
+        <!-- ================= INFOS ================= -->
+        <div class="border-bottom pb-3 mb-3">
+
+          <p>
+            <strong>Client :</strong>
+            <span class="text-info">{{ selectedAffaire.nomClient }}</span>
+          </p>
+
+          <div *ngIf="selectedAffaire.referents?.length">
+            <span class="badge bg-warning text-dark">Référents</span>
+            <ul>
+              <li *ngFor="let r of selectedAffaire.referents">
+                {{ r.prenom }} {{ r.nom }} – {{ r.email }}
+              </li>
+            </ul>
+          </div>
+
+          <div *ngIf="selectedAffaire.technicienId">
+            <span class="badge bg-success">Technicien</span>
+            <p class="mb-1">
+              {{ selectedAffaire.technicienPrenom }}
+              {{ selectedAffaire.technicienNom }}
+            </p>
+          </div>
+
+          <div *ngIf="selectedAffaire.equipeId">
+            <span class="badge bg-secondary">Équipe</span>
+            <p class="mb-0">{{ selectedAffaire.equipeNom }}</p>
+          </div>
+
+          <div *ngIf="selectedAffaire.chefId">
+            <span class="badge bg-danger">Chef</span>
+            <p class="mb-1">
+              {{ selectedAffaire.chefPrenom }}
+              {{ selectedAffaire.chefNom }}
+            </p>
+          </div>
+
+          <p class="mt-2">
+            <strong>Dates :</strong>
+            {{ selectedAffaire.dateDebut | date:'shortDate' }} –
+            {{ selectedAffaire.dateFin | date:'shortDate' }}
+          </p>
+
+          <p>
+            <strong>Durée :</strong>
+            {{ selectedAffaire.dureePrevueHeures || 0 }}h
+            {{ selectedAffaire.dureePrevueMinutes || 0 }}m
+          </p>
+
+          <p class="mb-1"><strong>Mémo :</strong></p>
+          <p class="bg-light p-2 rounded">
+            {{ selectedAffaire.memo || '-' }}
+          </p>
+        </div>
+
+        <!-- ================= FICHIERS ================= -->
+        <div>
+          <span class="badge bg-info text-dark mb-2">Fichiers</span>
+
+          <div class="border rounded p-2 mb-2 d-flex align-items-center gap-2">
+            <button class="btn btn-outline-primary btn-sm"
+                    (click)="fileInput.click()">
+              📂 Choisir
+            </button>
+
+            <small class="text-muted flex-grow-1">
+              {{ newFiles.length ? newFiles.length + ' fichier(s)' : 'Aucun fichier' }}
+            </small>
+
+            <button class="btn btn-success btn-sm"
+                    [disabled]="!newFiles.length"
+                    (click)="uploadFiles()">
+              📤 Upload
+            </button>
+
+            <input type="file"
+                   #fileInput
+                   class="d-none"
+                   multiple
+                   (change)="onFileSelected($event)">
+          </div>
+
+          <ul *ngIf="newFiles.length" class="list-group mb-2">
+            <li *ngFor="let f of newFiles; let i = index"
+                class="list-group-item d-flex justify-content-between">
+              {{ f.name }}
+              <button class="btn btn-sm btn-outline-danger"
+                      (click)="removeNewFile(i)">
+                Supprimer
+              </button>
+            </li>
+          </ul>
+
+          <ul *ngIf="selectedAffaire.fichiers?.length"
+              class="list-group">
+            <li *ngFor="let f of selectedAffaire.fichiers"
+                class="list-group-item d-flex justify-content-between">
+              {{ f.nom }}
+
+              <div class="d-flex gap-1">
+                <a class="btn btn-sm btn-outline-primary"
+                   [href]="url_upload + '/' + f.chemin"
+                   target="_blank">
+                  Voir
+                </a>
+
+                <button class="btn btn-sm btn-outline-danger"
+                        (click)="removeUploadedFile(f.id)">
+                  Supprimer
+                </button>
+              </div>
+            </li>
+          </ul>
+
+          <p *ngIf="!selectedAffaire.fichiers?.length"
+             class="text-muted mt-2">
+            Aucun fichier attaché
+          </p>
+        </div>
+
+      </div>
+    </div>
 
     <ng-template #noSelection>
       <div class="alert alert-secondary">
         Sélectionnez une affaire pour voir les détails
       </div>
     </ng-template>
+
   </div>
 </div>

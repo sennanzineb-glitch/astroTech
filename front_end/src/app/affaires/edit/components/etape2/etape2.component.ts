@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { SharedModule } from '../../../../_globale/shared/shared.module';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { MultiStepFormService } from '../../../../_services/multi-step-form.service';
@@ -15,6 +15,8 @@ import { EquipeTechniciensService } from '../../../../_services/techniciens/equi
 })
 export class Etape2Component {
 
+  @Input() form!: FormGroup;  // ✅ REÇU DU PARENT
+
   constructor(
     private fb: FormBuilder,
     private formService: MultiStepFormService,
@@ -27,17 +29,41 @@ export class Etape2Component {
   selectedType: string = 'individuel'; // par défaut
   enteredKeyword: string = '';
   keywords: string[] = [];
-  form: FormGroup = new FormGroup({});
   selectedEquipe: any = null;
 
   referents: any = [];
   techniciens: any = [];
   equipes: any = [];
 
+  ngOnInit() {
+    if (!this.form) return;
+
+    // 🔹 Synchroniser le FormGroup avec le service
+    this.form.valueChanges.subscribe(val => {
+      this.formService.setStepData('step2', val);
+    });
+
+
+    // 🔹 Initialiser keywords depuis le FormControl motsCles
+    this.keywords = [];
+    const mots = this.form.get('motsCles')?.value;
+    if (Array.isArray(mots)) {
+      this.keywords = [...mots];
+    }
+
+    // 🔹 Déterminer le type en fonction de equipeTechnicienId
+    this.selectedType = this.form.get('equipeTechnicienId')?.value ? 'equipe' : 'individuel';
+
+    // 🔹 Charger les données nécessaires
+    this.loadTechnicien();
+    this.loadReferent();
+    this.loadEquipes();
+
+  }
+
   loadTechnicien() {
     this.technicienService.getAll().subscribe(data => {
       this.techniciens = data;
-
     });
   }
 
@@ -51,30 +77,6 @@ export class Etape2Component {
     this.equipeService.getAllEquipes().subscribe((res: any) => {
       this.equipes = res.data;
     })
-  }
-
-  ngOnInit() {
-    this.form = this.fb.group({
-      etatLogement: ['', Validators.required],
-      referentId: new FormControl([], Validators.required),
-      motsCles: new FormControl([]),
-      technicienId: [''],
-      equipeId: [''],
-      dateDebut: ['', Validators.required],
-      dateFin: ['', Validators.required],
-      dureePrevueHeures: ['', Validators.required],
-      dureePrevueMinutes: ['', Validators.required],
-      memo: ['', Validators.required]
-    });
-
-    const savedData = this.formService.getFormData()['step2'];
-    if (savedData) this.form.patchValue(savedData);
-
-    this.form.valueChanges.subscribe(val => this.formService.setStepData('step2', val));
-
-    this.loadTechnicien();
-    this.loadReferent();
-    this.loadEquipes();
   }
 
 

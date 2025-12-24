@@ -2,118 +2,107 @@ const ContactService = require("../services/contacts.services");
 
 class Contact {
 
-    static async apiCreate(req, res) {
-        try {
+  // Créer un contact
+  static async apiCreate(req, res) {
+    try {
+      const { nom_complet, poste, date_du, date_au, memo_note, client_id, secteur_id, habitation_id } = req.body;
+      if (!nom_complet)
+        return res.status(400).json({ error: "nomComplet is required" });
 
-            const { nomComplet, poste, dateDu, dateAu, memoNote, idClient } = req.body;
-            if (!nomComplet || !poste || !dateDu || !dateAu || !memoNote || !idClient)
-                return res.status(400).json({ error: "nomComplet, poste, dateDu, dateAu, memoNote and idClient are required" });
+      const record = { nom_complet, poste, date_du, date_au, memo_note, client_id, secteur_id, habitation_id };
+      const response = await ContactService.createRecord(record);
 
-            const record = { nomComplet, poste, dateDu, dateAu, memoNote, idClient };
-            const response = await ContactService.createRecord(record);
+      res.status(201).json({ success: true, data: response });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: error.message });
+    }
+  }
 
-            res.status(201).json({ success: true, data: response });
-        } catch (error) {
-            console.error(error);
-            res.status(500).json({ error: error.message });
-        }
+  // Mettre à jour un contact par ID
+  static async apiUpdateById(req, res) {
+    try {
+      const { id } = req.params;
+      const { nom_complet, poste, date_du, date_au, memo_note, client_id } = req.body;
+
+      if (!nom_complet || !client_id)
+        return res.status(400).json({ error: "nom_complet and client_id are required" });
+
+      const record = { id, nom_complet, poste, date_du, date_au, memo_note, client_id };
+      const response = await ContactService.updateRecordById(record);
+
+      res.json({ success: true, data: response });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  // Supprimer un contact
+  static async apiDeleteById(req, res) {
+    try {
+      const { id } = req.params;
+      await ContactService.deleteRecordById(id);
+      res.json({ success: true, message: `Contact ${id} supprimé` });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  // Récupérer tous les contacts
+  static async apiGetAll(req, res) {
+    try {
+      const rows = await ContactService.getAllRecords();
+      res.json({ success: true, data: rows });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  // Récupérer un contact par ID
+  static async apiGetById(req, res) {
+    try {
+      const { id } = req.params;
+      const record = await ContactService.getRecordById(id);
+      if (!record) return res.status(404).json({ error: "Contact non trouvé" });
+      res.json({ success: true, data: record });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+
+  // GET /clients/contact/byNameAndPoste
+static async apiGetByNameAndPoste(req, res) {
+  try {
+    const { type, id, nom_complet, poste } = req.query;
+
+    // Vérification des paramètres obligatoires
+    if (!type || !id || !nom_complet || !poste) {
+      return res.status(400).json({
+        message: "Paramètres manquants : type, id, nom_complet, poste sont obligatoires."
+      });
     }
 
-    static async apiUpdateById(req, res) {
-        try {
+    // Appel du service
+    const contact = await ContactService.getByNameAndPoste(type, id, nom_complet, poste);
 
-            console.log("Request body:", req.body, req.params);
+    return res.status(200).json({
+      exists: !!contact,
+      data: contact || null
+    });
 
-            const { id } = req.params;
-            const { nomComplet, poste, dateDu, dateAu, memoNote, idClient } = req.body;
-            if (!nomComplet || !poste || !dateDu || !dateAu || !memoNote || !idClient)
-                return res.status(400).json({ error: "nomComplet, poste, dateDu, dateAu, memoNote and idClient are required" });
-
-            const record = { nomComplet, poste, dateDu, dateAu, memoNote, idClient, id };
-            const response = await ContactService.updateRecordById(record);
-            res.json(response);
-        } catch (error) {
-            console.error(error.message);
-            res.status(204).send();
-        }
-    }
-
-    static async apiDeleteById(req, res) {
-        try {
-            const { id } = req.params;
-
-            await ContactService.deleteRecordById(id);
-            res.send();
-
-        } catch (error) {
-            console.log(error.message);
-            res.status(500).send();
-        }
-    }
-
-
-    static async apiGetAll(req, res) {
-        try {
-            const response = await ContactService.getAllRecords();
-            res.json(response);
-
-        } catch (error) {
-            console.error(error);
-            res.status(500).json({ error: "Internal Server Error" });
-        }
-    }
-
-
-
-    static async apiGetById(req, res) {
-        try {
-            const { id } = req.params;
-
-            const response = await ContactService.getRecordById(id);
-            if (!response) return res.status(404).send();
-
-            res.json(response);
-        } catch (error) {
-            console.error(error.message);
-            res.status(500).send();
-        }
-    }
-
-    static async apiGetByNameAndPoste(req, res) {
-        try {
-            const { idClient } = req.params;
-            const { nomComplet, poste } = req.query;
-
-            console.log(idClient,nomComplet,poste);
-            
-
-            // Vérifier les entrées
-            if (!idClient || !nomComplet || !poste) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Champs manquants : idClient, nomComplet ou poste.",
-                });
-            }
-
-            const contact = await ContactService.getByNameAndPoste(
-                idClient,
-                nomComplet,
-                poste
-            );
-
-            if (contact) {
-                return res.json({ success: true, data: contact });
-            } else {
-                return res.json({ success: false, data: null });
-            }
-        } catch (err) {
-            console.error("Erreur apiGetByNameAndPoste:", err);
-            res.status(500).json({
-                success: false,
-                message: "Erreur interne du serveur",
-            });
-        }
-    }
+  } catch (error) {
+    console.error("Erreur controller getByNameAndPoste :", error);
+    return res.status(500).json({
+      message: "Erreur interne du serveur",
+      error: error.message
+    });
+  }
+}
 
 
 }

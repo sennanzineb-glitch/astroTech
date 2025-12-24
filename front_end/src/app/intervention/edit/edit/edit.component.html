@@ -1,0 +1,41 @@
+<!-- *** Titre *** -->
+<div class="page-header">
+    <h3 class="page-title">Intervention</h3>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="#">Interventions</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Création de l'intervention</li>
+        </ol>
+    </nav>
+</div>
+
+<!-- *** Contenu *** -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="steps">
+            <app-etape1 *ngIf="step === 1" [form]="formService.formStep1"></app-etape1>
+            <app-etape2 *ngIf="step === 2" [form]="formService.formStep2"></app-etape2>
+        </div>
+
+        <div class="navigation mt-3">
+            <button class="btn btn-gradient-info btn-rounded btn-fw float-end mx-2" (click)="nextStep()" [disabled]="step === 2">Suivant</button>
+            <button class="btn btn-gradient-info btn-rounded btn-fw float-end" (click)="previousStep()" [disabled]="step === 1">Précédent</button>
+        </div>
+
+        <div class="card card-nav shadow-sm action-save" style="width: 250px;" *ngIf="step === 2">
+           <div class="card-body text-center">
+                <button type="button" class="btn btn-light w-100 mb-2 btn-sm">
+                  Annuler
+                </button>
+                <button (click)="submit()" class="btn btn-success w-100 mb-2 btn-sm" style="background-color: #5cc6b4; border:none;">
+                  Sauvegarder
+                </button>
+
+            </div>
+        </div>
+
+
+
+
+    </div>
+</div>
