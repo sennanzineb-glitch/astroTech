@@ -40,4 +40,28 @@ export class ListComponent {
     this.router.navigate(['/interventions/edit', id]);
   }
 
+deleteIntervention(id: number) {
+  if (!id) {
+    console.error("ID invalide");
+    return;
+  }
+
+  const confirmation = confirm("Voulez-vous vraiment supprimer cette intervention ?");
+  if (!confirmation) return;
+
+  this.interventionService.delete(id).subscribe({
+    next: () => {
+      alert("Intervention supprimée avec succès ✅");
+
+      // 🔄 Recharger la liste des interventions
+      this.loadInterventions();
+    },
+    error: (err) => {
+      console.error("Erreur lors de la suppression", err);
+      alert("Erreur lors de la suppression ❌");
+    }
+  });
+}
+
+
 }
