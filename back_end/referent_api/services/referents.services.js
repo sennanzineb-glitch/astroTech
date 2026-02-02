@@ -6,8 +6,8 @@ class ReferentService {
 
     const query = `
       INSERT INTO referent 
-      (nom, prenom, telephone, email, dateNaissance, poste, adresse)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      (nom, prenom, telephone, email, dateNaissance, poste, adresse, createur_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const [result] = await db.execute(query, [
       record.nom,
@@ -17,9 +17,112 @@ class ReferentService {
       record.dateNaissance,
       record.poste,
       record.adresse,
+      record.createur_id
     ]);
     return { id: result.insertId, ...record };
   }
+
+  static async apiGetAllWithPaginated({ page = 1, limit = 10, search = '', userId = null }) {
+    try {
+      page = Number(page);
+      limit = Number(limit);
+
+      if (!Number.isInteger(page) || page < 1) page = 1;
+      if (!Number.isInteger(limit) || limit < 1) limit = 10;
+
+      const offset = (page - 1) * limit;
+
+      /* ===================== WHERE ===================== */
+      let whereClause = 'WHERE 1=1';
+      const params = [];
+
+      if (search && search.trim() !== '') {
+        whereClause += `
+        AND (
+          r.nom LIKE ?
+          OR r.prenom LIKE ?
+          OR r.email LIKE ?
+        )
+      `;
+        const keyword = `%${search}%`;
+        params.push(keyword, keyword, keyword);
+      }
+
+      if (userId) {
+        whereClause += ' AND r.createur_id = ?';
+        params.push(userId);
+      }
+
+      /* ===================== QUERY REFERENTS ===================== */
+      const referentsSql = `
+      SELECT r.id AS referentId,
+             r.nom,
+             r.prenom,
+             r.email,
+             r.telephone
+      FROM referent r
+      ${whereClause}
+      ORDER BY r.id DESC
+      LIMIT ? OFFSET ?
+    `;
+
+      const referentsParams = [...params, limit, offset];
+      const [referentRows] = await db.query(referentsSql, referentsParams);
+
+      // Si aucun référent, retourner vide
+      if (referentRows.length === 0) return { total: 0, data: [] };
+
+      const referentIds = referentRows.map(r => r.referentId);
+
+      /* ===================== QUERY FICHIERS ===================== */
+      const fichiersSql = `
+      SELECT id AS fichierId, nom AS fichierNom, chemin AS fichierChemin, idReferent
+      FROM fichier
+      WHERE idReferent IN (?)
+    `;
+      const [fichierRows] = await db.query(fichiersSql, [referentIds]);
+
+      /* ===================== TOTAL ===================== */
+      const [[{ total }]] = await db.query(
+        `SELECT COUNT(*) AS total FROM referent r ${whereClause}`, params
+      );
+
+      /* ===================== ASSEMBLER ===================== */
+      const referentsMap = new Map();
+
+      referentRows.forEach(r => {
+        referentsMap.set(r.referentId, {
+          id: r.referentId,
+          nom: r.nom,
+          prenom: r.prenom,
+          email: r.email,
+          telephone: r.telephone,
+          fichiers: []
+        });
+      });
+
+      fichierRows.forEach(f => {
+        const ref = referentsMap.get(f.idReferent);
+        if (ref) {
+          ref.fichiers.push({
+            id: f.fichierId,
+            nom: f.fichierNom,
+            chemin: f.fichierChemin
+          });
+        }
+      });
+
+      return {
+        total,
+        data: Array.from(referentsMap.values())
+      };
+
+    } catch (err) {
+      console.error('Erreur apiGetAllWithPaginated:', err);
+      throw err;
+    }
+  }
+
 
   static async updateRecordById(record, id) {
     const query = `
@@ -83,7 +186,6 @@ class ReferentService {
     // 3️⃣ Retourner le résultat sous forme de tableau
     return Array.from(referentsMap.values());
   }
-
 
   static async getRecordById(id) {
     const query = `SELECT * FROM referent WHERE id = ?`;

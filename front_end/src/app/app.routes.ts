@@ -46,6 +46,8 @@ export const routes: Routes = [
             { path: 'interventions/planning', loadComponent: () => import('./intervention/planning/planning.component').then(c => c.PlanningComponent) },
             //
             { path: 'interventions', loadComponent: () => import('./intervention/choix-intervention/choix-intervention.component').then(c => c.ChoixInterventionComponent) },
+            //
+            { path: 'dashboard', loadComponent: () => import('./dashboard/dashboard.component').then(c => c.DashboardComponent) },
         ]
     },
 

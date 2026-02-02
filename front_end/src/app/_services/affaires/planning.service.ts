@@ -7,7 +7,7 @@ import { environment } from '../../../environments/environment';
 })
 export class PlanningService {
 
-    constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) { }
 
   // 🔹 Ajouter une planification pour une intervention
   addPlanning(interventionId: number, planning: { date: string; heure: string }){

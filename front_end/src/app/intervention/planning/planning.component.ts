@@ -9,13 +9,15 @@ import interactionPlugin from '@fullcalendar/interaction';
 import frLocale from '@fullcalendar/core/locales/fr';
 
 import { PlanningService } from '../../_services/affaires/planning.service';
+import { RouterModule } from '@angular/router';
+import { InterventionService } from '../../_services/affaires/intervention.service';
 
 declare var bootstrap: any;
 
 @Component({
   selector: 'app-planning',
   standalone: true,
-  imports: [CommonModule, FullCalendarModule, FormsModule],
+  imports: [CommonModule, FullCalendarModule, FormsModule, RouterModule],
   templateUrl: './planning.component.html',
   styleUrls: ['./planning.component.css']
 })
@@ -47,7 +49,10 @@ export class PlanningComponent implements OnInit {
     eventClick: this.onEventClick.bind(this)
   };
 
-  constructor(private planningService: PlanningService) {}
+  constructor(
+    private planningService: PlanningService,
+    private interventionService: InterventionService
+  ) { }
 
   ngOnInit(): void {
     this.loadEvents();
@@ -55,24 +60,54 @@ export class PlanningComponent implements OnInit {
   }
 
   // 🔹 Charger toutes les planifications
+  // loadEvents(): void {
+  //   this.planningService.getAll().subscribe((data: any) => {
+  //     this.events = data.map((row : any) => ({
+  //       id: row.planningId,
+  //       title: row.interventionNumero,
+  //       start: row.planningDate.split('T')[0],
+  //       allDay: true,
+  //       backgroundColor: '#79b7f2',
+  //       borderColor: '#79b7f2',
+  //       textColor: '#fff',
+  //       extendedProps: row
+  //     }));
+  //   });
+  // }
+
   loadEvents(): void {
-    this.planningService.getAll().subscribe((data: any) => {
-      this.events = data.map((row : any) => ({
-        id: row.planningId,
-        title: row.interventionNumero,
-        start: row.planningDate.split('T')[0],
-        allDay: true,
-        backgroundColor: '#79b7f2',
-        borderColor: '#79b7f2',
-        textColor: '#fff',
-        extendedProps: row
-      }));
+    this.planningService.getAll().subscribe((res: any) => {
+
+      // ✅ sécurité : selon la réponse API
+      const rows = Array.isArray(res) ? res : res.data;
+
+      this.events = rows.map((row: any) => {
+
+        // ✅ combiner date + heure (ISO valide)
+        const startDateTime = row.planningDate && row.planningHeure
+          ? `${row.planningDate.split('T')[0]}T${row.planningHeure}`
+          : row.planningDate;
+
+        return {
+          id: row.planningId,
+          title: `Intervention #${row.interventionNumero}`,
+          start: startDateTime,
+          allDay: false,
+
+          backgroundColor: '#79b7f2',
+          borderColor: '#79b7f2',
+          textColor: '#fff',
+
+          extendedProps: row
+        };
+      });
     });
   }
 
+
   // 🔹 Charger toutes les interventions pour le select
   loadInterventions(): void {
-    this.planningService.getAll().subscribe((data: any) => {
+    this.interventionService.getAll().subscribe((data: any) => {
       this.interventions = data;
     });
   }

@@ -5,12 +5,12 @@ class Agence {
     // 🔹 CREATE
     static async apiCreate(req, res) {
         try {
-            const { client_id, nom_agence, adresse_id } = req.body;
+            const { client_id, nom_agence, adresse_id, createur_id = req.user.id } = req.body;
 
             if (!nom_agence)
                 return res.status(400).json({ error: "nom_agence est obligatoire." });
 
-            const record = { client_id, nom_agence, adresse_id };
+            const record = { client_id, nom_agence, adresse_id, createur_id };
             const response = await AgenceService.createRecord(record);
 
             res.status(201).json({ success: true, data: response });

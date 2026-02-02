@@ -4,13 +4,12 @@ class Client {
 
     static async apiCreate(req, res) {
         try {
-            const { numero, compte, parent_id } = req.body;
+            const { numero, compte, parent_id, createur_id = req.user.id } = req.body;
             if (!numero || !compte)
                 return res.status(400).json({ error: "numero and compte are required" });
 
             console.log(parent_id);
-            const record = { numero, compte, parent_id };
-            console.log(record);
+            const record = { numero, compte, parent_id, createur_id };
 
             const response = await ClientService.createRecord(record);
 
@@ -54,8 +53,6 @@ class Client {
         }
     }
 
-    // DELETE /clients/delete?type=agence&id=84
-
     static async apiDeleteRecordByType(req, res) {
         try {
             const { type, id } = req.query;
@@ -88,7 +85,6 @@ class Client {
         }
     }
 
-
     static async apiGetAll(req, res) {
         try {
             const response = await ClientService.getAllRecords();
@@ -111,6 +107,46 @@ class Client {
         } catch (error) {
             console.error(error.message);
             res.status(500).send();
+        }
+    }
+
+    // 🔹 Clients avec contacts (pagination + recherche)
+    static async getAllClientsWithContactsPaginated(req, res) {
+        try {
+            // paramètres query
+            let { page = 1, limit = 10, search = '' } = req.query;
+
+            page = parseInt(page, 10);
+            limit = parseInt(limit, 10);
+
+            if (page < 1) page = 1;
+            if (limit < 1) limit = 10;
+
+            const userId = req.user?.id; // utilisateur connecté
+
+            // appel service
+            const result = await ClientService.getAllClientsWithContactsPaginated({
+                page,
+                limit,
+                search,
+                userId
+            });
+
+            // réponse standardisée
+            res.status(200).json({
+                success: true,
+                page,
+                limit,
+                total: result.total,
+                data: result.data
+            });
+
+        } catch (err) {
+            console.error('Erreur getAllClientsWithContactsPaginated:', err);
+            res.status(500).json({
+                success: false,
+                message: 'Internal Server Error'
+            });
         }
     }
 
@@ -139,23 +175,92 @@ class Client {
         }
     }
 
-
-    // Récupérer client + children par parent_id
+    // controllers/ClientController.js
     static async getClientsByParentWithDetails(req, res) {
         try {
-            console.log("Request params:", req.params);
-
             const { parentId } = req.params;
+            const { parentType } = req.query; // 👈 NOUVEAU
+
             if (!parentId || isNaN(parseInt(parentId, 10))) {
                 return res.status(400).json({ error: "parentId invalide" });
             }
 
-            const clients = await ClientService.getClientsByParentWithDetails(parseInt(parentId, 10));
+            if (!parentType) {
+                return res.status(400).json({ error: "parentType requis" });
+            }
 
-            res.status(200).json(clients);
+            // Pagination
+            const page = parseInt(req.query.page, 10) || 1;
+            const limit = parseInt(req.query.limit, 10) || 10;
+            const offset = (page - 1) * limit;
+
+            // Recherche
+            const search = req.query.search ? req.query.search.trim() : "";
+
+            // User connecté
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ error: "Utilisateur non authentifié" });
+            }
+
+            const result = await ClientService.getClientsByParentWithDetails({
+                parentId: parseInt(parentId, 10),
+                parentType, // 👈 ENVOYÉ AU SERVICE
+                page,
+                limit,
+                offset,
+                search,
+                userId
+            });
+
+            res.status(200).json({
+                success: true,
+                page,
+                limit,
+                parentId,
+                parentType, // 👈 RENVOYÉ AU FRONT
+                data: result.data
+            });
+
         } catch (error) {
-            console.error("Erreur apiGetByParentId:", error.message);
+            console.error("Erreur getClientsByParentWithDetails:", error);
             res.status(500).json({ error: "Erreur serveur" });
+        }
+    }
+
+
+    // 🔹 Récupérer interventions d'un client avec pagination et recherche
+    static async getClientInterventions(req, res) {
+        try {
+            const { clientId } = req.params;
+            const { page = 1, limit = 10, search = '' } = req.query;
+            const userId = req.user?.id; // utilisateur connecté
+
+            if (!clientId || isNaN(parseInt(clientId, 10))) {
+                return res.status(400).json({ error: "clientId invalide" });
+            }
+
+            const result = await ClientService.getInterventionsByClient({
+                clientId: parseInt(clientId, 10),
+                page: parseInt(page, 10),
+                limit: parseInt(limit, 10),
+                search: search.trim(),
+                userId
+            });
+
+            res.status(200).json({
+                success: true,
+                page: parseInt(page, 10),
+                limit: parseInt(limit, 10),
+                total: result.total,
+                data: result.data
+            });
+        } catch (err) {
+            console.error("Erreur getClientInterventions:", err);
+            res.status(500).json({
+                error: "Internal Server Error",
+                details: err.message
+            });
         }
     }
 

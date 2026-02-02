@@ -332,7 +332,6 @@
                     <tr *ngFor="let contact of listContacts; let i = index">
                       <td>{{ contact.nom_complet }}</td>
                       <td>{{ contact.poste }}</td>
-
                       <td>
                         <li *ngFor="let email of contact.listEmails">
                           {{ email.email}}

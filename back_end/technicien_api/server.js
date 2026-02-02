@@ -31,22 +31,31 @@ const controllerEquipeTechnicien = require("./controllers/equipe_technicien.cont
 
 // === Equipe Technicien ===
 // Toutes les routes sécurisées
-app.post(`${URI}/equipe/`, authenticateToken, controllerEquipeTechnicien.apiCreate);
-app.put(`${URI}/equipe/:id`, authenticateToken, controllerEquipeTechnicien.apiUpdateById);
-app.delete(`${URI}/equipe/:id`, authenticateToken, controllerEquipeTechnicien.apiDeleteById);
-app.get(`${URI}/equipe/`, authenticateToken, controllerEquipeTechnicien.apiGetAll);
-app.get(`${URI}/equipe/:id`, authenticateToken, controllerEquipeTechnicien.apiGetById);
-app.put(`${URI}/equipe/:id/ajouter-technicien`, authenticateToken, controllerEquipeTechnicien.apiAddTechnicien);
-app.put(`${URI}/equipe/retirer-technicien/:technicienId`, authenticateToken, controllerEquipeTechnicien.apiRemoveTechnicien);
-app.put(`${URI}/equipe/:id/change-chef`, authenticateToken, controllerEquipeTechnicien.apiChangeChef);
+// ===== GET =====
+app.get(`${URI}/equipe/all`, authenticateToken, controllerEquipeTechnicien.apiGetAll);                // Tous les enregistrements
+app.get(`${URI}/equipe`, authenticateToken, controllerEquipeTechnicien.apiGetAllWithPaginated);      // Pagination
+app.get(`${URI}/equipe/:id`, authenticateToken, controllerEquipeTechnicien.apiGetById);               // Détail d'une équipe
+// ===== POST =====
+app.post(`${URI}/equipe/`, authenticateToken, controllerEquipeTechnicien.apiCreate);                 // Créer une équipe
+// ===== PUT =====
+app.put(`${URI}/equipe/:id`, authenticateToken, controllerEquipeTechnicien.apiUpdateById);           // Modifier une équipe
+app.put(`${URI}/equipe/:id/ajouter-technicien`, authenticateToken, controllerEquipeTechnicien.apiAddTechnicien); // Ajouter un technicien
+app.put(`${URI}/equipe/retirer-technicien/:technicienId`, authenticateToken, controllerEquipeTechnicien.apiRemoveTechnicien); // Retirer un technicien
+app.put(`${URI}/equipe/:id/change-chef`, authenticateToken, controllerEquipeTechnicien.apiChangeChef); // Changer le chef
+// ===== DELETE =====
+app.delete(`${URI}/equipe/:id`, authenticateToken, controllerEquipeTechnicien.apiDeleteById);        // Supprimer une équipe
+
 
 // === Technicien ===
 // Toutes les routes sécurisées
-app.get(`${URI}`, authenticateToken, controllerTechnicien.apiGetAll);
-app.get(`${URI}/:id`, authenticateToken, controllerTechnicien.apiGetById);
-app.post(`${URI}`, authenticateToken, controllerTechnicien.apiCreate);
-app.put(`${URI}/:id`, authenticateToken, controllerTechnicien.apiUpdateById);
-app.delete(`${URI}/:id`, authenticateToken, controllerTechnicien.apiDeleteById);
+// Routes Technicien
+app.get(`${URI}/all`, authenticateToken, controllerTechnicien.apiGetAll); // tous les techniciens (sans pagination)
+app.get(`${URI}`, authenticateToken, controllerTechnicien.apiGetAllWithPaginated); // techniciens paginés
+app.get(`${URI}/:id`, authenticateToken, controllerTechnicien.apiGetById); // technicien par ID
+app.post(`${URI}`, authenticateToken, controllerTechnicien.apiCreate); // créer technicien
+app.put(`${URI}/:id`, authenticateToken, controllerTechnicien.apiUpdateById); // mettre à jour
+app.delete(`${URI}/:id`, authenticateToken, controllerTechnicien.apiDeleteById); // supprimer
+
 
 // Démarrage du serveur
 app.listen(PORT, '0.0.0.0', () => {

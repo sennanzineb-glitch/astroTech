@@ -17,7 +17,7 @@ class Adresse {
                 interphone_digicode,
                 escalier,
                 porte_entree,
-                createur_id
+                createur_id = req.user.id
             } = req.body;
 
             if (!adresse || !ville || !pays)

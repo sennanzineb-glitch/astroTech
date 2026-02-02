@@ -3,7 +3,9 @@
   <h3 class="page-title">Affaires</h3>
   <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
-      <li class="breadcrumb-item"><a href="#">Affaires</a></li>
+      <li class="breadcrumb-item">
+        <a [routerLink]="['/affaires/list']">Affaires</a>
+      </li>
       <li class="breadcrumb-item active" aria-current="page">
         {{ isEdit ? "Modification de l'affaire" : "Création de l'affaire" }}
       </li>
@@ -16,7 +18,7 @@
   <div class="col-md-12">
 
     <!-- 🔹 Étapes -->
-    <div class="steps">
+    <div class="steps" *ngIf="formReady">
       <app-etape1 *ngIf="step === 1" [form]="formService.formStep1"></app-etape1>
       <app-etape2 *ngIf="step === 2" [form]="formService.formStep2"></app-etape2>
       <app-etape3 *ngIf="step === 3 && !isEdit" [form]="formService.formStep3"></app-etape3>

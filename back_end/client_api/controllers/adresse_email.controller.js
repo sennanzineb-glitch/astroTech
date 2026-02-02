@@ -5,14 +5,13 @@ class AdresseEmail {
     // 🔹 CREATE
     static async apiCreate(req, res) {
         try {
-            console.log("***",req.body);
             
-            const { email, type, contact_id } = req.body;
+            const { email, type, contact_id, createur_id = req.user.id } = req.body;
 
             if (!email || !contact_id)
                 return res.status(400).json({ error: "email et contact_id sont obligatoires" });
 
-            const record = { email, type, contact_id };
+            const record = { email, type, contact_id, createur_id };
             const response = await AdresseEmailService.createRecord(record);
 
             res.status(201).json({ success: true, data: response });

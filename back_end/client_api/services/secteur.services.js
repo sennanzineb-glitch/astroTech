@@ -5,12 +5,12 @@ class SecteurService {
   static async createRecord(record) {
     const query = `
             INSERT INTO secteur 
-            (reference, nom, description, adresse_id, agence_id, organisation_id, parent_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            (reference, nom, description, adresse_id, agence_id, organisation_id, parent_id, createur_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `;
     const [result] = await db.execute(query, [
       record.reference, record.nom, record.description,
-      record.adresse_id, record.agence_id, record.organisation_id, record.parent_id
+      record.adresse_id, record.agence_id, record.organisation_id, record.parent_id, record.createur_id
     ]);
     return { id: result.insertId, ...record };
   }

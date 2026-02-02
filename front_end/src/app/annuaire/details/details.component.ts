@@ -1,17 +1,18 @@
 import { Component, ViewChild, OnInit } from '@angular/core';
 import { SharedModule } from '../../_globale/shared/shared.module';
 import { ModalSaveComponent } from '../modal-save/modal-save.component';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ClientsService } from '../../_services/clients/clients.service';
 import { SecteurService } from '../../_services/clients/secteur.service';
 import { HabitationService } from '../../_services/clients/habitation.service';
 import { OrganisationsService } from '../../_services/clients/organisations.service';
 import { ParticuliersService } from '../../_services/clients/particuliers.service';
 import { AgencesService } from '../../_services/clients/agences.service';
+declare var bootstrap: any; // pour Bootstrap 5 JS
 
 @Component({
   selector: 'app-details',
-  imports: [SharedModule, ModalSaveComponent],
+  imports: [SharedModule, ModalSaveComponent, RouterModule],
   templateUrl: './details.component.html',
   styleUrls: ['./details.component.css']
 })
@@ -23,6 +24,19 @@ export class DetailsComponent implements OnInit {
   client: any;
   clients: any[] = [];
   activeTab: string = 'details'; // Onglet par défaut
+  iHistory: any[] = [];
+  selectedIntervention: any;
+
+  // ===== Pagination clients enfants =====
+  clientsPage = 1;
+  clientsLimit = 4;
+  clientsTotal = 0;
+
+  // ===== Pagination historique interventions =====
+  historyPage = 1;
+  historyLimit = 10;
+  historyTotal = 0;
+
 
   constructor(
     private router: Router,
@@ -43,6 +57,7 @@ export class DetailsComponent implements OnInit {
       // Récupérer le type depuis les query params
       const type = this.route.snapshot.queryParams['type'];
       this.loadClient(this.id, type); // Appel avec deux paramètres
+      this.loadHistoryInterventions();
       this.resetView();
     });
   }
@@ -66,8 +81,6 @@ export class DetailsComponent implements OnInit {
       this.clientsService.getRecordDetails(id).subscribe({
         next: (sectRes: any) => {
           this.client = sectRes.data;
-          console.log("detail_client", sectRes.data);
-          
           this.getAllClients();
         },
         error: (err: any) => {
@@ -79,14 +92,45 @@ export class DetailsComponent implements OnInit {
   }
 
   // Charger les clients enfants
-  getAllClients() {
-    this.clientsService.getClientsByParentWithDetails(this.id).subscribe((result: any) => {
-      this.clients = (result as any[]).map(client => ({
+ getAllClients(page: number = this.clientsPage) {
+  this.clientsPage = page;
+
+  //const parentType: 'client' | 'secteur' | 'habitation' = this.client.type_client;
+  //console.log('***',this.client,'***');
+
+  this.clientsService
+    .getClientsByParentWithDetails(
+      this.id,
+      this.client.type_client,
+      this.clientsPage,
+      this.clientsLimit,
+      ''
+    )
+    .subscribe((result: any) => {
+      this.clientsTotal = result.total;
+
+      this.clients = (result.data as any[]).map(client => ({
         ...client,
-        contacts: client.contacts || []
+        contacts: client.contacts || [],
+        type_parent: result.parentType
       }));
+      //console.log('* client *',this.clients);
     });
+}
+
+
+  nextClientsPage() {
+    if (this.clientsPage * this.clientsLimit < this.clientsTotal) {
+      this.getAllClients(this.clientsPage + 1);
+    }
   }
+
+  prevClientsPage() {
+    if (this.clientsPage > 1) {
+      this.getAllClients(this.clientsPage - 1);
+    }
+  }
+
 
   // Réinitialiser la vue lors du changement de client
   resetView() {
@@ -97,7 +141,7 @@ export class DetailsComponent implements OnInit {
   // Ouvrir le modal pour ajouter un client enfant
   addChilderClient() {
     if (this.modalSave) {
-      if (['organisation', 'particulier', 'agence'].includes(this.client.type_client)) 
+      if (['organisation', 'particulier', 'agence'].includes(this.client.type_client))
         this.modalSave.addChilderClient(this.client.type_client, this.client.client_id);
       else
         this.modalSave.addChilderClient(this.client.type_client, this.client.id);
@@ -157,6 +201,8 @@ export class DetailsComponent implements OnInit {
 
   // Ouvrir le modal pour éditer un client
   editClient(client: any) {
+    //client = {...client, type_parent:client.}
+
     if (this.modalSave) {
       this.modalSave.editClient(client);
     } else {
@@ -177,7 +223,7 @@ export class DetailsComponent implements OnInit {
 
     // Map type_client → service correspondant
     const serviceMap: { [key: string]: any } = {
-      'agence': this.secteurService,          // ou AgencesService si c’est plus approprié
+      'agence': this.agencesService,          // ou AgencesService si c’est plus approprié
       'organisation': this.organisationsService,
       'particulier': this.particuliersService,
       'secteur': this.secteurService,
@@ -197,5 +243,43 @@ export class DetailsComponent implements OnInit {
     });
   }
 
+  async loadHistoryInterventions(page: number = this.historyPage) {
+    try {
+      this.historyPage = page;
+
+      const res = await this.clientsService.getByClient(
+        this.id,
+        this.historyPage,
+        this.historyLimit,
+        ''
+      );
+
+      this.iHistory = res.data;
+      this.historyTotal = res.total;
+
+    } catch (err) {
+      console.error('Erreur chargement historique', err);
+    }
+  }
+
+  nextHistoryPage() {
+    if (this.historyPage * this.historyLimit < this.historyTotal) {
+      this.loadHistoryInterventions(this.historyPage + 1);
+    }
+  }
+
+  prevHistoryPage() {
+    if (this.historyPage > 1) {
+      this.loadHistoryInterventions(this.historyPage - 1);
+    }
+  }
+
+  openInterventionModal(item: any) {
+    this.selectedIntervention = item;
+
+    const modalEl = document.getElementById('interventionDetailModal');
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+  }
 
 }

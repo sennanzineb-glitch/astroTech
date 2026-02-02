@@ -5,11 +5,11 @@ class Contact {
   // Créer un contact
   static async apiCreate(req, res) {
     try {
-      const { nom_complet, poste, date_du, date_au, memo_note, client_id, secteur_id, habitation_id } = req.body;
+      const { nom_complet, poste, date_du, date_au, memo_note, client_id, secteur_id, habitation_id, createur_id = req.user.id } = req.body;
       if (!nom_complet)
         return res.status(400).json({ error: "nomComplet is required" });
 
-      const record = { nom_complet, poste, date_du, date_au, memo_note, client_id, secteur_id, habitation_id };
+      const record = { nom_complet, poste, date_du, date_au, memo_note, client_id, secteur_id, habitation_id, createur_id };
       const response = await ContactService.createRecord(record);
 
       res.status(201).json({ success: true, data: response });

@@ -90,9 +90,10 @@
         </h4>
       </div>
 
+      <!-- ================= LISTE DES ÉQUIPES ================= -->
       <div *ngIf="equipes && equipes.length > 0; else noEquipe">
         <div *ngFor="let equipe of equipes" class="card shadow-sm mb-3 border-0">
-          <div class="card-header bg-white shadow-sm g-light d-flex justify-content-between align-items-center">
+          <div class="card-header bg-white shadow-sm d-flex justify-content-between align-items-center">
             <div>
               <h5 class="mb-0 text-dark">
                 <i class="bi bi-people-fill me-2 text-primary"></i>
@@ -103,12 +104,10 @@
               </small>
             </div>
 
-            <!-- Bouton supprimer aligné à droite -->
             <button class="btn btn-sm btn-danger" (click)="deleteEquipe(equipe.id)">
               <i class="fa fa-trash"></i>
             </button>
           </div>
-
 
           <div class="card-body">
             <p *ngIf="equipe.description" class="text-muted fst-italic">
@@ -116,8 +115,7 @@
             </p>
 
             <h6 class="fw-semibold">Techniciens :</h6>
-            <ul *ngIf="equipe.techniciens && equipe.techniciens.length > 0; else noTech"
-              class="list-group list-group-flush">
+            <ul *ngIf="equipe.techniciens?.length > 0; else noTech" class="list-group list-group-flush">
               <li *ngFor="let tech of equipe.techniciens"
                 class="list-group-item d-flex justify-content-between align-items-center">
                 <span>
@@ -125,7 +123,7 @@
                   {{ tech.prenom }} {{ tech.nom }}
                 </span>
                 <span *ngIf="tech.dateAffectation" class="text-muted small">
-                  Affecté le : {{ tech.dateAffectation | date: 'shortDate' }}
+                  Affecté le : {{ tech.dateAffectation | date:'shortDate' }}
                 </span>
               </li>
             </ul>
@@ -136,6 +134,30 @@
           </div>
         </div>
       </div>
+
+      <ng-template #noEquipe>
+        <div class="alert alert-secondary">
+          😕 Aucune équipe trouvée. Vous pouvez en créer une nouvelle.
+        </div>
+      </ng-template>
+
+      <!-- ================= PAGINATION ================= -->
+      <nav *ngIf="totalPages > 1" aria-label="Page navigation example">
+        <ul class="pagination justify-content-center mt-3">
+          <li class="page-item" [class.disabled]="currentPage === 1">
+            <button class="page-link" (click)="changePage(currentPage - 1)">Précédent</button>
+          </li>
+
+          <li class="page-item" *ngFor="let page of [].constructor(totalPages); let idx = index"
+            [class.active]="currentPage === idx + 1">
+            <button class="page-link" (click)="changePage(idx + 1)">{{ idx + 1 }}</button>
+          </li>
+
+          <li class="page-item" [class.disabled]="currentPage === totalPages">
+            <button class="page-link" (click)="changePage(currentPage + 1)">Suivant</button>
+          </li>
+        </ul>
+      </nav>
 
       <ng-template #noEquipe>
         <div class="alert alert-secondary">

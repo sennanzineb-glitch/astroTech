@@ -4,11 +4,11 @@ class NumTel {
 
     static async apiCreate(req, res) {
         try {
-            const { tel, type, contact_id } = req.body;
+            const { tel, type, contact_id, createur_id = req.user.id } = req.body;
             if (!tel || !type || !contact_id)
                 return res.status(400).json({ error: "tel, type and contact_id are required" });
 
-            const record = { tel, type, contact_id };
+            const record = { tel, type, contact_id, createur_id };
             const response = await NumTelService.createRecord(record);
 
             res.status(201).json({ success: true, data: response });

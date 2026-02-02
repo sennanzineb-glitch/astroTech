@@ -6,22 +6,22 @@ class Affaire {
     static async apiCreate(req, res) {
         try {
             const {
-                reference, titre, zoneIntervention, description, clientId,
+                reference, titre, zoneIntervention, description,
                 etatLogement, technicienId, equipeTechnicienId, referents,
                 dateDebut, dateFin, motsCles, dureePrevueHeures, dureePrevueMinutes,
-                memo, memoPiecesJointes, adresse_id, client_adresse_id, type_client_adresse
+                memo, memoPiecesJointes, client_id, zone_intervention_client_id, type_client_zone_intervention,
+                createur_id = req.user.id
             } = req.body;
 
             // Vérification basique
-            if (!reference || !titre || !clientId)
-                return res.status(400).json({ error: "reference, titre et clientId sont requis" });
+            if (!reference || !titre || !client_id)
+                return res.status(400).json({ error: "reference, titre et client_id sont requis" });
 
             const record = {
                 reference,
                 titre,
                 zoneIntervention,
                 description,
-                clientId,
                 etatLogement,
                 technicienId,
                 equipeTechnicienId,
@@ -33,48 +33,84 @@ class Affaire {
                 dureePrevueMinutes,
                 memo,
                 memoPiecesJointes,
-                adresse_id,
-                client_adresse_id,
-                type_client_adresse
+                client_id,
+                zone_intervention_client_id,
+                type_client_zone_intervention,
+                createur_id
             };
 
             const response = await AffaireService.apiCreate(record);
             res.status(201).json({ success: true, data: response });
 
         } catch (error) {
-            console.error(error);
+            console.error("❌ Erreur apiCreate controller:", error);
             res.status(500).json({ error: error.message });
         }
     }
+
 
 
     // ✏️ Modifier une affaire par ID
     static async apiUpdateById(req, res) {
         try {
             const { id } = req.params;
+
             const {
-                reference, titre, zoneIntervention, description, clientId,
-                etatLogement, technicienId, equipeTechnicienId, referents, memo, memoPiecesJointes,
-                dateDebut, dateFin, motsClesId, dureePrevueHeures, dureePrevueMinutes, adresse_id, client_adresse_id, type_client_adresse
+                reference,
+                titre,
+                description,
+                etatLogement,
+                technicienId,
+                equipeTechnicienId,
+                referents,
+                memo,
+                memoPiecesJointes,
+                dateDebut,
+                dateFin,
+                motsCles,
+                dureePrevueHeures,
+                dureePrevueMinutes,
+                client_id,
+                zone_intervention_client_id,
+                type_client_zone_intervention
             } = req.body;
 
-            if (!reference || !titre || !clientId)
-                return res.status(400).json({ error: "reference, titre et clientId sont requis" });
+            if (!reference || !titre || !client_id) {
+                return res.status(400).json({
+                    error: "reference, titre et client_id sont requis"
+                });
+            }
 
             const record = {
-                reference, titre, zoneIntervention, description, clientId,
-                etatLogement, technicienId, equipeTechnicienId, referents, memo, memoPiecesJointes,
-                dateDebut, dateFin, motsClesId, dureePrevueHeures, dureePrevueMinutes, adresse_id, client_adresse_id,type_client_adresse, id
+                id,
+                reference,
+                titre,
+                description,
+                etatLogement,
+                technicienId,
+                equipeTechnicienId,
+                referents,
+                memo,
+                memoPiecesJointes,
+                dateDebut,
+                dateFin,
+                motsCles,
+                dureePrevueHeures,
+                dureePrevueMinutes,
+                client_id,
+                zone_intervention_client_id,
+                type_client_zone_intervention
             };
 
-            const response = await AffaireService.updateAffaire(record, id);
+            const response = await AffaireService.updateAffaire(record);
             res.json(response);
 
         } catch (error) {
-            console.error(error.message);
-            res.status(500).send();
+            console.error("❌ apiUpdateById:", error);
+            res.status(500).json({ error: "Erreur serveur" });
         }
     }
+
 
     // ❌ Supprimer une affaire par ID
     static async apiDeleteById(req, res) {
@@ -96,6 +132,39 @@ class Affaire {
         } catch (error) {
             console.error(error);
             res.status(500).json({ error: "Internal Server Error" });
+        }
+    }
+
+    // 📜 Récupérer les affaires (pagination + recherche + user)
+    static async apiGetAllPaginated(req, res) {
+        try {
+            let { page = 1, limit = 10, search = '' } = req.query;
+            const userId = Number(req.user.id);
+
+            page = Number(page);
+            limit = Number(limit);
+
+            const result = await AffaireService.apiGetAllPaginated({
+                page,
+                limit,
+                search,
+                userId
+            });
+
+            res.status(200).json({
+                success: true,
+                page,
+                limit,
+                total: result.total,
+                data: result.data
+            });
+
+        } catch (error) {
+            console.error('Erreur apiGetAllPaginated:', error);
+            res.status(500).json({
+                success: false,
+                error: 'Internal Server Error'
+            });
         }
     }
 

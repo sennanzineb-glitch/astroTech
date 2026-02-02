@@ -88,6 +88,9 @@ services:
       DB_USER: root
       DB_PASSWORD: 123456789
       DB_NAME: astro_tech
+    volumes:
+      - ./affaires_api:/app
+      - ./client_api:/app/client_api
 
 volumes:
   db_data: {}

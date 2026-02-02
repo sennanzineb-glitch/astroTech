@@ -19,10 +19,9 @@ export class MultiStepFormService {
     this.formStep1 = this.fb.group({
       reference: [''],
       titre: [''],
-      clientId: [''],
-      adresse_id: [null],
-      client_adresse_id: [null],
-      type_client_adresse: [''],
+      client_id: [null],
+      zone_intervention_client_id: [null],
+      type_client_zone_intervention	: [''],
       description: ['']
     });
 
@@ -73,10 +72,9 @@ export class MultiStepFormService {
     this.formStep1.reset({
       reference: '',
       titre: '',
-      clientId: '',
-      adresse_id: null,
-      client_adresse_id: null,
-      type_client_adresse: '',
+      client_id: null,
+      zone_intervention_client_id: null,
+      type_client_zone_intervention	: '',
       description: ''
     });
 

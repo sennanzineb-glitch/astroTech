@@ -71,6 +71,114 @@ class EquipeTechnicienService {
     return equipes;
   }
 
+  // 🔹 Récupérer les équipes avec pagination + search + filtrage user
+  static async getAllEquipesPaginated({ page = 1, limit = 10, search = '', userId = null }) {
+    try {
+      page = Number(page);
+      limit = Number(limit);
+
+      if (!Number.isInteger(page) || page < 1) page = 1;
+      if (!Number.isInteger(limit) || limit < 1) limit = 10;
+
+      const offset = (page - 1) * limit;
+
+      /* ===================== WHERE ===================== */
+      let whereClause = 'WHERE 1=1';
+      const params = [];
+
+      if (search && search.trim() !== '') {
+        whereClause += `
+        AND (
+          e.nom LIKE ?
+          OR e.description LIKE ?
+        )
+      `;
+        const keyword = `%${search}%`;
+        params.push(keyword, keyword);
+      }
+
+      if (userId) {
+        whereClause += ' AND e.createur_id = ?';
+        params.push(userId);
+      }
+
+      /* ===================== EQUIPES ===================== */
+      const sqlEquipes = `
+      SELECT SQL_CALC_FOUND_ROWS
+        e.id,
+        e.nom,
+        e.description,
+        e.chefId,
+        e.createur_id,
+        e.date_creation,
+        e.date_modification
+      FROM equipe_technicien e
+      ${whereClause}
+      ORDER BY e.id DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `;
+
+      const [equipes] = await db.query(sqlEquipes, params);
+
+      /* ===================== TOTAL ===================== */
+      const [[{ total }]] = await db.query(
+        'SELECT FOUND_ROWS() AS total'
+      );
+
+      if (equipes.length === 0) {
+        return { total, data: [] };
+      }
+
+      /* ===================== TECHNICIENS ===================== */
+      const equipeIds = equipes.map(e => e.id);
+
+      const sqlTechniciens = `
+      SELECT
+        te.equipeId,
+        t.id,
+        t.nom,
+        t.prenom,
+        te.dateAffectation
+      FROM technicien_equipe te
+      JOIN technicien t ON t.id = te.technicienId
+      WHERE te.equipeId IN (?)
+      ORDER BY t.nom
+    `;
+
+      const [techniciens] = await db.query(sqlTechniciens, [equipeIds]);
+
+      /* ===================== GROUPING ===================== */
+      const techMap = {};
+
+      techniciens.forEach(t => {
+        if (!techMap[t.equipeId]) {
+          techMap[t.equipeId] = [];
+        }
+
+        techMap[t.equipeId].push({
+          id: t.id,
+          nom: t.nom,
+          prenom: t.prenom,
+          dateAffectation: t.dateAffectation
+        });
+      });
+
+      const data = equipes.map(e => ({
+        ...e,
+        techniciens: techMap[e.id] || []
+      }));
+
+      return {
+        total,
+        data
+      };
+
+    } catch (err) {
+      console.error('Erreur getAllEquipesPaginated:', err);
+      throw err;
+    }
+  }
+
   /** Récupère une équipe par ID */
   static async getEquipeById(id) {
     const [rows] = await db.query(`
@@ -95,9 +203,9 @@ class EquipeTechnicienService {
 
     rows.forEach(row => {
       if (row.technicienId) {
-        const tech = { 
-          id: row.technicienId, 
-          nom: row.technicienNom, 
+        const tech = {
+          id: row.technicienId,
+          nom: row.technicienNom,
           prenom: row.technicienPrenom,
           dateAffectation: row.dateAffectation
         };
@@ -110,23 +218,25 @@ class EquipeTechnicienService {
   }
 
   /** Crée une nouvelle équipe */
-  static async createEquipe({ nom, description, chefId }) {
+  static async createEquipe({ nom, description, chefId, createur_id }) {
     const [result] = await db.query(
-      'INSERT INTO equipe_technicien (nom, description, chefId) VALUES (?, ?, ?)',
-      [nom, description, chefId]
+      'INSERT INTO equipe_technicien (nom, description, chefId, createur_id) VALUES (?, ?, ?, ?)',
+      [nom, description, chefId, createur_id]
     );
-    return { id: result.insertId, nom, description, chefId };
+    return { id: result.insertId, nom, description, chefId, createur_id };
   }
 
-  /** Ajoute un technicien à une équipe avec date affectation */
-  static async addTechnicienToEquipe(equipeId, technicienId) {
+  /** Service : ajoute un technicien à une équipe avec date d'affectation */
+  static async addTechnicienToEquipe(equipeId, { technicienId, createur_id }) {
+    // Insertion avec dateAffectation automatique et createur_id
     await db.query(
-      `INSERT INTO technicien_equipe (technicienId, equipeId) 
-       VALUES (?, ?) 
-       ON DUPLICATE KEY UPDATE dateAffectation = CURRENT_TIMESTAMP`,
-      [technicienId, equipeId]
+      `INSERT INTO technicien_equipe (technicienId, equipeId, createur_id, dateAffectation) 
+     VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+     ON DUPLICATE KEY UPDATE dateAffectation = CURRENT_TIMESTAMP`,
+      [technicienId, equipeId, createur_id]
     );
-    return { technicienId, equipeId };
+
+    return { technicienId, equipeId, createur_id };
   }
 
   /** Retire un technicien d’une équipe */

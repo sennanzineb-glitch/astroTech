@@ -4,11 +4,11 @@ class Organisation {
 
     static async apiCreate(req, res) {
       try {
-        const { client_id, nom_entreprise } = req.body;
+        const { client_id, nom_entreprise, createur_id = req.user.id } = req.body;
         if (!client_id || !nom_entreprise)
             return res.status(400).json({ error: "client_id and nom_entreprise are required" });
 
-        const record = { client_id, nom_entreprise };
+        const record = { client_id, nom_entreprise, createur_id };
         const response = await OrganisationService.createRecord(record);
 
         res.status(201).json({ success: true, data: response });

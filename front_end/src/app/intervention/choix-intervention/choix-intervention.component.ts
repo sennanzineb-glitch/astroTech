@@ -1,10 +1,10 @@
 import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { SharedModule } from '../../_globale/shared/shared.module';
 
 @Component({
   selector: 'app-choix-intervention',
-  imports: [SharedModule],
+  imports: [SharedModule, RouterModule],
   templateUrl: './choix-intervention.component.html',
   styleUrl: './choix-intervention.component.css'
 })

@@ -5,12 +5,12 @@ class HabitationService {
     static async createRecord(record) {
         const query = `
             INSERT INTO habitation 
-            (reference, surface, adresse_id, secteur_id, agence_id, organisation_id, particulier_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            (reference, surface, adresse_id, secteur_id, agence_id, organisation_id, particulier_id, createur_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `;
         const [result] = await db.execute(query, [
             record.reference, record.surface, record.adresse_id, record.secteur_id,
-            record.agence_id, record.organisation_id, record.particulier_id
+            record.agence_id, record.organisation_id, record.particulier_id, record.createur_id
         ]);
         return { id: result.insertId, ...record };
     }

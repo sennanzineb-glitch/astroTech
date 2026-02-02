@@ -5,13 +5,13 @@ class ParticulierController {
   // Créer un particulier
   static async apiCreate(req, res) {
     try {
-      const { nom_complet, email, telephone, adresse_id, client_id } = req.body;
+      const { nom_complet, email, telephone, adresse_id, client_id, createur_id = req.user.id } = req.body;
 
       if (!nom_complet || !client_id) {
         return res.status(400).json({ error: "nom_complet et client_id sont requis" });
       }
 
-      const data = { nom_complet, email, telephone, adresse_id, client_id };
+      const data = { nom_complet, email, telephone, adresse_id, client_id, createur_id };
       const nouvelParticulier = await ParticulierService.apiCreate(data);
 
       res.status(201).json({ success: true, data: nouvelParticulier });

@@ -3,22 +3,35 @@
   <h3 class="page-title">Affaires</h3>
   <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
-      <li class="breadcrumb-item"><a href="#">Affaires</a></li>
+      <li class="breadcrumb-item">
+        <a [routerLink]="['/affaires/list']">Affaires</a>
+      </li>
       <li class="breadcrumb-item active">Liste des affaires</li>
     </ol>
   </nav>
 </div>
 
 <!-- ================= AJOUT AFFAIRE ================= -->
-  <button class="btn btn-gradient-success mb-3"
-          (click)="goToAddAffaire()">
-    ➕ Nouvelle affaire
-  </button>
+<button class="btn btn-gradient-success mb-3" (click)="goToAddAffaire()">
+  ➕ Nouvelle affaire
+</button>
 
 <div class="row">
 
+
+
   <!-- ================= TABLEAU ================= -->
   <div class="col-md-7 mb-3">
+    <!-- ================= RECHERCHE ================= -->
+    <div class="mb-3 position-relative">
+      <input type="text" class="form-control ps-5" placeholder="Rechercher ..."
+        [(ngModel)]="searchTerm" (keyup)="searchAffaires()" />
+      <span class="position-absolute top-50 start-0 translate-middle-y ps-3 text-muted">
+        🔍
+      </span>
+    </div>
+
+
     <table class="table table-bordered table-hover" *ngIf="affaires.length">
       <thead class="table-light">
         <tr>
@@ -28,10 +41,8 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let a of affaires"
-            (click)="selectAffaire(a)"
-            style="cursor:pointer"
-            [class.table-secondary]="selectedAffaire?.affaireId === a.affaireId">
+        <tr *ngFor="let a of affaires" (click)="selectAffaire(a)" style="cursor:pointer"
+          [class.table-secondary]="selectedAffaire?.affaireId === a.affaireId">
           <td>{{ a.reference }}</td>
           <td>{{ a.titre }}</td>
           <td>{{ a.nomClient }}</td>
@@ -40,15 +51,32 @@
     </table>
 
     <div *ngIf="!affaires.length" class="alert alert-secondary">
-      Aucune affaire trouvée
+      📂 Aucune affaire n’est disponible pour le moment. Vous pouvez en créer une nouvelle.
     </div>
+
+    <!-- ================= PAGINATION ================= -->
+    <nav *ngIf="total > limit" class="mt-3">
+      <ul class="pagination justify-content-center">
+        <li class="page-item" [class.disabled]="page === 1">
+          <button class="page-link" (click)="changePage(page - 1)">Précédent</button>
+        </li>
+
+        <li class="page-item" *ngFor="let p of totalPages" [class.active]="p === page">
+          <button class="page-link" (click)="changePage(p)">{{ p }}</button>
+        </li>
+
+        <li class="page-item" [class.disabled]="page === totalPages.length">
+          <button class="page-link" (click)="changePage(page + 1)">Suivant</button>
+        </li>
+      </ul>
+    </nav>
   </div>
+
 
   <!-- ================= DETAILS ================= -->
   <div class="col-md-5">
 
-    <div *ngIf="selectedAffaire; else noSelection"
-         class="card shadow-sm">
+    <div *ngIf="selectedAffaire; else noSelection" class="card shadow-sm">
 
       <!-- ================= HEADER – BARRE D’ACTIONS ================= -->
       <div class="card-header bg-white border-bottom">
@@ -64,19 +92,16 @@
         <!-- Barre actions -->
         <div class="d-flex justify-content-between align-items-center bg-light rounded p-2">
 
-          <button class="btn btn-success btn-sm"
-                  (click)="goToAddLinkedAffaire(selectedAffaire)">
-            ➕ Créer une affaire
+          <button class="btn btn-success btn-sm" (click)="goToAddLinkedAffaire(selectedAffaire)">
+            ➕ Créer une intervention
           </button>
 
           <div class="d-flex gap-1">
-            <button class="btn btn-outline-primary btn-sm"
-                    (click)="goToEditAffaire(selectedAffaire)">
+            <button class="btn btn-outline-primary btn-sm" (click)="goToEditAffaire(selectedAffaire)">
               ✏ Modifier
             </button>
 
-            <button class="btn btn-outline-danger btn-sm"
-                    (click)="deleteAffaire(selectedAffaire.affaireId)">
+            <button class="btn btn-outline-danger btn-sm" (click)="deleteAffaire(selectedAffaire.affaireId)">
               🗑 Supprimer
             </button>
           </div>
@@ -148,8 +173,7 @@
           <span class="badge bg-info text-dark mb-2">Fichiers</span>
 
           <div class="border rounded p-2 mb-2 d-flex align-items-center gap-2">
-            <button class="btn btn-outline-primary btn-sm"
-                    (click)="fileInput.click()">
+            <button class="btn btn-outline-primary btn-sm" (click)="fileInput.click()">
               📂 Choisir
             </button>
 
@@ -157,53 +181,39 @@
               {{ newFiles.length ? newFiles.length + ' fichier(s)' : 'Aucun fichier' }}
             </small>
 
-            <button class="btn btn-success btn-sm"
-                    [disabled]="!newFiles.length"
-                    (click)="uploadFiles()">
+            <button class="btn btn-success btn-sm" [disabled]="!newFiles.length" (click)="uploadFiles()">
               📤 Upload
             </button>
 
-            <input type="file"
-                   #fileInput
-                   class="d-none"
-                   multiple
-                   (change)="onFileSelected($event)">
+            <input type="file" #fileInput class="d-none" multiple (change)="onFileSelected($event)">
           </div>
 
           <ul *ngIf="newFiles.length" class="list-group mb-2">
-            <li *ngFor="let f of newFiles; let i = index"
-                class="list-group-item d-flex justify-content-between">
+            <li *ngFor="let f of newFiles; let i = index" class="list-group-item d-flex justify-content-between">
               {{ f.name }}
-              <button class="btn btn-sm btn-outline-danger"
-                      (click)="removeNewFile(i)">
+              <button class="btn btn-sm btn-outline-danger" (click)="removeNewFile(i)">
                 Supprimer
               </button>
             </li>
           </ul>
 
-          <ul *ngIf="selectedAffaire.fichiers?.length"
-              class="list-group">
-            <li *ngFor="let f of selectedAffaire.fichiers"
-                class="list-group-item d-flex justify-content-between">
+          <ul *ngIf="selectedAffaire.fichiers?.length" class="list-group">
+            <li *ngFor="let f of selectedAffaire.fichiers" class="list-group-item d-flex justify-content-between">
               {{ f.nom }}
 
               <div class="d-flex gap-1">
-                <a class="btn btn-sm btn-outline-primary"
-                   [href]="url_upload + '/' + f.chemin"
-                   target="_blank">
+                <a class="btn btn-sm btn-outline-primary" [href]="url_upload + '/' + f.chemin" target="_blank">
                   Voir
                 </a>
 
-                <button class="btn btn-sm btn-outline-danger"
-                        (click)="removeUploadedFile(f.id)">
+                <button class="btn btn-sm btn-outline-danger" (click)="removeUploadedFile(f.id)">
                   Supprimer
                 </button>
               </div>
             </li>
           </ul>
 
-          <p *ngIf="!selectedAffaire.fichiers?.length"
-             class="text-muted mt-2">
+          <p *ngIf="!selectedAffaire.fichiers?.length" class="text-muted mt-2">
             Aucun fichier attaché
           </p>
         </div>

@@ -20,6 +20,12 @@ export class ListComponent {
   newFiles: File[] = [];
   url_upload = environment.url_upload;
 
+  // ================= PAGINATION =================
+  page = 1;             // page actuelle
+  limit = 20;            // nombre d'éléments par page
+  total = 0;            // total d'éléments côté backend
+  searchTerm = '';      // texte de recherche
+
   constructor(
     private affaireService: AffairesService,
     private fichiersService: FichiersService,
@@ -38,17 +44,43 @@ export class ListComponent {
   }
 
   loadAffaires() {
-    this.affaireService.getAll().subscribe({
-      next: (data) => {
-        this.affaires = data;
-        this.loading = false;
-      },
-      error: (err) => {
-        console.error('Erreur lors du chargement des affaires', err);
-        this.error = 'Impossible de charger les affaires';
-        this.loading = false;
-      }
-    });
+    this.loading = true;
+
+    this.affaireService.getAllPaginated(this.page, this.limit, this.searchTerm)
+      .subscribe({
+        next: (res: any) => {
+          // ⚡ le backend doit renvoyer { data, page, limit, total }
+          this.affaires = res.data;
+          this.page = res.page;
+          this.limit = res.limit;
+          this.total = res.total;
+          this.loading = false;
+        },
+        error: err => {
+          console.error(err);
+          this.error = 'Impossible de charger les affaires';
+          this.loading = false;
+        }
+      });
+  }
+
+  searchAffaires() {
+    this.page = 1; // revenir à la page 1 à chaque recherche
+    this.loadAffaires();
+  }
+
+  // ================= PAGINATION METHODS =================
+  get totalPages(): number[] {
+    return Array.from(
+      { length: Math.ceil(this.total / this.limit) },
+      (_, i) => i + 1
+    );
+  }
+
+  changePage(p: number) {
+    if (p < 1 || p > this.totalPages.length) return;
+    this.page = p;
+    this.loadAffaires();
   }
 
   selectAffaire(affaire: any): void {
@@ -158,10 +190,10 @@ export class ListComponent {
   }
 
   goToAddLinkedAffaire(affaire: any) {
-  this.router.navigate(
-    ['/interventions/edit'],
-    { queryParams: { affaireId: affaire.affaireId } }
-  );
-}
+    this.router.navigate(
+      ['/interventions/edit'],
+      { queryParams: { affaireId: affaire.affaireId } }
+    );
+  }
 
 }

@@ -19,7 +19,8 @@ class Technicien {
                 dateEmbauche,
                 typeContrat,
                 salaire,
-                statut
+                statut,
+                createur_id = req.user.id
             } = req.body;
 
             // Validation des champs obligatoires
@@ -41,6 +42,7 @@ class Technicien {
             typeContrat = typeContrat || null;
             salaire = salaire || null;
             statut = statut || null;
+            createur_id = createur_id || null;
 
             const record = {
                 nom,
@@ -57,7 +59,8 @@ class Technicien {
                 dateEmbauche,
                 typeContrat,
                 salaire,
-                statut
+                statut,
+                createur_id
             };
 
             const response = await TechnicienService.createRecord(record);
@@ -151,7 +154,6 @@ class Technicien {
         }
     }
 
-
     static async apiGetAll(req, res) {
         try {
             const response = await TechnicienService.getAllRecords();
@@ -163,6 +165,38 @@ class Technicien {
         }
     }
 
+    // 📄 GET /techniciens
+    static async apiGetAllWithPaginated(req, res) {
+        try {
+            let { page = 1, limit = 10, search = '' } = req.query;
+            const userId = req.user?.id || null;
+
+            page = Number(page);
+            limit = Number(limit);
+
+            const result = await TechnicienService.getAllRecordsPaginated({
+                page,
+                limit,
+                search,
+                userId
+            });
+
+            res.status(200).json({
+                success: true,
+                page,
+                limit,
+                total: result.total,
+                data: result.data
+            });
+
+        } catch (err) {
+            console.error('Erreur apiGetAllWithPaginated:', err);
+            res.status(500).json({
+                success: false,
+                error: 'Internal Server Error'
+            });
+        }
+    }
 
 
     static async apiGetById(req, res) {

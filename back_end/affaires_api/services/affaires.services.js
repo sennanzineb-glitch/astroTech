@@ -5,14 +5,11 @@ class AffaireService {
    * 🔹 Créer une nouvelle affaire
    */
   static async apiCreate(data) {
+    // 🔹 Création de safeData pour garantir que toutes les valeurs existent
     const safeData = {
       reference: data.reference || '',
       titre: data.titre || '',
-      adresse_id: data.adresse_id != null ? Number(data.adresse_id) : null,
-      client_adresse_id: data.client_adresse_id != null ? Number(data.client_adresse_id) : null,
-      type_client_adresse: data.type_client_adresse || '',
       description: data.description || '',
-      clientId: data.clientId != null ? Number(data.clientId) : null,
       etatLogement: data.etatLogement || '',
       technicienId: data.technicienId != null ? Number(data.technicienId) : null,
       equipeTechnicienId: data.equipeTechnicienId != null ? Number(data.equipeTechnicienId) : null,
@@ -23,20 +20,24 @@ class AffaireService {
       dureePrevueHeures: data.dureePrevueHeures != null ? Number(data.dureePrevueHeures) : 0,
       dureePrevueMinutes: data.dureePrevueMinutes != null ? Number(data.dureePrevueMinutes) : 0,
       memo: data.memo || '',
-      memoPiecesJointes: data.memoPiecesJointes || ''
+      memoPiecesJointes: data.memoPiecesJointes || '',
+      client_id: data.client_id != null ? Number(data.client_id) : null,
+      zone_intervention_client_id: data.zone_intervention_client_id != null ? Number(data.zone_intervention_client_id) : null,
+      type_client_zone_intervention: data.type_client_zone_intervention || '',
+      createur_id: data.createur_id != null ? Number(data.createur_id) : null
     };
 
     const connection = await pool.getConnection();
     try {
       await connection.beginTransaction();
 
-      // 🔹 1. Insertion dans affaire
-      const insertAffaireQuery = `
+      // 🔹 Insertion dans la table affaire
+      const sql = `
       INSERT INTO affaire (
-        reference, titre, description, clientId,
+        reference, titre, description,
         etatLogement, technicienId, equipeTechnicienId,
         dateDebut, dateFin, motsCles, dureePrevueHeures, dureePrevueMinutes,
-        memo, memoPiecesJointes, adresse_id, client_adresse_id, type_client_adresse
+        memo, memoPiecesJointes, client_id, zone_intervention_client_id, type_client_zone_intervention, createur_id
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
@@ -44,7 +45,6 @@ class AffaireService {
         safeData.reference,
         safeData.titre,
         safeData.description,
-        safeData.clientId,
         safeData.etatLogement,
         safeData.technicienId,
         safeData.equipeTechnicienId,
@@ -55,39 +55,37 @@ class AffaireService {
         safeData.dureePrevueMinutes,
         safeData.memo,
         safeData.memoPiecesJointes,
-        safeData.adresse_id,
-        safeData.client_adresse_id,
-        safeData.type_client_adresse
+        safeData.client_id,
+        safeData.zone_intervention_client_id,
+        safeData.type_client_zone_intervention,
+        safeData.createur_id
       ];
 
-      const [result] = await connection.query(insertAffaireQuery, values);
+      const [result] = await connection.execute(sql, values);
       const affaireId = result.insertId;
 
-      // 🔹 2. Insertion dans affaire_referent
-      if (safeData.referents && safeData.referents.length > 0) {
+      // 🔹 Insertion des référents
+      if (safeData.referents.length > 0) {
         const valuesRef = safeData.referents.map(refId => [affaireId, refId]);
-        console.log("Valeurs à insérer dans affaire_referent:", valuesRef);
-
         await connection.query(
           "INSERT INTO affaire_referent (idAffaire, idReferent) VALUES ?",
           [valuesRef]
         );
-
-        console.log("✅ Référents associés:", safeData.referents);
-      } else {
-        console.warn("⚠️ Aucun référent associé à cette affaire.");
       }
 
       await connection.commit();
       return { id: affaireId, ...safeData };
+
     } catch (error) {
       await connection.rollback();
       console.error("❌ Erreur création affaire:", error);
       throw error;
+
     } finally {
       connection.release();
     }
   }
+
 
 
   /**
@@ -117,7 +115,7 @@ class AffaireService {
         tc.nom AS chefEquipeNom,
         tc.prenom AS chefEquipePrenom
       FROM affaire a
-      LEFT JOIN client c ON a.clientId = c.id
+      LEFT JOIN client c ON a.client_id = c.id
       LEFT JOIN particulier p ON p.client_id = c.id
       LEFT JOIN agence ag ON ag.client_id = c.id
       LEFT JOIN organisation o ON o.client_id = c.id
@@ -172,6 +170,127 @@ class AffaireService {
     }
   }
 
+static async apiGetAllPaginated({ page = 1, limit = 10, search = '', userId }) {
+  try {
+    if (!userId) throw new Error('userId manquant');
+
+    page = Number(page);
+    limit = Number(limit);
+
+    if (!Number.isInteger(page) || page < 1) page = 1;
+    if (!Number.isInteger(limit) || limit < 1) limit = 10;
+
+    const offset = (page - 1) * limit;
+
+    /* ===================== WHERE ===================== */
+    let whereClause = `WHERE a.createur_id = ?`;
+    const params = [userId];
+
+    if (search && search.trim() !== '') {
+      whereClause += `
+        AND (
+          a.reference LIKE ?
+          OR a.titre LIKE ?
+          OR p.nom_complet LIKE ?
+          OR ag.nom_agence LIKE ?
+          OR o.nom_entreprise LIKE ?
+        )
+      `;
+      const like = `%${search}%`;
+      params.push(like, like, like, like, like);
+    }
+
+    /* ===================== QUERY PRINCIPALE ===================== */
+    const sql = `
+      SELECT SQL_CALC_FOUND_ROWS DISTINCT
+        a.id AS affaireId,
+        a.reference,
+        a.titre,
+        a.dateDebut,
+        a.dateFin,
+        a.etatLogement,
+        a.dureePrevueHeures,
+        a.dureePrevueMinutes,
+        a.memo,
+
+        COALESCE(
+          p.nom_complet,
+          ag.nom_agence,
+          o.nom_entreprise,
+          'Client inconnu'
+        ) AS nomClient,
+
+        e.id AS equipeId,
+        e.nom AS equipeNom,
+        e.description AS equipeDescription,
+        tc.id AS chefEquipeId,
+        tc.nom AS chefEquipeNom,
+        tc.prenom AS chefEquipePrenom
+
+      FROM affaire a
+      LEFT JOIN client c ON a.client_id = c.id
+      LEFT JOIN particulier p ON p.client_id = c.id
+      LEFT JOIN agence ag ON ag.client_id = c.id
+      LEFT JOIN organisation o ON o.client_id = c.id
+      LEFT JOIN equipe_technicien e ON a.equipeTechnicienId = e.id
+      LEFT JOIN technicien tc ON e.chefId = tc.id
+
+      ${whereClause}
+      ORDER BY a.id DESC
+      LIMIT ? OFFSET ?
+    `;
+
+    params.push(limit, offset);
+
+    const [rows] = await pool.query(sql, params);
+
+    /* ===================== TOTAL ===================== */
+    const [[{ total }]] = await pool.query(
+      `SELECT FOUND_ROWS() AS total`
+    );
+
+    /* ===================== FICHIERS ===================== */
+    const affaireIds = rows.map(r => r.affaireId);
+
+    let fichiersMap = {};
+    if (affaireIds.length) {
+      const [fichiers] = await pool.query(
+        `SELECT id, nom, chemin, idAffaire
+         FROM fichier
+         WHERE idAffaire IN (?)`,
+        [affaireIds]
+      );
+
+      fichiers.forEach(f => {
+        fichiersMap[f.idAffaire] = fichiersMap[f.idAffaire] || [];
+        fichiersMap[f.idAffaire].push({
+          id: f.id,
+          nom: f.nom,
+          chemin: f.chemin
+        });
+      });
+    }
+
+    /* ===================== ATTACHER LES FICHIERS ===================== */
+    rows.forEach(affaire => {
+      affaire.fichiers = fichiersMap[affaire.affaireId] || [];
+    });
+
+    return {
+      total,
+      page,
+      limit,
+      data: rows
+    };
+
+  } catch (err) {
+    console.error('Erreur apiGetAllPaginated:', err);
+    throw err;
+  }
+}
+
+
+
   /**
    * 🔹 Modifier une affaire
    */
@@ -182,7 +301,7 @@ class AffaireService {
     try {
       await connection.beginTransaction();
 
-      // 🔹 Helper : convertir '' en NULL (important pour MySQL DATE)
+      // 🔹 Helper : '' ou undefined → NULL (important pour MySQL DATE)
       const cleanDate = (value) =>
         value && value !== '' ? value : null;
 
@@ -193,7 +312,6 @@ class AffaireService {
         reference = ?, 
         titre = ?, 
         description = ?, 
-        clientId = ?, 
         etatLogement = ?, 
         technicienId = ?, 
         equipeTechnicienId = ?, 
@@ -204,48 +322,46 @@ class AffaireService {
         dureePrevueMinutes = ?, 
         memo = ?, 
         memoPiecesJointes = ?, 
-        adresse_id = ?, 
-        client_adresse_id = ?,
-        type_client_adresse = ?
+        client_id = ?, 
+        zone_intervention_client_id = ?,
+        type_client_zone_intervention = ?
       WHERE id = ?
     `;
 
       const values = [
-        record.reference ?? null,
-        record.titre ?? null,
-        record.description ?? null,
-        record.clientId ?? null,
-        record.etatLogement ?? null,
-        record.technicienId ?? null,
-        record.equipeTechnicienId ?? null,
-
-        // ✅ correction dates
-        cleanDate(record.dateDebut),
-        cleanDate(record.dateFin),
-
-        record.motsCles ?? null,
-        record.dureePrevueHeures ?? null,
-        record.dureePrevueMinutes ?? null,
-        record.memo ?? null,
-        record.memoPiecesJointes ?? null,
-        record.adresse_id ?? null,
-        record.client_adresse_id ?? null,
-        record.type_client_adresse ?? null,
-        record.id
+        record.reference ?? null,                        // 1
+        record.titre ?? null,                            // 2
+        record.description ?? null,                      // 3
+        record.etatLogement ?? null,                     // 4
+        record.technicienId ?? null,                     // 5
+        record.equipeTechnicienId ?? null,               // 6
+        cleanDate(record.dateDebut),                     // 7
+        cleanDate(record.dateFin),                       // 8
+        record.motsCles ?? [],                           // 9
+        record.dureePrevueHeures ?? null,                // 10
+        record.dureePrevueMinutes ?? null,               // 11
+        record.memo ?? null,                             // 12
+        record.memoPiecesJointes ?? null,  // 13
+        record.client_id ?? null,                        // 14
+        record.zone_intervention_client_id ?? null,      // 15
+        record.type_client_zone_intervention ?? null,    // 16
+        record.id                                        // 17
       ];
+
+      console.log("✅ UPDATE affaire VALUES COUNT =", values.length);
 
       await connection.execute(query, values);
 
       // 🔹 2. Mise à jour des référents
       if (Array.isArray(record.referents)) {
 
-        // Supprimer les anciens référents
+        // Supprimer anciens référents
         await connection.execute(
           `DELETE FROM affaire_referent WHERE idAffaire = ?`,
           [record.id]
         );
 
-        // Réinsérer les nouveaux référents
+        // Insérer nouveaux référents
         if (record.referents.length > 0) {
           const valuesRef = record.referents.map(refId => [
             record.id,
@@ -260,16 +376,18 @@ class AffaireService {
       }
 
       await connection.commit();
-      return { success: true };
+      return { success: true, message: "Affaire mise à jour avec succès" };
 
     } catch (error) {
       await connection.rollback();
       console.error('❌ Erreur updateAffaire:', error);
       throw error;
+
     } finally {
       connection.release();
     }
   }
+
 
 
   /**
@@ -285,7 +403,7 @@ class AffaireService {
     try {
       const [rows] = await pool.query(
         `SELECT 
-        a.id, a.reference, a.titre, a.description, a.clientId, a.adresse_id, a.client_adresse_id, a.type_client_adresse,
+        a.id, a.reference, a.titre, a.description, a.client_id, a.zone_intervention_client_id, a.type_client_zone_intervention,
         a.etatLogement, a.technicienId, a.equipeTechnicienId, a.dateDebut, a.dateFin,
         a.dureePrevueHeures, a.dureePrevueMinutes, a.motsCles, a.memo, a.memoPiecesJointes
       FROM affaire a

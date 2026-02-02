@@ -2,8 +2,8 @@ const db = require("../db");
 
 class OrganisationService {
   static async createRecord(record) {
-    const query = `INSERT INTO organisation (client_id, nom_entreprise) VALUES (?, ?)`;
-    const [result] = await db.execute(query, [record.client_id, record.nom_entreprise]);
+    const query = `INSERT INTO organisation (client_id, nom_entreprise, createur_id) VALUES (?, ?, ?)`;
+    const [result] = await db.execute(query, [record.client_id, record.nom_entreprise, record.createur_id]);
     return { id: result.insertId, ...record };
   }
 

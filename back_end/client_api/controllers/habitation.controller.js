@@ -4,11 +4,11 @@ class HabitationController {
 
     static async apiCreate(req, res) {
         try {
-            const { reference, surface, adresse_id, secteur_id, agence_id, organisation_id, particulier_id } = req.body;
+            const { reference, surface, adresse_id, secteur_id, agence_id, organisation_id, particulier_id, createur_id = req.user.id } = req.body;
             if (!reference)
                 return res.status(400).json({ error: "La référence de l'habitation est requise" });
 
-            const record = { reference, surface, adresse_id, secteur_id, agence_id, organisation_id, particulier_id };
+            const record = { reference, surface, adresse_id, secteur_id, agence_id, organisation_id, particulier_id, createur_id };
             const response = await HabitationService.createRecord(record);
 
             res.status(201).json({ success: true, data: response });

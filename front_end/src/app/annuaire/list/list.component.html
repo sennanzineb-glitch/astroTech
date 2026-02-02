@@ -3,7 +3,9 @@
   <h3 class="page-title">Annuaire</h3>
   <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
-      <li class="breadcrumb-item"><a href="#">Annuaire</a></li>
+      <li class="breadcrumb-item">
+        <a [routerLink]="['/clients/list']">Annuaire</a>
+      </li>
       <li class="breadcrumb-item active">Liste des annuaires</li>
     </ol>
   </nav>
@@ -13,6 +15,15 @@
 <button class="btn btn-gradient-success mb-3" data-bs-toggle="modal" data-bs-target="#saveModal">
   ➕ Nouveau client
 </button>
+
+<!-- ================= RECHERCHE ================= -->
+<div class="mb-3 position-relative w-50">
+  <input type="text" class="form-control ps-5" placeholder="Rechercher ..." [(ngModel)]="searchTerm"
+    (keyup)="searchClients()" />
+  <span class="position-absolute top-50 start-0 translate-middle-y ps-3 text-muted">
+    🔍
+  </span>
+</div>
 
 <!-- *** Liste des clients *** -->
 <div class="row g-3">
@@ -84,11 +95,31 @@
 
   <div *ngIf="clients.length === 0" class="col-12">
     <div class="alert alert-secondary text-center mt-3">
-      Aucun client trouvé.
+      😕 Aucun client trouvé pour le moment. Vous pouvez en créer un nouveau.
     </div>
   </div>
 </div>
 
+
+<!-- ================= PAGINATION ================= -->
+<nav *ngIf="totalPages > 1" aria-label="Page navigation example">
+  <ul class="pagination justify-content-center mt-3">
+    <li class="page-item" [class.disabled]="currentPage === 1">
+      <button class="page-link" (click)="changePage(currentPage - 1)">Précédent</button>
+    </li>
+
+    <li class="page-item" *ngFor="let page of [].constructor(totalPages); let idx = index"
+      [class.active]="currentPage === idx + 1">
+      <button class="page-link" (click)="changePage(idx + 1)">{{ idx + 1 }}</button>
+    </li>
+
+    <li class="page-item" [class.disabled]="currentPage === totalPages">
+      <button class="page-link" (click)="changePage(currentPage + 1)">Suivant</button>
+    </li>
+  </ul>
+</nav>
+
+
 <!-- *** Modal d'ajout / modification *** -->
-<app-modal-save #modalSave (clientAdded)="getAllClients()" (clientUpdated)="getAllClients()">
+<app-modal-save #modalSave (clientAdded)="loadClients()" (clientUpdated)="loadClients()">
 </app-modal-save>

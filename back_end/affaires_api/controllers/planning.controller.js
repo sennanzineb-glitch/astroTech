@@ -15,14 +15,34 @@ class PlanningController {
   }
 
   // 📜 Récupérer toutes les planifications
-  static async getAll(req, res) {
-    try {
-      const data = await PlanningService.getAll();
-      res.json(data);
-    } catch (err) {
-      res.status(500).json({ success: false, message: err.message });
+ // controllers/planning.controller.js
+static async getAll(req, res) {
+  try {
+    const userId = req.user?.id; // injecté par authenticateToken
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Utilisateur non authentifié'
+      });
     }
+
+    const data = await PlanningService.getAllByUser(userId);
+
+    res.json({
+      success: true,
+      data
+    });
+
+  } catch (err) {
+    console.error('Erreur getAll planning:', err);
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
   }
+}
+
 
   // ✏️ Modifier une planification
   static async updatePlanning(req, res) {

@@ -20,6 +20,15 @@ export class ListComponent {
   newFiles: File[] = [];
   url_upload = environment.url_upload;
 
+   // Pagination
+  currentPage: number = 1;
+  pageSize: number = 4;
+  totalItems: number = 0;
+  totalPages: number = 1;
+
+  // Recherche
+  searchTerm: string = '';
+
   constructor(
     private referentsService: ReferentsService,
     private fichiersService: FichiersService,
@@ -37,19 +46,28 @@ export class ListComponent {
       : 'Aucun fichier sélectionné';
   }
 
-  // 🔄 Charger tous les référents
-  loadReferents() {
-    this.referentsService.getAll().subscribe({
-      next: data => {
-        this.referents = data;
-        this.loading = false;
+  // 🔄 Charger les référents avec pagination et filtre
+  loadReferents(page: number = 1, search: string = '') {
+    this.referentsService.apiGetAllWithPaginated(page, this.pageSize, search).subscribe(
+      (res: any) => {
+        this.referents = res.data || [];
+        this.totalItems = res.total || 0;
+        this.totalPages = Math.ceil(this.totalItems / this.pageSize);
+        this.currentPage = page;
       },
-      error: err => {
-        console.error('Erreur chargement référents', err);
-        this.error = 'Impossible de charger les référents';
-        this.loading = false;
-      }
-    });
+      (err) => console.error('Erreur chargement référents', err)
+    );
+  }
+
+  // 🔍 Recherche
+  searchReferents() {
+    this.loadReferents(1, this.searchTerm);
+  }
+
+  // 🔁 Changer de page
+  changePage(page: number) {
+    if (page < 1 || page > this.totalPages) return;
+    this.loadReferents(page, this.searchTerm);
   }
 
   // 🗑️ Supprimer un référent

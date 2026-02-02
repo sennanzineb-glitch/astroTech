@@ -6,15 +6,16 @@ class ParticulierService {
   static async apiCreate(data) {
     const query = `
       INSERT INTO particulier 
-        (nom_complet, email, telephone, adresse_id, client_id) 
-      VALUES (?, ?, ?, ?, ?)
+        (nom_complet, email, telephone, adresse_id, client_id, createur_id) 
+      VALUES (?, ?, ?, ?, ?, ?)
     `;
     const values = [
-      data.nom_complet,
+      data.nom_complet ?? null,
       data.email ?? null,
       data.telephone ?? null,
       data.adresse_id ?? null,
-      data.client_id
+      data.client_id ?? null,
+      data.createur_id ?? null
     ];
     const [result] = await db.execute(query, values);
     return { id: result.insertId, ...data };

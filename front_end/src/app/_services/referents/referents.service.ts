@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 @Injectable({
@@ -7,25 +8,43 @@ import { environment } from '../../../environments/environment';
 })
 export class ReferentsService {
 
+  private baseUrl = environment.url_referent + '/referents';
+
   constructor(private http: HttpClient) { }
 
-    create(record: any) {
-      return this.http.post<any>(environment.url_referent + '/referents/', record)
-    }
-  
-    update(record: any, id: any) {
-      return this.http.put(environment.url_referent + '/referents/' + id, record, id)
-    }
-  
-    getAll() {
-      return this.http.get(environment.url_referent + '/referents/')
-    }
-  
-    getItemById(id: number) {
-      return this.http.get<any>(environment.url_referent + '/referents/' + id)
-    }
-  
-    delete(id: any) {
-      return this.http.delete(environment.url_referent + '/referents/' + id)
-    }
+  // Créer un nouveau référent
+  create(record: any): Observable<any> {
+    return this.http.post<any>(this.baseUrl + '/', record);
+  }
+
+  // Mettre à jour un référent existant
+  update(record: any, id: number): Observable<any> {
+    return this.http.put<any>(`${this.baseUrl}/${id}`, record);
+  }
+
+  // Récupérer tous les référents (non paginés)
+  getAll(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/all`);
+  }
+
+  // Récupérer les référents avec pagination et recherche
+  apiGetAllWithPaginated(page: number = 1, limit: number = 10, search: string = ''): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}`, {
+      params: {
+        page: page.toString(),
+        limit: limit.toString(),
+        search
+      }
+    });
+  }
+
+  // Récupérer un référent par ID
+  getItemById(id: number): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/${id}`);
+  }
+
+  // Supprimer un référent
+  delete(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.baseUrl}/${id}`);
+  }
 }

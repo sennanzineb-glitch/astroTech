@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
@@ -10,7 +10,7 @@ export class InterventionService {
 
   private baseUrl = environment.url_affaire + '/affaires/interventions';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   /** Ajouter une intervention (FormData autorisé) */
   create(record: any): Observable<any> {
@@ -24,7 +24,17 @@ export class InterventionService {
 
   /** Récupérer toutes les interventions */
   getAll(): Observable<any> {
-    return this.http.get(this.baseUrl);
+    return this.http.get(`${this.baseUrl}/all`);
+  }
+
+  getAllPaginated(page: number, limit: number, search: string) {
+    return this.http.get<any[]>(`${this.baseUrl}`, {
+      params: {
+        page: page.toString(),
+        limit: limit.toString(),
+        search
+      }
+    });
   }
 
   /** Récupérer une intervention par ID */
@@ -57,4 +67,52 @@ export class InterventionService {
       planning
     );
   }
+
+  // ✅ Affecter une équipe à une intervention
+  assignEquipe(interventionId: number, equipeId: number) {
+    return this.http.put(`${this.baseUrl}/${interventionId}/assign-equipe`, {
+      equipe_id: equipeId
+    });
+  }
+
+  // Supprimer une équipe par ID
+  deleteEquipe(id: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/equipe/${id}`);
+  }
+
+  updateType(interventionId: number, type: string): Observable<any> {
+    return this.http.put(
+      `${this.baseUrl}/${interventionId}/type`,
+      { type }
+    );
+  }
+
+  getByTypePaginated(
+    typeId: number,
+    page: number,
+    limit: number,
+    etat: string = ''   // 🔹 correspond à req.query.etat
+  ) {
+    return this.http.get<{
+      success: boolean;
+      data: any[];
+      pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+      };
+    }>(`${this.baseUrl}/by-type/${typeId}`, {
+      params: {
+        page: page.toString(),
+        limit: limit.toString(),
+        etat   // 🔹 le backend utilisera req.query.etat
+      }
+    });
+  }
+
+  getInterventionTypes() {
+    return this.http.get(`${this.baseUrl}/type/all`);
+  }
+
 }

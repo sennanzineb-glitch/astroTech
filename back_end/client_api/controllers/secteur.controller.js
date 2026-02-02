@@ -4,11 +4,11 @@ class SecteurController {
 
     static async apiCreate(req, res) {
         try {
-            const { reference, nom, description, adresse_id, agence_id, organisation_id, parent_id } = req.body;
+            const { reference, nom, description, adresse_id, agence_id, organisation_id, parent_id, createur_id = req.user.id } = req.body;
             if (!reference)
                 return res.status(400).json({ error: "La référence du secteur est requise" });
 
-            const record = { reference, nom, description, adresse_id, agence_id, organisation_id, parent_id };
+            const record = { reference, nom, description, adresse_id, agence_id, organisation_id, parent_id, createur_id };
             const response = await SecteurService.createRecord(record);
 
             res.status(201).json({ success: true, data: response });

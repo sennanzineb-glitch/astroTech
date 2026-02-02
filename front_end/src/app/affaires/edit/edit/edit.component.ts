@@ -30,6 +30,7 @@ export class EditComponent {
   loading = false;
   isEdit = false;
   affaireId!: number;
+  formReady = false; // pour afficher les enfants après patch
 
   constructor(
     public formService: MultiStepFormService,
@@ -48,6 +49,8 @@ export class EditComponent {
       this.affaireId = Number(idParam);
       await this.loadAffaireData();
     }
+
+    this.formReady = true;
   }
 
   nextStep() { if (this.step < 3) this.step++; }
@@ -65,10 +68,9 @@ export class EditComponent {
       this.formService.formStep1.patchValue({
         reference: a.reference || null,
         titre: a.titre || null,
-        clientId: a.clientId || null,
-        adresse_id: Number(a.adresse_id) || null,
-        type_client_adresse: a.type_client_adresse || null,
-        client_adresse_id: Number(a.client_adresse_id) || null,
+        client_id: a.client_id || null,
+        zone_intervention_client_id: Number(a.zone_intervention_client_id) || null,
+        type_client_zone_intervention: a.type_client_zone_intervention || null,
         description: a.description || null
       });
 
@@ -100,29 +102,30 @@ export class EditComponent {
   async submit() {
     const data = this.formService.getFormData();
     const all = { ...data.step1, ...data.step2, ...data.step3 };
-
+    
     const affaireData = {
       reference: all.reference,
       titre: all.titre,
-      clientId: Number(all.clientId),
-      adresse_id: Number(all.adresse_id),
-      client_adresse_id: Number(all.client_adresse_id),
-      type_client_adresse: all.type_client_adresse,
+      client_id: Number(all.client_id),
+      zone_intervention_client_id: Number(all.zone_intervention_client_id),
+      type_client_zone_intervention: all.type_client_zone_intervention,
       description: all.description,
 
       etatLogement: all.etatLogement,
       technicienId: Number(all.technicienId),
-      equipeTechnicienId: Number(all.equipeId),
-      referents: all.referentId,
+      equipeTechnicienId: Number(all.equipeTechnicienId),
+      referents: Array.isArray(all.referentId) ? all.referentId.map(Number) : [],
 
-      dateDebut: all.dateDebut,
-      dateFin: all.dateFin,
-      motsCles: Array.isArray(all.motsCles) ? all.motsCles.join(',') : '',
-      dureePrevueHeures: all.dureePrevueHeures,
-      dureePrevueMinutes: all.dureePrevueMinutes,
-      memo: all.memo,
+      dateDebut: all.dateDebut || null,
+      dateFin: all.dateFin || null,
 
-      memoPiecesJointes: all.memoPiecesJointes
+      // 🔹 motsCles comme string simple (séparée par des virgules)
+      motsCles: Array.isArray(all.motsCles) ? all.motsCles.join(',') : (all.motsCles || ''),
+
+      dureePrevueHeures: all.dureePrevueHeures != null ? Number(all.dureePrevueHeures) : 0,
+      dureePrevueMinutes: all.dureePrevueMinutes != null ? Number(all.dureePrevueMinutes) : 0,
+      memo: all.memo || '',
+      memoPiecesJointes: all.memoPiecesJointes || ''
     };
 
     this.loading = true;

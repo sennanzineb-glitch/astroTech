@@ -5,13 +5,20 @@ class EquipeTechnicien {
   // 🟩 Créer une nouvelle équipe
   static async apiCreate(req, res) {
     try {
-      const { nom, description, chefId } = req.body;
+      const {
+        nom,
+        description,
+        chefId,
+        createur_id = req.user.id
+      } = req.body;
 
       if (!nom) {
         return res.status(400).json({ error: "Le nom de l'équipe est requis" });
       }
 
-      const record = { nom, description, chefId };
+      const record = { nom, description, chefId, createur_id };
+      console.log("***", record);
+
       const response = await EquipeTechnicienService.createEquipe(record);
 
       res.status(201).json({ success: true, data: response });
@@ -64,6 +71,38 @@ class EquipeTechnicien {
     }
   }
 
+  static async apiGetAllWithPaginated(req, res) {
+    try {
+      let { page = 1, limit = 10, search = '' } = req.query;
+      const userId = req.user?.id || null;
+
+      page = Number(page);
+      limit = Number(limit);
+
+      const result = await EquipeTechnicienService.getAllEquipesPaginated({
+        page,
+        limit,
+        search,
+        userId
+      });
+
+      res.status(200).json({
+        success: true,
+        page,
+        limit,
+        total: result.total,
+        data: result.data
+      });
+
+    } catch (error) {
+      console.error("Erreur apiGetAllWithPaginated Equipes:", error);
+      res.status(500).json({
+        success: false,
+        error: "Erreur interne du serveur"
+      });
+    }
+  }
+
   // 🟪 Obtenir une équipe par ID
   static async apiGetById(req, res) {
     try {
@@ -82,14 +121,20 @@ class EquipeTechnicien {
   // 🟧 Ajouter un technicien à une équipe
   static async apiAddTechnicien(req, res) {
     try {
-      const { id } = req.params;
+      const { id } = req.params; // id de l'équipe
       const { technicienId } = req.body;
 
       if (!technicienId) {
         return res.status(400).json({ error: "L'ID du technicien est requis" });
       }
 
-      const result = await EquipeTechnicienService.addTechnicienToEquipe(id, technicienId);
+      // Récupérer l'ID de l'utilisateur connecté depuis req.user
+      const createur_id = req.user?.id;
+
+      const record = { technicienId, createur_id };
+
+      // Appel au service
+      const result = await EquipeTechnicienService.addTechnicienToEquipe(id, record);
       res.json({ success: true, data: result });
     } catch (error) {
       console.error(error.message);

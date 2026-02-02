@@ -42,7 +42,7 @@ export class LoginComponent {
         }
 
         // Redirection après connexion
-        this.router.navigate(['/clients/list']);
+        this.router.navigate(['/dashboard']);
       },
       error: (err) => {
         this.loading = false;

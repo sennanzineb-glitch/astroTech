@@ -82,6 +82,8 @@ export class ModalSaveComponent {
   clients: any = [];
 
   filteredOptions(type: string) {
+    console.log("*** type parent ***", type);
+    
     let filtered: any[] = [];
     switch (type) {
       case 'agence': filtered = this.options.filter(opt => ['agence', 'secteur', 'habitation'].includes(opt.value)); break;
@@ -500,6 +502,7 @@ export class ModalSaveComponent {
   /** Modifier un client existant */
   /** Editer un client */
   editClient(client: any) {
+    
     this.isEditMode = true;
     this.isFirstVisible = true;
     this.parentClient = { type: client.type_parent, id: client.parent_id };
@@ -576,6 +579,9 @@ export class ModalSaveComponent {
           particulier_id: client.particulier_id || client.habitation?.particulier_id || null
         };
         this.singleAdresse = client.adresse ? { ...client.adresse } : this.getEmptyAdresse();
+
+        console.log(this.singleHabitation);
+        
         break;
 
       default:
@@ -605,11 +611,7 @@ export class ModalSaveComponent {
 
   /** Ajouter un client enfant (secteur ou habitation) */
   addChilderClient(type: string, id: number) {
-    console.log("Bonjour tous le monde !");
-    
     this.parentClient = { type: type, id: id };
-    console.log('***',this.parentClient);
-    
     this.filteredOptions(type);
     this.singleClient = { id: null, numero: null, compte: null, parent_id: this.singleClient.id };
     this.openModal();
@@ -637,10 +639,13 @@ export class ModalSaveComponent {
   // Charger les clients enfants
   getAllClientsEnfantsByParent(id: number) {
     this.clientsService.getClientsByParentWithDetails(id).subscribe((result: any) => {
-      this.clients = (result as any[]).map(client => ({
-        ...client,
-        contacts: client.contacts || []
-      }));
+      // this.clients = (result.data as any[]).map(client => ({
+      //   ...client,
+      //   contacts: client.contacts || []
+      // }));
+
+      this.clients = result.data;
+      
     });
   }
 

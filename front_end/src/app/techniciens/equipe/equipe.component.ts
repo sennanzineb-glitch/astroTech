@@ -17,12 +17,17 @@ export class EquipeComponent implements OnInit {
   equipes: any = [];
   loading = false;
   message = '';
+  currentPage = 1;
+  limit = 2;
+  total = 0;
+  totalPages = 0;
+  searchTerm = '';
 
   constructor(
     private fb: FormBuilder,
     private equipeService: EquipeTechniciensService,
     private technicienService: TechnicienService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.initForm();
@@ -39,13 +44,23 @@ export class EquipeComponent implements OnInit {
   }
 
   loadEquipes() {
-    this.equipeService.getAllEquipes().subscribe((res:any) =>{
-      this.equipes = res.data;
-    })
+    this.equipeService
+      .apiGetAllWithPaginated(this.currentPage, this.limit, this.searchTerm)
+      .subscribe((res: any) => {
+        this.equipes = res.data;
+        this.total = res.total;
+        this.totalPages = Math.ceil(this.total / this.limit);
+      });
+  }
+
+  changePage(page: number) {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+    this.loadEquipes();
   }
 
   loadTechniciens() {
-    this.technicienService.getAll().subscribe(res =>{
+    this.technicienService.getAll().subscribe(res => {
       this.techniciens = res;
     })
   }
@@ -55,7 +70,7 @@ export class EquipeComponent implements OnInit {
       // Show a warning message
       alert("⚠️ Veuillez remplir tous les champs obligatoires avant de soumettre le formulaire !");
       return;
-    } 
+    }
 
     this.loading = true;
     const formValue = this.formEquipe.value;
@@ -93,25 +108,21 @@ export class EquipeComponent implements OnInit {
 
 
   deleteEquipe(id: number) {
-  const confirmed = window.confirm('Voulez-vous vraiment supprimer cette équipe de techniciens ?');
+    const confirmed = window.confirm('Voulez-vous vraiment supprimer cette équipe de techniciens ?');
 
-  if (confirmed) {
-    this.equipeService.delete(id).subscribe({
-      next: () => {
-        this.loadEquipes(); // Recharge la liste des équipes après suppression
-        console.log('Équipe supprimée avec succès !');
-        alert('Équipe supprimée avec succès !'); // Optionnel
-      },
-      error: (err) => {
-        console.error('Erreur lors de la suppression :', err);
-        alert('Impossible de supprimer cette équipe.');
-      }
-    });
+    if (confirmed) {
+      this.equipeService.deleteEquipe(id).subscribe({
+        next: () => {
+          this.loadEquipes(); // Recharge la liste des équipes après suppression
+          console.log('Équipe supprimée avec succès !');
+          alert('Équipe supprimée avec succès !'); // Optionnel
+        },
+        error: (err) => {
+          console.error('Erreur lors de la suppression :', err);
+          alert('Impossible de supprimer cette équipe.');
+        }
+      });
+    }
   }
-}
-
-
-
-
 
 }

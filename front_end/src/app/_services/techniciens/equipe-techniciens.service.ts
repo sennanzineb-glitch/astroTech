@@ -1,53 +1,68 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-
 @Injectable({
   providedIn: 'root'
 })
 export class EquipeTechniciensService {
 
-    constructor(private http: HttpClient) {}
+  private baseUrl = environment.url_technicien + '/techniciens/equipe';
 
-    //return this.http.post<any>(environment.url_technicien + '/techniciens/', record)
+  constructor(private http: HttpClient) { }
 
   // 🟩 Créer une équipe
-  createEquipe(equipeData: any) {
-    return this.http.post(environment.url_technicien + '/techniciens/equipe', equipeData);
+  createEquipe(data: any) {
+    return this.http.post(this.baseUrl, data);
   }
 
   // 🟨 Mettre à jour une équipe
-  updateEquipe(id: number, equipeData: any){
-    return this.http.put(environment.url_technicien +'/techniciens/equipe/'+id, equipeData);
+  updateEquipe(id: number, data: any) {
+    return this.http.put(`${this.baseUrl}/${id}`, data);
   }
 
   // 🟥 Supprimer une équipe
-  delete(id: number){
-    return this.http.delete(environment.url_technicien +'/techniciens/equipe/'+id);
+  deleteEquipe(id: number) {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 
   // 🟦 Récupérer toutes les équipes
   getAllEquipes() {
-    return this.http.get<any[]>(environment.url_technicien + '/techniciens/equipe');
+    return this.http.get(`${this.baseUrl}/all`);
+  }
+
+  apiGetAllWithPaginated(page: number = 1, limit: number = 10, search: string = '') {
+    return this.http.get<any[]>(`${this.baseUrl}`, {
+      params: {
+        page: page.toString(),
+        limit: limit.toString(),
+        search
+      }
+    });
   }
 
   // 🟪 Récupérer une équipe par ID
-  getEquipeById(id: number){
-    return this.http.get(environment.url_technicien +'/techniciens/equipe/'+id);
+  getEquipeById(id: number) {
+    return this.http.get(`${this.baseUrl}/${id}`);
   }
 
   // 🟧 Ajouter un technicien à une équipe
-  addTechnicienToEquipe(id: number, technicienId: number){
-    return this.http.put(environment.url_technicien +'/techniciens/equipe/'+id+'/ajouter-technicien', { technicienId });
+  addTechnicienToEquipe(equipeId: number, technicienId: number) {
+    return this.http.put(`${this.baseUrl}/${equipeId}/ajouter-technicien`, {
+      technicienId
+    });
   }
 
   // 🟫 Retirer un technicien d’une équipe
-  removeTechnicienFromEquipe(technicienId: number){
-    return this.http.put(environment.url_technicien +'/techniciens/equipe/retirer-technicien/'+technicienId, {});
+  removeTechnicienFromEquipe(technicienId: number) {
+    return this.http.put(`${this.baseUrl}/retirer-technicien/${technicienId}`, {});
   }
 
   // ⚪ Changer le chef d’équipe
-  changeChefEquipe(id: number, chefId: number){
-    return this.http.put(environment.url_technicien +'/techniciens/equipe/'+id+'/change-chef', { chefId });
+  changeChefEquipe(equipeId: number, chefId: number) {
+    return this.http.put(`${this.baseUrl}/${equipeId}/change-chef`, {
+      chefId
+    });
   }
+
 }

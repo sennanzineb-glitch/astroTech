@@ -113,14 +113,21 @@ app.delete(`${CLIENT_URI}/organisation/:id`, authenticateToken, controllerOrgani
 app.put(`${CLIENT_URI}/organisation/:id/note`, controllerOrganisation.setRecordNote);
 
 /*** clients ***/
+
+// Routes statiques / "spécifiques" en premier
+app.get(`${CLIENT_URI}/contacts/all`, authenticateToken, controllerClient.apigetAllClientsWithContacts);
+app.get(`${CLIENT_URI}/contacts`, authenticateToken, controllerClient.getAllClientsWithContactsPaginated);
+app.get(`${CLIENT_URI}/parent/:parentId`, authenticateToken, controllerClient.getClientsByParentWithDetails);
+app.get(`${CLIENT_URI}/:clientId/interventions`, authenticateToken, controllerClient.getClientInterventions);
+app.get(`${CLIENT_URI}/details/:id`, authenticateToken, controllerClient.getRecordDetails);
+
+// CRUD générique
 app.get(`${CLIENT_URI}`, authenticateToken, controllerClient.apiGetAll);
-app.get(`${CLIENT_URI}/contacts`, authenticateToken, controllerClient.apigetAllClientsWithContacts);
+app.get(`${CLIENT_URI}/:id`, authenticateToken, controllerClient.apiGetById);
 app.post(`${CLIENT_URI}`, authenticateToken, controllerClient.apiCreate);
 app.put(`${CLIENT_URI}/:id`, authenticateToken, controllerClient.apiUpdateById);
-app.get(`${CLIENT_URI}/:id`, authenticateToken, controllerClient.apiGetById);
-app.get(`${CLIENT_URI}/details/:id`, authenticateToken, controllerClient.getRecordDetails);
 app.delete(`${CLIENT_URI}/:id`, authenticateToken, controllerClient.apiDeleteById);
-app.get(`${CLIENT_URI}/parent/:parentId`, authenticateToken, controllerClient.getClientsByParentWithDetails);
+
 
 // Démarrage du serveur
 app.listen(PORT, '0.0.0.0', () => {

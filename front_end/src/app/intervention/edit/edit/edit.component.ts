@@ -31,6 +31,8 @@ export class EditComponent {
   isEdit = false;
   interventionId!: number;
   affaireId: number | null = null;
+  formReady = false; // pour afficher les enfants après patch
+  
 
   constructor(
     public formService: InterventionFormService,
@@ -45,82 +47,73 @@ export class EditComponent {
     this.formService.resetAllForms();
 
     const id = this.route.snapshot.paramMap.get('id');
-
     if (id) {
       this.isEdit = true;
       this.interventionId = Number(id);
       await this.loadInterventionData();
     }
 
-    // Création depuis une affaire
     const affaireIdParam = this.route.snapshot.queryParamMap.get('affaireId');
     this.affaireId = affaireIdParam ? Number(affaireIdParam) : null;
-
     if (this.affaireId) {
       await this.loadAffaireDataForIntervention();
     }
+
+    this.formReady = true;
   }
 
   nextStep() { if (this.step < 2) this.step++; }
   previousStep() { if (this.step > 1) this.step--; }
 
+
   async loadAffaireDataForIntervention() {
     try {
-      const res: any = await lastValueFrom(
-        this.affairesService.getItemById(this.affaireId!)
-      );
-
+      const res: any = await lastValueFrom(this.affairesService.getItemById(this.affaireId!));
       const a = res.data;
-
       const formatDate = (d: string | null) => d ? d.split('T')[0] : null;
 
-      // STEP 1 – Infos générales
       this.formService.formStep1.patchValue({
         titre: a.titre || '',
         description: a.description || '',
-        referent_ids: Array.isArray(a.referent_ids) ? a.referent_ids : [],
-        client_id: a.clientId || null,
-        adresse_facturation_id: a.adresse_id || null,
-        client_adresse_id: a.client_adresse_id || null,
-        type_client_adresse: a.type_client_adresse || ''
+        client_id: a.client_id || 0,
+        type_id: a.type_id || 0,
+        zone_intervention_client_id: a.zone_intervention_client_id || 0,
+        type_client_zone_intervention: a.type_client_zone_intervention || 'autre_zone'
       });
 
-      // STEP 2 – Planification
       this.formService.formStep2.patchValue({
-        mots_cles: a.mots_cles ? a.mots_cles.split(',') : [],
+        referent_ids: Array.isArray(a.referents) ? a.referents : [],
+        mots_cles: a.motsCles ? a.motsCles.split(',') : [],
         date_butoir_realisation: formatDate(a.dateFin),
         date_cloture_estimee: formatDate(a.dateFin)
       });
+
+      console.log(this.formService);
+
 
     } catch (err) {
       console.error('Erreur chargement affaire', err);
     }
   }
 
-  /** Charger les données en mode édition */
   async loadInterventionData() {
-
     try {
       const formatDate = (d: string | null) => d ? d.split('T')[0] : '';
-
       const res: any = await lastValueFrom(this.interventionService.getItemById(this.interventionId));
       const i = res;
-
       if (!i) return;
 
-      // STEP 1
       this.formService.formStep1.patchValue({
-        numero: i.numero != null ? Number(i.numero) : null,
+        numero: i.numero != null ? Number(i.numero) : 0,
         titre: i.titre || '',
         type: i.type || '',
-        client_id: i.client_id || null,
-        adresse_facturation_id: i.adresse_facturation_id || null,
-        client_adresse_id: i.client_adresse_id || null,
-        type_client_adresse: i.type_client_adresse || '',
+        type_id: i.type_id || 0,  
+        client_id: i.client_id || 0,
+        zone_intervention_client_id: i.zone_intervention_client_id || 0,
+        type_client_zone_intervention: i.type_client_zone_intervention || 'autre_zone',
         description: i.description || ''
       });
 
-      // STEP 2
       this.formService.formStep2.patchValue({
         priorite: i.priorite || '',
         referent_ids: Array.isArray(i.referent_ids) ? i.referent_ids : [],
@@ -138,93 +131,34 @@ export class EditComponent {
     }
   }
 
-  /** Ajouter ou modifier */
-  // async submit() {
-  //   const formatDate = (d: string | null) => d ? d.split('T')[0] : '';
-
-  //   const data = this.formService.getFormData();
-  //   const all = { ...data.step1, ...data.step2 };
-
-  //   const interventionData = {
-  //     numero: all.numero != null ? Number(all.numero) : 0,
-  //     titre: all.titre || '',
-  //     type: all.type || '',
-  //     client_id: all.client_id ? Number(all.client_id) : 0,
-  //     adresse_facturation_id: all.adresse_facturation_id ? Number(all.adresse_facturation_id) : 0,
-  //     client_adresse_id: all.client_adresse_id ? Number(all.client_adresse_id) : 0,
-  //     type_client_adresse: all.type_client_adresse || '',
-  //     description: all.description || '',
-
-  //     priorite: all.priorite || '',
-  //     referents: Array.isArray(all.referents) ? all.referents : [],
-  //     etat: all.etat || '',
-  //     date_butoir_realisation: formatDate(all.date_butoir_realisation) || null,
-  //     date_cloture_estimee: formatDate(all.date_cloture_estimee) || null,
-  //     mots_cles: Array.isArray(all.mots_cles) ? all.mots_cles.join(',') : '',
-
-  //     montant_intervention: Number(all.montant_intervention || 0),
-  //     montant_main_oeuvre: Number(all.montant_main_oeuvre || 0),
-  //     montant_fournitures: Number(all.montant_fournitures || 0)
-  //   };
-
-  //   this.loading = true;
-
-  //   try {
-  //     let interventionId = this.interventionId;
-
-  //     if (!this.isEdit) {
-  //       const res: any = await lastValueFrom(this.interventionService.create(interventionData));
-  //       interventionId = res.data.id;
-  //     } else {
-  //       await lastValueFrom(this.interventionService.update(interventionId, interventionData));
-  //     }
-
-  //     this.formService.resetAllForms();
-  //     this.router.navigate(['/interventions/details', interventionId]);
-
-  //   } catch (err) {
-  //     console.error('Erreur sauvegarde intervention', err);
-  //   } finally {
-  //     this.loading = false;
-  //   }
-  // }
-
   async submit() {
-    const formatDate = (d: string | null) => d ? d.split('T')[0] : null;
 
+    const formatDate = (d: string | null) => d ? d.split('T')[0] : null;
     const data = this.formService.getFormData();
     const all = { ...data.step1, ...data.step2 };
+    
 
-    // 🔴 VALIDATION OBLIGATOIRE
-    if (
-      !all.numero || Number(all.numero) === 0 ||
+    if (!all.numero || Number(all.numero) === 0 ||
       !all.titre || all.titre.trim() === '' ||
-      !all.type || all.type.trim() === ''
-      //!all.adresse_facturation_id || all.adresse_facturation_id.trim() === '' || 
-      //!all.client_adresse_id || all.client_adresse_id.trim() === '' ||
-      //!all.description || all.description.trim() === ''
-    ) {
-      alert("⚠️ Les champs numéro, titre, type, adresse de facturation, zone d’intervention et description sont obligatoires.");
-      return; // ⛔ STOP
+      !all.type_id || Number(all.type_id) === 0) {
+      alert("⚠️ Les champs numéro, titre et type sont obligatoires.");
+      return;
     }
-
+    
     const interventionData = {
       numero: Number(all.numero),
       titre: all.titre.trim(),
-      type: all.type.trim(),
-      client_id: all.client_id ? Number(all.client_id) : null,
-      adresse_facturation_id: all.adresse_facturation_id ? Number(all.adresse_facturation_id) : null,
-      client_adresse_id: all.client_adresse_id ? Number(all.client_adresse_id) : null,
-      type_client_adresse: all.type_client_adresse || null,
-      description: all.description || null,
-
-      priorite: all.priorite || null,
-      referents: Array.isArray(all.referents) ? all.referents : [],
-      etat: all.etat || null,
+      client_id: all.client_id ? Number(all.client_id) : 0,
+      type_id: all.type_id ? Number(all.type_id) : 0,  
+      zone_intervention_client_id: all.zone_intervention_client_id ? Number(all.zone_intervention_client_id) : 0,
+      type_client_zone_intervention: all.type_client_zone_intervention || 'autre_zone',
+      description: all.description || '',
+      priorite: all.priorite || '',
+      referent_ids: Array.isArray(all.referent_ids) ? all.referent_ids : [],
+      etat: all.etat || '',
       date_butoir_realisation: formatDate(all.date_butoir_realisation),
       date_cloture_estimee: formatDate(all.date_cloture_estimee),
-      mots_cles: Array.isArray(all.mots_cles) ? all.mots_cles.join(',') : null,
-
+      mots_cles: Array.isArray(all.mots_cles) ? all.mots_cles.join(',') : '',
       montant_intervention: Number(all.montant_intervention || 0),
       montant_main_oeuvre: Number(all.montant_main_oeuvre || 0),
       montant_fournitures: Number(all.montant_fournitures || 0)
@@ -234,20 +168,11 @@ export class EditComponent {
 
     try {
       let interventionId = this.interventionId;
-
       if (!this.isEdit) {
-        console.log("Bonjour c'est l'ajout d'une intervention !");
-        
-        const res: any = await lastValueFrom(
-          this.interventionService.create(interventionData)
-        );
+        const res: any = await lastValueFrom(this.interventionService.create(interventionData));
         interventionId = res.data.id;
       } else {
-        console.log("Bonjour c'est la modification d'une nouveau intervention !");
-        
-        await lastValueFrom(
-          this.interventionService.update(interventionId, interventionData)
-        );
+        await lastValueFrom(this.interventionService.update(interventionId, interventionData));
       }
 
       this.formService.resetAllForms();
@@ -259,10 +184,9 @@ export class EditComponent {
     } finally {
       this.loading = false;
     }
-
-
-    //console.log(this.isEdit);
-    
   }
 
+  annuler() {
+    this.router.navigate(['/interventions/list']);
+  }
 }

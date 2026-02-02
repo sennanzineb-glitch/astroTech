@@ -58,7 +58,7 @@ export class Etape2Component {
     this.loadTechnicien();
     this.loadReferent();
     this.loadEquipes();
-
+    //this.onEquipeSelect();
   }
 
   loadTechnicien() {
@@ -76,11 +76,17 @@ export class Etape2Component {
   loadEquipes() {
     this.equipeService.getAllEquipes().subscribe((res: any) => {
       this.equipes = res.data;
+      // si equipeTechnicienId selectionner une equipe 
+      const selectedId = this.form.get('equipeTechnicienId')?.value;
+      if(selectedId)
+        this.selectedEquipe =
+      this.equipes.find((eq: any) => eq.id === selectedId) || null;
     })
   }
 
 
   onTechnicienChange(event: any): void {
+    this.form.patchValue({ equipeTechnicienId: null });
     this.selectedType = event.target.value;
     this.selectedEquipe = null;
   }
@@ -99,9 +105,17 @@ export class Etape2Component {
     this.enteredKeyword = '';
   }
 
-  onEquipeSelect(event: any) {
-    const selectedId = Number(event.target.value);
-    this.selectedEquipe = this.equipes.find((eq: any) => eq.id === selectedId) || null;
+  // onEquipeSelect(event: any) {
+  //   this.form.patchValue({ technicienId: null });
+  //   const selectedId = Number(event.target.value);
+  //   this.selectedEquipe = this.equipes.find((eq: any) => eq.id === selectedId) || null;
+  // }
+
+  onEquipeSelect() {
+    const selectedId = this.form.get('equipeTechnicienId')?.value;
+    this.selectedEquipe =
+      this.equipes.find((eq: any) => eq.id === selectedId) || null;
   }
+
 
 }

@@ -22,10 +22,10 @@
                                 placeholder="Indiquer le nom de l'affaire">
                         </div>
                         <div class="mb-3">
-                            <label for="clientId">Client</label>
+                            <label for="client_id">Client</label>
                             <strong class="text-danger">*</strong>
                             <div class="input-group mb-3">
-                                <select class="form-select form-select-sm" formControlName="clientId">
+                                <select class="form-select form-select-sm" formControlName="client_id" (change)="onClientSelect($event)">
                                     <option value="" disabled selected>Sélectionner client</option>
                                     <option *ngFor="let client of clients" [value]="client.id">
                                         {{ client.nom_client }}
@@ -91,46 +91,86 @@
 
 
 <ng-template #clientInfoTemplate let-client="client">
-    <div *ngIf="client" class="bg-white border rounded-3 shadow-sm p-3 m-0"
-        style="max-width: 420px; font-size: 0.85rem; line-height: 1.2;">
-       <h6 class="text-primary fw-semibold mb-3" *ngIf="client?.nom_client || client?.reference">
-  {{ client.nom_client || client.reference }}
-</h6>
+  <div *ngIf="client" class="bg-white border rounded-3 shadow-sm p-3 m-0"
+    style="max-width: 420px; font-size: 0.85rem; line-height: 1.2; margin-top: 20px !important;">
+    <h6 class="text-primary fw-semibold mb-3" *ngIf="client?.nom_client || client?.reference">
+      {{ client.nom_client || client.reference }}
+    </h6>
 
-        <div class="row g-3">
-            <!-- Contacts -->
-            <div class="col-auto">
-                <strong *ngIf="client?.contacts?.length > 0">Contacts :</strong>
-                <div *ngIf="client?.contacts?.length > 0">
-                    <div *ngFor="let contact of client.contacts" class="border-start ps-2 mb-2">
-                        <span class="fw-semibold">{{ contact.nom_complet }}</span>
-                        <span *ngIf="contact.poste" class="text-muted small">({{ contact.poste }})</span><br>
-                        <span *ngIf="contact.emails?.length > 0" class="text-muted">📧 {{ contact.emails[0].email
-                            }}</span><br>
-                        <span *ngIf="contact.telephones?.length > 0" class="text-muted">📞 {{ contact.telephones[0].tel
-                            }}</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Adresse -->
-            <div class="col-auto">
-                <strong>Adresse :</strong>
-                <div *ngIf="client.adresse?.adresse; else noAddress" class="d-flex flex-column gap-1 text-secondary">
-                    <span class="fw-medium">{{ client.adresse.adresse }}</span>
-                    <span class="small text-muted">{{ client.adresse.ville }}{{ client.adresse.province ? ', ' +
-                        client.adresse.province : '' }}</span>
-                    <span class="small text-muted">{{ client.adresse.pays }}</span>
-                </div>
-            </div>
+    <div class="row g-3">
+      <!-- Contacts -->
+      <div class="col-auto">
+        <strong *ngIf="client?.contacts?.length > 0">Contacts :</strong>
+        <div *ngIf="client?.contacts?.length > 0">
+          <div *ngFor="let contact of client.contacts" class="border-start ps-2 mb-2">
+            <span class="fw-semibold">{{ contact.nom_complet }}</span>
+            <span *ngIf="contact.poste" class="text-muted small">({{ contact.poste }})</span><br>
+            <span *ngIf="contact.emails?.length > 0" class="text-muted">📧 {{ contact.emails[0].email
+              }}</span><br>
+            <span *ngIf="contact.telephones?.length > 0" class="text-muted">📞 {{ contact.telephones[0].tel
+              }}</span>
+          </div>
         </div>
-        <ng-template #noContacts>
-            <span class="text-muted fst-italic small">Aucun contact disponible</span>
+      </div>
+
+      <!-- Adresse -->
+      <div class="col-auto">
+        <strong>Adresse :</strong>
+
+        <!-- 1️⃣ Adresse complète -->
+        <div *ngIf="client?.adresse?.adresse?.length > 0; else checkAdresseOnly"
+          class="d-flex flex-column gap-1 text-secondary">
+
+          <span class="fw-medium">
+            {{ client.adresse.adresse }}
+          </span>
+
+          <span class="small text-muted">
+            {{ client.adresse.ville }}
+            {{ client.adresse.province ? ', ' + client.adresse.province : '' }}
+            {{ client.adresse.code_postal ? ', ' + client.adresse.code_postal : '' }}
+          </span>
+
+          <span class="small text-muted">
+            {{ client.adresse.pays }}
+          </span>
+        </div>
+
+        <!-- 2️⃣ Adresse existe mais sans champ adresse -->
+        <ng-template #checkAdresseOnly>
+          <div *ngIf="client?.adresse; else noAddress" class="d-flex flex-column gap-1 text-secondary">
+            <span class="fw-medium">
+              {{ client.adresse }}
+            </span>
+
+            <span class="fw-medium">
+              {{ client.ville }}
+              {{ client.province ? ', ' + client.province : '' }}
+              {{ client.code_postal ? ', ' + client.code_postal : '' }}
+            </span>
+
+            <span class="small text-muted">
+              {{ client.pays }}
+            </span>
+          </div>
         </ng-template>
+
+        <!-- 3️⃣ Aucune adresse -->
         <ng-template #noAddress>
-            <p class="text-muted fst-italic small">Aucune adresse disponible</p>
+          <span class="text-muted fst-italic">
+            Aucune adresse disponible
+          </span>
         </ng-template>
+      </div>
+
     </div>
+    <ng-template #noContacts>
+      <span class="text-muted fst-italic small">Aucun contact disponible</span>
+    </ng-template>
+    <ng-template #noAddress>
+      <p class="text-muted fst-italic small">Aucune adresse disponible</p>
+    </ng-template>
+  </div>
 </ng-template>
 
 <app-modal-save #modalSave (clientAdded)="onClientAdded($event)"></app-modal-save>

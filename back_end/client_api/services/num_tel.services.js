@@ -3,8 +3,8 @@ const db = require("../db"); // db يجب أن يكون pool من mysql2/promise
 class NumTelService {
   static async createRecord(record) {
     const typeValue = record.type ? record.type.substring(0, 20) : null;
-    const query = `INSERT INTO num_tel (tel, type, contact_id) VALUES (?, ?, ?)`;
-    const [result] = await db.execute(query, [record.tel, typeValue, record.contact_id]);
+    const query = `INSERT INTO num_tel (tel, type, contact_id, createur_id) VALUES (?, ?, ?, ?)`;
+    const [result] = await db.execute(query, [record.tel, typeValue, record.contact_id, record.createur_id]);
     return { id: result.insertId, ...record };
   }
 

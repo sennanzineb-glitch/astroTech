@@ -29,11 +29,13 @@ app.get('/api/v1/auth/me', authenticateToken, me);
 const controllerReferent = require('./controllers/referents.controller.js');
 
 // 🔹 Toutes les routes referent sécurisées
-app.get(`${URI}`, authenticateToken, controllerReferent.apiGetAll);
-app.get(`${URI}/:id`, authenticateToken, controllerReferent.apiGetById);
-app.post(`${URI}`, authenticateToken, controllerReferent.apiCreate);
-app.put(`${URI}/:id`, authenticateToken, controllerReferent.apiUpdateById);
-app.delete(`${URI}/:id`, authenticateToken, controllerReferent.apiDeleteById);
+// Routes référents
+app.get(`${URI}/all`, authenticateToken, controllerReferent.apiGetAll); // Liste simple ou page d'accueil
+app.get(`${URI}`, authenticateToken, controllerReferent.apiGetAllWithPaginated); // Liste paginée
+app.get(`${URI}/:id`, authenticateToken, controllerReferent.apiGetById); // Récupérer un par ID
+app.post(`${URI}`, authenticateToken, controllerReferent.apiCreate); // Créer
+app.put(`${URI}/:id`, authenticateToken, controllerReferent.apiUpdateById); // Mettre à jour
+app.delete(`${URI}/:id`, authenticateToken, controllerReferent.apiDeleteById); // Supprimer
 
 // Démarrage du serveur
 app.listen(PORT, '0.0.0.0', () => {

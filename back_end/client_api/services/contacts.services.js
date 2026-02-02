@@ -5,8 +5,8 @@ class ContactService {
   // Créer un contact
   static async createRecord(data) {
     const query = `
-      INSERT INTO contact (client_id, nom_complet, poste, date_du, date_au, memo_note, secteur_id, habitation_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO contact (client_id, nom_complet, poste, date_du, date_au, memo_note, secteur_id, habitation_id, createur_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const params = [
       data.client_id ?? null,
@@ -16,7 +16,8 @@ class ContactService {
       data.date_au ?? null,
       data.memo_note ?? null,
       data.secteur_id ?? null,
-      data.habitation_id ?? null
+      data.habitation_id ?? null,
+      data.createur_id ?? null
     ];
     const [result] = await db.execute(query, params);
     return { id: result.insertId, ...data };

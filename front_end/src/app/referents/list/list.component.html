@@ -13,8 +13,18 @@
 
   <!-- ================= AJOUT AFFAIRE ================= -->
   <button type="button" class="btn btn-gradient-success mb-3" (click)="addReferent()">
-    ➕ Ajouter un référent
+    ➕ Nouveau référent
   </button>
+
+  <!-- ================= RECHERCHE ================= -->
+  <div class="mb-3 position-relative w-50">
+    <input type="text" class="form-control ps-5" placeholder="Rechercher ..." [(ngModel)]="searchTerm"
+      (keyup)="searchReferents()" />
+    <span class="position-absolute top-50 start-0 translate-middle-y ps-3 text-muted">
+      🔍
+    </span>
+  </div>
+
 
   <div class="row g-3">
     <!-- CHAQUE REFERENT DANS UNE CARD -->
@@ -87,5 +97,29 @@
 
       </div>
     </div>
+
+    <!-- MESSAGE SI AUCUN REFERENT -->
+    <div *ngIf="!referents || referents.length === 0" class="alert alert-secondary text-center">
+      📭 Aucun référent trouvé pour le moment. Vous pouvez en créer un nouveau.
+    </div>
+
+    <!-- ================= PAGINATION ================= -->
+    <nav *ngIf="totalPages > 1" aria-label="Page navigation example">
+      <ul class="pagination justify-content-center mt-3">
+        <li class="page-item" [class.disabled]="currentPage === 1">
+          <button class="page-link" (click)="changePage(currentPage - 1)">Précédent</button>
+        </li>
+
+        <li class="page-item" *ngFor="let page of [].constructor(totalPages); let idx = index"
+          [class.active]="currentPage === idx + 1">
+          <button class="page-link" (click)="changePage(idx + 1)">{{ idx + 1 }}</button>
+        </li>
+
+        <li class="page-item" [class.disabled]="currentPage === totalPages">
+          <button class="page-link" (click)="changePage(currentPage + 1)">Suivant</button>
+        </li>
+      </ul>
+    </nav>
+
   </div>
 </div>

@@ -18,22 +18,22 @@ class PlanningService {
     };
   }
 
-  // 🔹 Récupérer toutes les planifications
-  static async getAll() {
-    console.log("*** Bonjour c'est un test ! ***");
-    
-    const sql = `
+  // services/planning.service.js
+  static async getAllByUser(userId) {
+    try {
+      if (!userId) throw new Error('userId manquant');
+
+      const sql = `
       SELECT 
         p.id AS planningId,
         p.intervention_id AS interventionId,
         p.date AS planningDate,
         p.heure AS planningHeure,
-        
+
         i.titre AS interventionTitre,
         i.description AS interventionDescription,
         i.numero AS interventionNumero,
         i.type AS interventionType,
-        i.adresse_facturation_id AS interventionAdresseFacturation,
         i.priorite AS interventionPriorite,
         i.etat AS interventionEtat,
         i.date_butoir_realisation AS interventionDateButoir,
@@ -49,22 +49,29 @@ class PlanningService {
         i.createur_id AS interventionCreateurId,
         i.date_creation AS interventionDateCreation,
         i.date_modification AS interventionDateModification,
-        
+
         c.id AS clientId,
         c.numero AS clientNumero,
-        c.compte AS clientCompte,
-        c.createur_id AS clientCreateurId,
-        c.date_creation AS clientDateCreation,
-        c.date_modification AS clientDateModification
+        c.compte AS clientCompte
 
       FROM intervention_planning p
-      JOIN intervention i ON i.id = p.intervention_id
-      LEFT JOIN client c ON c.id = i.id_affaire  -- si le client est lié via id_affaire
-      ORDER BY p.date, p.heure;
+      INNER JOIN intervention i ON i.id = p.intervention_id
+      LEFT JOIN affaire a ON a.id = i.id_affaire
+      LEFT JOIN client c ON c.id = a.client_id
+
+      WHERE i.createur_id = ?
+      ORDER BY p.date ASC, p.heure ASC
     `;
-    const [rows] = await pool.query(sql);
-    return rows;
+
+      const [rows] = await pool.query(sql, [userId]);
+      return rows;
+
+    } catch (err) {
+      console.error('Erreur PlanningService.getAllByUser:', err);
+      throw err;
+    }
   }
+
 
   // 🔹 Modifier une planification
   static async updatePlanning(id, planning) {

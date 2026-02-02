@@ -4,7 +4,7 @@ class Referent {
 
     static async apiCreate(req, res) {
         try {
-            let { nom, prenom, telephone, email, dateNaissance, poste, adresse } = req.body;
+            let { nom, prenom, telephone, email, dateNaissance, poste, adresse, createur_id = req.user.id } = req.body;
 
             // Validation des champs obligatoires
             if (!nom || !prenom || !telephone || !email) {
@@ -18,7 +18,7 @@ class Referent {
             poste = poste || null;
             adresse = adresse || null;
 
-            const record = { nom, prenom, telephone, email, dateNaissance, poste, adresse };
+            const record = { nom, prenom, telephone, email, dateNaissance, poste, adresse, createur_id };
             const response = await ReferentService.createRecord(record);
 
             res.status(201).json({ success: true, data: response });
@@ -84,7 +84,26 @@ class Referent {
         }
     }
 
+    static async apiGetAllWithPaginated(req, res) {
+        try {
+            const { page = 1, limit = 10, search = '' } = req.query;
+            const userId = req.user?.id || null; // infos du client/referent connecté si besoin
 
+            const response = await ReferentService.apiGetAllWithPaginated({ page, limit, search, userId });
+
+            res.status(200).json({
+                success: true,
+                page:Number(page),
+                limit: Number(limit),
+                total: response.total,
+                data: response.data
+            });
+
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: "Internal Server Error" });
+        }
+    }
 
     static async apiGetById(req, res) {
         try {

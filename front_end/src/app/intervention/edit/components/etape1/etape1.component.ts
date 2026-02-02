@@ -8,10 +8,7 @@ import { HabitationService } from '../../../../_services/clients/habitation.serv
 import { SecteurService } from '../../../../_services/clients/secteur.service';
 import { InterventionService } from '../../../../_services/affaires/intervention.service';
 import { InterventionFormService } from '../../../../_services/affaires/intervention-form.service';
-import { startWith } from 'rxjs/operators';
-import { skip } from 'rxjs/operators';
-import { filter, distinctUntilChanged, map } from 'rxjs/operators';
-
+import { AdressesService } from '../../../../_services/clients/adresses.service';
 
 @Component({
   selector: 'app-etape1',
@@ -22,7 +19,19 @@ import { filter, distinctUntilChanged, map } from 'rxjs/operators';
 })
 export class Etape1Component implements OnInit {
 
-  @Input() form!: FormGroup;
+  private _form!: FormGroup;
+
+  @Input()
+  set form(fg: FormGroup) {
+    if (fg) {
+      this._form = fg;
+      this.loadData();
+    }
+  }
+
+  get form(): FormGroup {
+    return this._form;
+  }
 
   @ViewChild('modalSave') modalSave!: ModalSaveComponent;
 
@@ -30,44 +39,7 @@ export class Etape1Component implements OnInit {
   clientSelected: any = null;
   zoneSelected: any = null;
   typeZone: 'meme_zone' | 'autre_zone' | '' = '';
-
-  typesIntervention: string[] = [
-    'Auto-contrôle Electricité',
-    'Auto-contrôle FLOCAGE',
-    'Auto-contrôle Faience',
-    'Auto-contrôle ISOLATION DES COMBLES',
-    'Auto-contrôle Peinture',
-    'Auto-contrôle Plomberie Sanitaire',
-    'Auto-contrôle Plâtrerie',
-    'Auto-contrôle Remplacement colonne WC',
-    'Auto-contrôle SCIAGE',
-    'Auto-contrôle Sol Souple',
-    'Auto-contrôle VMC comble',
-    'Auto-contrôle calorifuge logement',
-    'Auto-contrôle carrelage hall d’entrée',
-    'Auto-contrôle peinture hall d’entrée',
-    'Auto-contrôle pose des MEXT',
-    'Auto-contrôle réseau sous-sol rcu',
-    'Auto-contrôle travaux d’électricité partie commune',
-    'Auto-contrôle travaux intratone',
-    'Doléance Demathieu Bard',
-    'Doléances',
-    'Décharge Locataire Remise Clefs',
-    'Décharge responsabilité',
-    'Levée de Pré OPR',
-    'Opr CLIENT',
-    'Pre-Opr Demathieu Bard',
-    'Quitus Asservissement',
-    'Quitus Bascule',
-    'Quitus Carottage',
-    'Quitus Carrelage hall d’entré',
-    'Quitus Couverture',
-    'Quitus Descente EP Balcon',
-    'Quitus Désenfumage',
-    'Quitus Détalonnage des portes de distribution',
-    'Quitus Interphonie',
-    'Quitus Mise en peinture hall d’entrée'
-  ];
+  interventionTypes:any = [];
 
   constructor(
     public formService: InterventionFormService,
@@ -78,44 +50,43 @@ export class Etape1Component implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    if (!this.form) {
-      console.error('❌ FormGroup non reçu dans Etape1');
-      return;
-    }
-
-    const numeroControl = this.form.get('numero');
-    if (!numeroControl || Number(numeroControl.value) === 0) {
-      // 🔹 Le control n'existe pas OU vaut 0
-      this.getNextNumero();   // ⬅️ appelle ta fonction ici
-    } else {
-      // 🔹 Le control existe et sa valeur ≠ 0
-      numeroControl.valueChanges.subscribe(val => {
-        console.log('Numero changé:', val);
-      });
-    }
-
-
-    const clientControl = this.form.get('client_id');
-    clientControl?.valueChanges
-      .pipe(
-        map((id: number | string | null) => Number(id)), // 🔹 conversion sûre
-        filter((id: number) => Number.isInteger(id) && id > 0), // 🔹 bloquer 0, null, NaN
-        distinctUntilChanged() // 🔹 éviter les doublons
-      )
-      .subscribe((id: number) => {
-        this.getClient(id);
-      });
-    
-    //
     this.loadClients();
+    this.loadTypes();
   }
 
+  /** Charger les données depuis le FormGroup (client_id) */
+  async loadData() {
+    if (!this.form) return;
+
+    const clientId = this.form.get('client_id')?.value;
+    if (clientId && clientId !== 0) {
+      await this.getClient(clientId);
+    }
+
+    const numero = this._form.get('numero')?.value;
+    if (numero === 0 || !numero) this.getNextNumero();
+  }
+
+ 
+  async loadTypes(){
+    this.interventionService.getInterventionTypes().subscribe({
+      next: (res: any) => {
+        this.interventionTypes = res.data;
+      },
+      error: (err) => {
+        console.error('Erreur chargement types', err);
+      }
+    });
+  }
+
+  /** Sélection d'un client dans le select */
   onClientSelect(event: Event) {
     const value = (event.target as HTMLSelectElement).value;
     const clientId = Number(value);
     if (clientId) this.getClient(clientId);
   }
 
+  /** Sauvegarder l'étape dans le service */
   saveStep() {
     if (this.form.valid) {
       this.formService.setStepData('step1', this.form.value);
@@ -124,6 +95,7 @@ export class Etape1Component implements OnInit {
     }
   }
 
+  /** Récupérer le prochain numéro */
   getNextNumero() {
     this.interventionService.getNextNumero().subscribe({
       next: (res: any) => {
@@ -135,6 +107,7 @@ export class Etape1Component implements OnInit {
     });
   }
 
+  /** Charger tous les clients */
   loadClients() {
     this.clientsService.getAll().subscribe({
       next: (data: any[]) => this.clients = data,
@@ -142,49 +115,45 @@ export class Etape1Component implements OnInit {
     });
   }
 
+  /** Charger un client et sa zone */
   async getClient(id: number) {
-    try {
+    if (!id || id === 0) return;
 
-      if (!id || id == 0) {
+    try {
+      const res: any = await lastValueFrom(this.clientsService.getRecordDetails(id));
+      this.clientSelected = res?.data ?? null;
+      if (!this.clientSelected) return;
+
+      //const clientId = this.clientSelected?.adresse?.id ?? null;
+      const clientId = this.clientSelected?.id ?? null;
+      const zoneClientId = this.form.get('zone_intervention_client_id')?.value ?? null;
+      const typeClientZone = this.form.get('type_client_zone_intervention')?.value;
+      
+      if (clientId === zoneClientId) {
+        this.zoneSelected = this.clientSelected;
+        this.typeZone = 'meme_zone';
         return;
       }
-      else {
-        const res: any = await lastValueFrom(this.clientsService.getRecordDetails(id));
-        this.clientSelected = res?.data ?? null;
-        if (!this.clientSelected) return;
-
-        const adresseClient = this.clientSelected?.adresse?.id ?? null;
-        const adresseForm = this.form.get('adresse_facturation_id')?.value ?? null;
-
-        if (adresseClient && adresseClient === adresseForm) {
-          this.zoneSelected = this.clientSelected;
-          this.typeZone = 'meme_zone';
-          return;
-        }
-
+      else if (zoneClientId != null && zoneClientId !== clientId) {
+        
         this.typeZone = 'autre_zone';
 
-        const clientAdresseId = this.form.get('client_adresse_id')?.value;
-        const typeClientAdresse = this.form.get('type_client_adresse')?.value;
-
-        if (!clientAdresseId) {
-          this.zoneSelected = null;
-          return;
-        }
-
         let res2: any;
-        switch (typeClientAdresse) {
+        switch (typeClientZone) {
           case 'habitation':
-            res2 = await lastValueFrom(this.habitationService.getRecordDetails(clientAdresseId));
+            res2 = await lastValueFrom(this.habitationService.getRecordDetails(zoneClientId));
             break;
           case 'secteur':
-            res2 = await lastValueFrom(this.secteurService.getRecordDetails(clientAdresseId));
+            res2 = await lastValueFrom(this.secteurService.getRecordDetails(zoneClientId));
             break;
           default:
-            res2 = await lastValueFrom(this.clientsService.getRecordDetails(clientAdresseId));
+            res2 = await lastValueFrom(this.clientsService.getRecordDetails(zoneClientId));
         }
-
         this.zoneSelected = res2?.data ?? null;
+      }
+      else{
+        this.zoneSelected = null;
+        return;
       }
 
     } catch (error) {
@@ -192,6 +161,7 @@ export class Etape1Component implements OnInit {
     }
   }
 
+  /** Changer la zone d'intervention */
   onZoneChange(type: 'meme_zone' | 'autre_zone') {
     this.typeZone = type;
 
@@ -200,9 +170,8 @@ export class Etape1Component implements OnInit {
     if (type === 'meme_zone') {
       this.zoneSelected = this.clientSelected;
       this.form.patchValue({
-        adresse_facturation_id: this.clientSelected?.adresse?.id ?? null,
-        client_adresse_id: null,
-        type_client_adresse: null
+        zone_intervention_client_id: this.clientSelected?.id ?? null,
+        type_client_zone_intervention: 'client'
       });
     }
 
@@ -210,22 +179,28 @@ export class Etape1Component implements OnInit {
       this.zoneSelected = null;
       this.modalSave.addZoneIntervention(
         this.clientSelected.type_client,
-        this.clientSelected.id
+        this.clientSelected.client_id
       );
       this.modalSave.openModal();
     }
   }
 
+  /** Ajouter un client depuis le modal */
   onClientAdded(client: any) {
     if (!client) return;
 
     this.zoneSelected = client;
     this.typeZone = 'autre_zone';
 
+    // this.form.patchValue({
+    //   adresse_facturation_id: client.adresse?.id ?? null,
+    //   client_adresse_id: client.id,
+    //   type_client_adresse: client.type_client
+    // });
+
     this.form.patchValue({
-      adresse_facturation_id: client.adresse?.id ?? null,
-      client_adresse_id: client.id,
-      type_client_adresse: client.type_client
+      zone_intervention_client_id: client.id ?? null,
+      type_client_zone_intervention: client.type_client
     });
   }
 }

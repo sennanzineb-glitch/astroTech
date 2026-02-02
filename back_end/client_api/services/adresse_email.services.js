@@ -7,14 +7,15 @@ class AdresseEmailService {
     const typeValue = record.type ? record.type.substring(0, 50) : null;
 
     const query = `
-      INSERT INTO adresse_email (email, type, contact_id)
-      VALUES (?, ?, ?)
+      INSERT INTO adresse_email (email, type, contact_id, createur_id)
+      VALUES (?, ?, ?, ?)
     `;
 
     const [result] = await db.execute(query, [
       record.email,
       typeValue,
-      record.contact_id
+      record.contact_id,
+      record.createur_id
     ]);
 
     return { id: result.insertId, ...record };

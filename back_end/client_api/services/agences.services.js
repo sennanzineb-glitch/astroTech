@@ -5,14 +5,15 @@ class AgenceService {
   // 🔹 CREATE
   static async createRecord(record) {
     const query = `
-      INSERT INTO agence (client_id, nom_agence, adresse_id)
-      VALUES (?, ?, ?)
+      INSERT INTO agence (client_id, nom_agence, adresse_id, createur_id)
+      VALUES (?, ?, ?, ?)
     `;
 
     const [result] = await db.execute(query, [
       record.client_id,
       record.nom_agence,
       record.adresse_id,
+      record.createur_id
     ]);
 
     return { id: result.insertId, ...record };

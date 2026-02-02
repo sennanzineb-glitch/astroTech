@@ -1,16 +1,20 @@
 <!-- *** Titre *** -->
-<div class="page-header">
-    <h3 class="page-title">Intervention</h3>
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="#">Interventions</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Création de l'intervention</li>
-        </ol>
-    </nav>
+<div class="page-header mb-3">
+  <h3 class="page-title">Intervention</h3>
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <a [routerLink]="['/interventions/list']">Intervention</a>
+      </li>
+      <li class="breadcrumb-item active" aria-current="page">
+        {{ isEdit ? "Modification de l'intervention" : "Création de l'intervention" }}
+      </li>
+    </ol>
+  </nav>
 </div>
 
 <!-- *** Contenu *** -->
-<div class="row">
+<div class="row" *ngIf="formReady">
     <div class="col-md-12">
         <div class="steps">
             <app-etape1 *ngIf="step === 1" [form]="formService.formStep1"></app-etape1>
@@ -24,7 +28,7 @@
 
         <div class="card card-nav shadow-sm action-save" style="width: 250px;" *ngIf="step === 2">
            <div class="card-body text-center">
-                <button type="button" class="btn btn-light w-100 mb-2 btn-sm">
+                <button type="button" class="btn btn-light w-100 mb-2 btn-sm" (click)="annuler()">
                   Annuler
                 </button>
                 <button (click)="submit()" class="btn btn-success w-100 mb-2 btn-sm" style="background-color: #5cc6b4; border:none;">

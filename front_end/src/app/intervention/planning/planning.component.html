@@ -1,5 +1,17 @@
+<div class="page-header mb-3">
+  <h3 class="page-title">Intervention</h3>
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <a [routerLink]="['/interventions/list']">Intervention</a>
+      </li>
+      <li class="breadcrumb-item active">Planning</li>
+    </ol>
+  </nav>
+</div>
+
 <div class="container py-4">
-  <h2 class="text-center mb-4">Planning des interventions</h2>
+  <!-- <h2 class="text-center mb-4">Planning des interventions</h2> -->
 
   <!-- FullCalendar Card -->
   <div class="card shadow-sm mb-4">
@@ -14,25 +26,25 @@
     <form (ngSubmit)="addPlanification()" #planForm="ngForm">
       <div class="row g-3">
         <div class="col-md-4">
-          <label for="interventionId" class="form-label">Intervention</label>
-          <select id="interventionId" class="form-select" required [(ngModel)]="newPlan.intervention_id"
-            name="interventionId">
+          <label for="id" class="form-label">Intervention</label>
+          <select id="id" class="form-select form-select-sm" required [(ngModel)]="newPlan.intervention_id"
+            name="id">
             <option value="" disabled>-- Sélectionnez une intervention --</option>
-            <option *ngFor="let i of interventions" [value]="i.interventionId">
-              #{{ i.interventionNumero }} - {{ i.interventionTitre }}
+            <option *ngFor="let i of interventions" [value]="i.id">
+              #{{ i.numero }} - {{ i.titre }}
             </option>
           </select>
         </div>
         <div class="col-md-4">
           <label for="date" class="form-label">Date</label>
-          <input type="date" id="date" name="date" class="form-control" required [(ngModel)]="newPlan.date">
+          <input type="date" id="date" name="date" class="form-control form-control-sm" required [(ngModel)]="newPlan.date">
         </div>
         <div class="col-md-4">
           <label for="heure" class="form-label">Heure</label>
-          <input type="time" id="heure" name="heure" class="form-control" required [(ngModel)]="newPlan.heure">
+          <input type="time" id="heure" name="heure" class="form-control form-control-sm" required [(ngModel)]="newPlan.heure">
         </div>
       </div>
-      <button type="submit" class="btn btn-primary mt-3" [disabled]="planForm.invalid">Ajouter</button>
+      <button type="submit" class="btn btn-sm btn-primary mt-3" [disabled]="planForm.invalid">Ajouter</button>
     </form>
   </div>
 </div>
@@ -63,7 +75,7 @@
                 <p><strong>Description :</strong> {{ selectedEvent.extendedProps.interventionDescription || 'N/A' }}</p>
                 <p><strong>Adresse :</strong> {{ selectedEvent.extendedProps.interventionAdresseFacturation || 'N/A' }}</p>
                 <p><strong>Date planifiée :</strong> 
-                  {{ selectedEvent.extendedProps.planningDate | date:'fullDate' }} à {{ selectedEvent.extendedProps.planningHeure }}
+                  {{ selectedEvent.extendedProps.planningDate | date:'dd/MM/yyyy' }} à {{ selectedEvent.extendedProps.planningHeure }}
                 </p>
               </div>
             </div>
@@ -86,8 +98,8 @@
                 <p><strong>Durée :</strong> 
                   {{ selectedEvent.extendedProps.interventionDureeHeures }}h {{ selectedEvent.extendedProps.interventionDureeMinutes }}min
                 </p>
-                <p><strong>Créé le :</strong> {{ selectedEvent.extendedProps.interventionDateCreation | date:'fullDate' }}</p>
-                <p><strong>Dernière modification :</strong> {{ selectedEvent.extendedProps.interventionDateModification | date:'fullDate' }}</p>
+                <p><strong>Créé le :</strong> {{ selectedEvent.extendedProps.interventionDateCreation | date:'dd/MM/yyyy' }}</p>
+                <p><strong>Dernière modification :</strong> {{ selectedEvent.extendedProps.interventionDateModification | date:'dd/MM/yyyy' }}</p>
               </div>
             </div>
           </div>

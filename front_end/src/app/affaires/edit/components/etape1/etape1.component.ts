@@ -1,13 +1,14 @@
 import { Component, ViewChild, Input, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
-import { SharedModule } from '../../../../_globale/shared/shared.module';
-import { MultiStepFormService } from '../../../../_services/multi-step-form.service';
-import { ClientsService } from '../../../../_services/clients/clients.service';
-import { ModalSaveComponent } from '../../../../annuaire/modal-save/modal-save.component';
+import { FormGroup } from '@angular/forms';
 import { lastValueFrom } from 'rxjs';
+import { startWith } from 'rxjs/operators';
+import { SharedModule } from '../../../../_globale/shared/shared.module';
+import { ModalSaveComponent } from '../../../../annuaire/modal-save/modal-save.component';
+import { ClientsService } from '../../../../_services/clients/clients.service';
 import { HabitationService } from '../../../../_services/clients/habitation.service';
 import { SecteurService } from '../../../../_services/clients/secteur.service';
-import { startWith } from 'rxjs/operators';
+import { MultiStepFormService } from '../../../../_services/multi-step-form.service';
+import { InterventionService } from '../../../../_services/affaires/intervention.service';
 
 @Component({
   selector: 'app-etape1',
@@ -18,139 +19,178 @@ import { startWith } from 'rxjs/operators';
 })
 export class Etape1Component implements OnInit {
 
-  @Input() form!: FormGroup;  // Reçu du parent
+  private _form!: FormGroup;
+
+  @Input()
+  set form(fg: FormGroup) {
+    if (fg) {
+      this._form = fg;
+      this.loadData();
+    }
+  }
+
+  get form(): FormGroup {
+    return this._form;
+  }
+
   @ViewChild('modalSave') modalSave!: ModalSaveComponent;
 
   clients: any[] = [];
-  clientSelected: any;
-  zoneSelected: any;
-  typeZone: string = '';
+  clientSelected: any = null;
+  zoneSelected: any = null;
+  typeZone: 'meme_zone' | 'autre_zone' | '' = '';
 
   constructor(
-    private fb: FormBuilder,
     private formService: MultiStepFormService,
     private clientsService: ClientsService,
     private habitationService: HabitationService,
-    private secteurService: SecteurService
+    private secteurService: SecteurService,
+    private interventionService: InterventionService
   ) { }
 
-  ngOnInit() {
-    console.log("*** Bonjour c'est la fonction ngOnInit ***");
-
+  ngOnInit(): void {
     this.loadClients();
 
     if (!this.form) return;
-
-    const clientControl = this.form.get('clientId');
-    clientControl?.valueChanges
-      .pipe(startWith(clientControl.value))
-      .subscribe(id => {
-        if (id) {
-          this.getClient(id);
-        }
-      });
-
   }
 
+
+  /** Charger tous les clients */
   loadClients() {
-    this.clientsService.getAll().subscribe(data => {
-      this.clients = data;
+    this.clientsService.getAll().subscribe({
+      next: (data: any[]) => this.clients = data,
+      error: err => console.error('Erreur chargement clients', err)
     });
   }
 
+  /** Charger les données depuis le FormGroup (client_id) */
+  async loadData() {
+    if (!this.form) return;
+
+    const clientId = this.form.get('client_id')?.value;
+    if (clientId && clientId !== 0) {
+      await this.getClient(clientId);
+    }
+  }
+
+  /** Charger un client et sa zone */
   async getClient(id: number) {
-    console.log("*** Bonjour c'est la fonction getClient ***");
+    if (!id || id === 0) return;
 
     try {
-      // Récupération du client principal
       const res: any = await lastValueFrom(this.clientsService.getRecordDetails(id));
-      this.clientSelected = res.data;
+      this.clientSelected = res?.data ?? null;
+      if (!this.clientSelected) return;
 
-      // Vérification de la zone
-      const adresseClient = this.clientSelected?.adresse?.id ?? null;
-      const adresseAffaire = this.form.get('adresse_id')?.value ?? null;
+      //const clientId = this.clientSelected?.adresse?.id ?? null;
+      const clientId = this.clientSelected?.id ?? null;
+      const zoneClientId = this.form.get('zone_intervention_client_id')?.value ?? null;
+      const typeClientZone = this.form.get('type_client_zone_intervention')?.value;
 
-      if (adresseClient === adresseAffaire) {
+      if (clientId === zoneClientId) {
         this.zoneSelected = this.clientSelected;
         this.typeZone = 'meme_zone';
-      } else {
+      } else if (zoneClientId != null && zoneClientId !== clientId) {
         this.typeZone = 'autre_zone';
-
-        // Récupération du client à partir de client_adresse_id si différent
-        const clientAdresseId = this.form.get('client_adresse_id')?.value;
-        const typeClientAdresse = this.form.get('type_client_adresse')?.value;
-
-        if (clientAdresseId) {
-          let res2: any;
-
-          switch (typeClientAdresse) {
-            case 'habitation':
-              res2 = await lastValueFrom(this.habitationService.getRecordDetails(clientAdresseId));
-              break;
-            case 'secteur':
-              res2 = await lastValueFrom(this.secteurService.getRecordDetails(clientAdresseId));
-              break;
-            default:
-              res2 = await lastValueFrom(this.clientsService.getRecordDetails(clientAdresseId));
+        switch (typeClientZone) {
+          case 'habitation': {
+            const res = await lastValueFrom(
+              this.habitationService.getRecordDetails(zoneClientId)
+            );
+            this.zoneSelected = res?.data ?? null;
+            break;
           }
-          this.zoneSelected = res2?.data ?? null;
-        } else {
-          this.zoneSelected = null;
+
+          case 'secteur': {
+            const res = await lastValueFrom(
+              this.secteurService.getRecordDetails(zoneClientId)
+            );
+            this.zoneSelected = res ?? null;
+            break;
+          }
+
+          default: {
+            const res = await lastValueFrom(
+              this.clientsService.getRecordDetails(zoneClientId)
+            );
+            this.zoneSelected = res?.data ?? null;
+          }
         }
-      }
-    } catch (error) {
-      console.error('Erreur lors du chargement du client :', error);
-    }
-  }
 
-  onZoneChange(type: string) {
-    this.typeZone = type;
+      
+      
+    
 
-    if (!this.clientSelected) {
-      console.warn('Aucun client sélectionné');
-      return;
-    }
-
-    if (!this.modalSave) {
-      console.error('ModalSaveComponent non initialisé !');
-      return;
-    }
-
-    if (type === 'autre_zone') {
-      this.modalSave.addZoneIntervention(this.clientSelected.type_client, this.clientSelected.id);
-      this.modalSave.openModal();
-      this.zoneSelected = null;
-    }
-
-    if (type === 'meme_zone') {
-      this.formService.formStep1.get('adresse_id')?.setValue(this.clientSelected?.adresse?.id);
-      this.zoneSelected = this.clientSelected;
-    }
-  }
-
-  addClient() {
-    if (this.modalSave) {
-      this.modalSave.openModal();
-    }
-  }
-
-  saveStep() {
-    if (this.form.valid) {
-      this.formService.setStepData('step1', this.form.value);
     } else {
-      console.warn('Formulaire invalide !');
-      this.form.markAllAsTouched();
+      this.zoneSelected = null;
+      this.typeZone = '';
     }
+  } catch(error) {
+    console.error('Erreur lors du chargement du client', error);
   }
 
-  onClientAdded(client: any) {
-    //this.clientSelected = client;
-    this.zoneSelected = client;
+}
 
-    if (client?.adresse?.id) {
-      this.formService.formStep1.get('adresse_id')?.setValue(client.adresse.id);
-      this.formService.formStep1.get('client_adresse_id')?.setValue(client.id);
-      this.formService.formStep1.get('type_client_adresse')?.setValue(client.type_client);
-    }
+/** Sélection d'un client dans le select */
+onClientSelect(event: Event) {
+  const value = (event.target as HTMLSelectElement).value;
+  const clientId = Number(value);
+  if (clientId) this.getClient(clientId);
+}
+
+/** Changer la zone d’intervention */
+onZoneChange(type: 'meme_zone' | 'autre_zone') {
+  this.typeZone = type;
+  if (!this.clientSelected) return;
+
+  if (type === 'meme_zone') {
+    this.zoneSelected = this.clientSelected;
+    this.form.patchValue({
+      zone_intervention_client_id: this.clientSelected.id,
+      type_client_zone_intervention: 'client'
+    });
   }
+
+  if (type === 'autre_zone' && this.modalSave) {
+    this.zoneSelected = null;
+    this.modalSave.addZoneIntervention(this.clientSelected.type_client, this.clientSelected.id);
+    this.modalSave.openModal();
+  }
+}
+
+/** Ajouter un client depuis le modal */
+onClientAdded(client: any) {
+  /** ** ** */
+  console.log(client);
+
+  /** ** ** */
+  if (!client) return;
+  this.zoneSelected = client;
+  this.typeZone = 'autre_zone';
+  this.form.patchValue({
+    zone_intervention_client_id: client.id ?? null,
+    type_client_zone_intervention: client.type_client
+  });
+}
+
+/** Sauvegarder l’étape */
+saveStep() {
+  if (this.form.valid) {
+    this.formService.setStepData('step1', this.form.value);
+  } else {
+    this.form.markAllAsTouched();
+    console.warn('Formulaire invalide');
+  }
+}
+
+/** Ouvrir le modal pour ajouter un client */
+addClient() {
+  if (this.modalSave) {
+    this.modalSave.openModal();
+  } else {
+    console.warn('ModalSaveComponent non initialisé !');
+  }
+}
+
+
 }

@@ -19,11 +19,10 @@ export class InterventionFormService {
     this.formStep1 = this.fb.group({
       numero: [0],
       titre: [''],
-      type: [''],
-      client_id: [0],
-      adresse_facturation_id: [0],
-      client_adresse_id: [0],
-      type_client_adresse: [''],
+      client_id: [0],   // nombre, pas tableau
+      type_id: [0],              
+      zone_intervention_client_id: [0],
+      type_client_zone_intervention: [''],
       description: ['']
     });
 
@@ -64,12 +63,10 @@ export class InterventionFormService {
     this.formStep1.reset({
       numero: 0,
       titre: '',
-      type: '',
-      client_id: [0],
-      adresse_facturation_id: [0],
-      client_adresse_id: [0],
-      type_client_adresse: [''],
-      zoneIntervention: '',
+      client_id: 0,
+      type_id: 0,  
+      zone_intervention_client_id: 0,
+      type_client_zone_intervention: '',
       description: ''
     });
 

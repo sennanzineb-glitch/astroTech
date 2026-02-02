@@ -1,66 +1,94 @@
-<!-- *** Titre *** -->
-<div class="page-header mb-4 d-flex justify-content-between align-items-center">
-  <div>
-    <h3 class="page-title mb-1">Intervention</h3>
-    <nav aria-label="breadcrumb">
-      <ol class="breadcrumb mb-0">
-        <li class="breadcrumb-item"><a href="#">intervention</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Liste des intervention</li>
-      </ol>
-    </nav>
-  </div>
+<div class="page-header mb-3">
+  <h3 class="page-title">Intervention</h3>
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <a [routerLink]="['/interventions/list']">Intervention</a>
+      </li>
+      <li class="breadcrumb-item active">Liste des intervention</li>
+    </ol>
+  </nav>
 </div>
 
-<div class="card">
-  <div class="card-body">
+<!-- ================= AJOUT INTERVENTION ================= -->
+<button class="btn btn-gradient-success mb-3 row" (click)="goToAddIntervention()">
+  ➕ Nouvelle intervention
+</button>
 
-    <!-- Table -->
-    <table class="table table-striped">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Titre</th>
-          <th>Type</th>
-          <th>État</th>
-          <th>Date création</th>
-          <th class="text-center">Actions</th>
-        </tr>
-      </thead>
+<!-- ================= RECHERCHE ================= -->
+<div class="mb-3 position-relative w-50">
+  <input type="text" class="form-control ps-5" placeholder="Rechercher ..." [(ngModel)]="searchTerm"
+    (keyup)="searchInterventions()" />
+  <span class="position-absolute top-50 start-0 translate-middle-y ps-3 text-muted">
+    🔍
+  </span>
+</div>
 
-      <tbody>
-        <tr *ngFor="let i of interventions">
-          <td>{{ i.numero }}</td>
-          <td>{{ i.titre }}</td>
-          <td>{{ i.type }}</td>
-          <td>
-            <span class="badge bg-primary">{{ i.etat }}</span>
-          </td>
-          <td>{{ i.date_creation | date:'dd/MM/yyyy' }}</td>
+<div class="row">
+  <div class="card" *ngIf="interventions.length">
+    <div class="card-body">
+      <!-- Table -->
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Titre</th>
+            <th>Type</th>
+            <th>État</th>
+            <th>Date création</th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
 
-          <td class="text-center">
-            <!-- Bouton Détail -->
-            <button 
-              class="btn btn-sm btn-primary me-2"
-              (click)="openDetail(i.id)">
-              <i class="fa fa-eye"></i>
-            </button>
-
-            <!-- Bouton Modifier -->
-            <button 
-              class="btn btn-sm btn-warning me-2"
-              (click)="editIntervention(i.id)">
-              <i class="fa fa-pencil"></i>
-            </button>
-
-            <!--Button delete-->
-            <button class="btn btn-sm btn-danger" (click)="deleteIntervention(i.id)">
+        <tbody>
+          <tr *ngFor="let i of interventions">
+            <td>{{ i.numero }}</td>
+            <td>{{ i.titre }}</td>
+            <td>{{ i.type }}</td>
+            <td>
+              <span class="badge rounded-pill d-inline-flex align-items-center" [ngClass]="getBadgeClass(i.etat)"
+                style="padding: 0.4em 0.7em;">
+                <i [class]="getEtatIcon(i.etat) + ' me-1'"></i>
+                {{ i.etat || '—' }}
+              </span>
+            </td>
+            <td>{{ i.date_creation | date:'dd/MM/yyyy' }}</td>
+            <td class="text-center">
+              <button class="btn btn-sm btn-primary me-2" (click)="openDetail(i.id)">
+                <i class="fa fa-eye"></i>
+              </button>
+              <button class="btn btn-sm btn-warning me-2" (click)="editIntervention(i.id)">
+                <i class="fa fa-pencil"></i>
+              </button>
+              <button class="btn btn-sm btn-danger" (click)="deleteIntervention(i.id)">
                 <i class="fa fa-trash-o"></i>
-            </button>
-          </td>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
 
-        </tr>
-      </tbody>
-    </table>
+      <!-- ================= PAGINATION ================= -->
+      <nav *ngIf="totalPages > 1" class="mt-3">
+        <ul class="pagination justify-content-center">
+          <li class="page-item" [class.disabled]="currentPage === 1">
+            <button class="page-link" (click)="changePage(currentPage - 1)">Précédent</button>
+          </li>
+          <li class="page-item" *ngFor="let page of pages" [class.active]="page === currentPage">
+            <button class="page-link" (click)="changePage(page)">{{ page }}</button>
+          </li>
+          <li class="page-item" [class.disabled]="currentPage === totalPages">
+            <button class="page-link" (click)="changePage(currentPage + 1)">Suivant</button>
+          </li>
+        </ul>
+      </nav>
 
+    </div>
   </div>
+
+  <div *ngIf="!interventions.length" class="alert alert-secondary text-center">
+    🛠️ Aucune intervention trouvée pour le moment. Vous pouvez en créer une nouvelle.
+  </div>
+
+
 </div>
