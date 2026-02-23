@@ -1,0 +1,204 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h3 class="fw-bold mb-1">Détails Client</h3>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a routerLink="/dashboard">Home</a></li>
+        <li class="breadcrumb-item"><a routerLink="/clients/list">Annuaire</a></li>
+        <li class="breadcrumb-item active">Détails</li>
+      </ol>
+    </nav>
+  </div>
+  <button type="button" class="btn btn-primary" (click)="addChilderClient()">
+    <i class="mdi mdi-account-plus me-2"></i> Ajouter un sous-client
+  </button>
+</div>
+
+<div class="row g-4" *ngIf="client; else noClient">
+  <!-- COLONNE GAUCHE: Infos & Notes -->
+  <div class="col-lg-4">
+    <!-- Notes -->
+    <div class="card mb-4">
+      <div class="card-header bg-white py-3 border-0">
+        <h5 class="fw-bold mb-0 text-primary"><i class="mdi mdi-notebook-edit-outline me-2"></i>Notes interne</h5>
+      </div>
+      <div class="card-body pt-0">
+        <textarea class="form-control mb-3" rows="5" placeholder="Ajouter une note confidentielle..."
+          [(ngModel)]="client.note"></textarea>
+        <button class="btn btn-primary w-100" (click)="saveNote()">
+          <i class="mdi mdi-content-save me-1"></i> Sauvegarder la note
+        </button>
+      </div>
+    </div>
+
+    <!-- Informations Fixes -->
+    <div class="card mb-4">
+      <div class="card-header bg-white py-3 border-0">
+        <h5 class="fw-bold mb-0 text-secondary"><i class="mdi mdi-card-account-details-outline me-2"></i>Informations</h5>
+      </div>
+      <div class="card-body pt-0">
+        <!-- Contacts -->
+        <div class="mb-4">
+          <p class="text-uppercase smaller fw-bold text-muted mb-2">Contacts</p>
+          <div *ngIf="client?.contacts?.length; else noContacts">
+            <div *ngFor="let contact of client?.contacts" class="p-3 bg-light rounded-3 mb-2 small">
+              <div class="fw-bold text-primary mb-1">{{ contact?.poste || 'Contact principal' }}</div>
+              <div class="mb-1"><i class="mdi mdi-email-outline me-1"></i> {{ contact?.emails?.[0]?.email || '—' }}</div>
+              <div><i class="mdi mdi-phone-outline me-1"></i> {{ contact?.telephones?.[0]?.tel || '—' }}</div>
+            </div>
+          </div>
+          <ng-template #noContacts>
+            <p class="smaller text-muted italic">Aucun contact enregistré</p>
+          </ng-template>
+        </div>
+
+        <!-- Adresse -->
+        <div>
+          <p class="text-uppercase smaller fw-bold text-muted mb-2">Adresse de facturation</p>
+          <div *ngIf="client?.adresse; else noAddress" class="small text-secondary">
+            <i class="mdi mdi-map-marker-outline text-primary me-1"></i>
+            {{ client?.adresse?.adresse }}<br>
+            {{ client?.adresse?.code_postal }} {{ client?.adresse?.ville }}<br>
+            <span class="smaller opacity-75">{{ client?.adresse?.province }}, {{ client?.adresse?.pays }}</span>
+          </div>
+          <ng-template #noAddress>
+            <p class="smaller text-muted italic">Aucune adresse enregistrée</p>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COLONNE DROITE: Sous-clients & Historique -->
+  <div class="col-lg-8">
+    <!-- Sous-clients List -->
+    <div class="mb-5">
+      <h5 class="fw-bold mb-3 d-flex align-items-center">
+        <i class="mdi mdi-account-group text-primary me-2"></i> Sous-entités / Sites
+      </h5>
+      <div class="row g-3">
+        <div class="col-md-6" *ngFor="let c of clients">
+          <div class="card h-100 border-0 shadow-sm hover-shadow transition">
+            <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-start">
+              <div>
+                <span class="fw-bold d-block">{{ c.nom_client }}</span>
+                <span class="badge bg-light text-secondary border smaller mt-1">{{ c.type_client | titlecase }}</span>
+              </div>
+              <div class="btn-group">
+                <button *ngIf="c.type_client !== 'habitation'" class="btn btn-xs btn-light" (click)="viewDetails(c)">
+                  <i class="mdi mdi-eye text-primary"></i>
+                </button>
+                <button class="btn btn-xs btn-light" (click)="editClient(c)">
+                  <i class="mdi mdi-pencil text-warning"></i>
+                </button>
+                <button class="btn btn-xs btn-light" (click)="deleteClient(c.id)">
+                  <i class="mdi mdi-delete text-danger"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="clients.length === 0" class="col-12">
+          <div class="text-center py-4 bg-white rounded-3 border border-dashed text-muted smaller">
+            Aucun sous-client ou site rattaché
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGINATION SOUS-CLIENTS -->
+      <div class="d-flex justify-content-center mt-3 gap-2" *ngIf="clientsTotal > clientsLimit">
+        <button class="btn btn-light btn-xs border" [disabled]="clientsPage === 1" (click)="prevClientsPage()">◀</button>
+        <span class="smaller align-self-center">Page {{ clientsPage }}</span>
+        <button class="btn btn-light btn-xs border" [disabled]="clientsPage * clientsLimit >= clientsTotal" (click)="nextClientsPage()">▶</button>
+      </div>
+    </div>
+
+    <!-- Historique des interventions -->
+    <div class="historique">
+      <h5 class="fw-bold mb-3 d-flex align-items-center">
+        <i class="mdi mdi-history text-primary me-2"></i> Historique des interventions
+      </h5>
+      <div class="card">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th class="ps-4">Numéro</th>
+                  <th>Titre</th>
+                  <th>Adresse</th>
+                  <th>Date</th>
+                  <th class="text-end pe-4">Détails</th>
+                </tr>
+              </thead>
+              <tbody class="small">
+                <tr *ngFor="let item of iHistory">
+                  <td class="ps-4 fw-bold text-primary">{{ item.interventionNumero || '—' }}</td>
+                  <td>{{ item.interventionTitre || '—' }}</td>
+                  <td class="text-truncate" style="max-width: 150px;">{{ item.habitation || '—' }}</td>
+                  <td class="text-muted">{{ item.interventionDateCreation | date:'dd/MM/yyyy' }}</td>
+                  <td class="text-end pe-4">
+                    <button class="btn btn-xs btn-outline-primary rounded-pill" (click)="openInterventionModal(item)">
+                      Ouvrir
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div *ngIf="!iHistory?.length" class="p-4 text-center text-muted smaller">
+            Aucune intervention passée enregistrée pour ce client.
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGINATION HISTORIQUE -->
+      <div class="d-flex justify-content-center mt-3 gap-2" *ngIf="historyTotal > historyLimit">
+        <button class="btn btn-light btn-xs border" [disabled]="historyPage === 1" (click)="prevHistoryPage()">◀</button>
+        <span class="smaller align-self-center">Page {{ historyPage }}</span>
+        <button class="btn btn-light btn-xs border" [disabled]="historyPage * historyLimit >= historyTotal" (click)="nextHistoryPage()">▶</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #noClient>
+  <div class="text-center py-5">
+    <i class="mdi mdi-account-search display-1 text-muted"></i>
+    <p class="text-muted mt-3">Aucun client sélectionné</p>
+  </div>
+</ng-template>
+
+<!-- Modals -->
+<app-modal-save #modalSave (clientAdded)="getAllClients()" (clientUpdated)="getAllClients()"></app-modal-save>
+
+<div class="modal fade" id="interventionDetailModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+      <div class="modal-header bg-white py-3 border-0">
+        <h5 class="modal-title fw-bold">
+          <i class="mdi mdi-clipboard-text-outline text-primary me-2"></i>
+          {{ selectedIntervention?.interventionTitre || 'Détail intervention' }}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4 bg-light">
+        <div class="row g-3 small">
+          <div class="col-md-6"><span class="text-muted">Numéro:</span> <span class="fw-bold ms-2">{{ selectedIntervention?.interventionNumero }}</span></div>
+          <div class="col-md-6"><span class="text-muted">Client:</span> <span class="fw-bold ms-2">{{ selectedIntervention?.clientNom }}</span></div>
+          <div class="col-md-12"><span class="text-muted">Adresse:</span> <span class="fw-medium ms-2">{{ selectedIntervention?.habitation }}</span></div>
+          <div class="col-md-6"><span class="text-muted">Échéance:</span> <span class="fw-medium ms-2">{{ selectedIntervention?.interventionDatePrevue | date:'short' }}</span></div>
+          <div class="col-md-6"><span class="text-muted">Créée le:</span> <span class="fw-medium ms-2">{{ selectedIntervention?.interventionDateCreation | date:'short' }}</span></div>
+        </div>
+        <hr class="my-4 opacity-10">
+        <div>
+          <h6 class="fw-bold text-uppercase smaller text-muted mb-2">Description</h6>
+          <p class="bg-white p-3 rounded-3 shadow-sm mb-0">{{ selectedIntervention?.interventionDescription || '—' }}</p>
+        </div>
+      </div>
+      <div class="modal-footer bg-white border-0">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,172 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h3 class="fw-bold mb-1">Affaires</h3>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a routerLink="/dashboard">Home</a></li>
+        <li class="breadcrumb-item active">Affaires</li>
+      </ol>
+    </nav>
+  </div>
+  <button class="btn btn-primary" (click)="goToAddAffaire()">
+    <i class="mdi mdi-plus me-2"></i> Nouvelle affaire
+  </button>
+</div>
+
+<div class="row">
+  <!-- ================= TABLEAU ================= -->
+  <div class="col-md-7 mb-4">
+    <div class="card mb-3">
+      <div class="card-body py-3">
+        <div class="position-relative">
+          <input type="text" class="form-control ps-5" placeholder="Rechercher une affaire..."
+            [(ngModel)]="searchTerm" (keyup)="searchAffaires()" />
+          <span class="position-absolute top-50 start-0 translate-middle-y ps-3 text-muted">
+            <i class="mdi mdi-magnify fs-4"></i>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0" *ngIf="affaires.length">
+            <thead>
+              <tr>
+                <th class="ps-4">Référence</th>
+                <th>Titre</th>
+                <th class="pe-4">Client</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let a of affaires" (click)="selectAffaire(a)" style="cursor:pointer"
+                [class.table-active]="selectedAffaire?.affaireId === a.affaireId">
+                <td class="ps-4 fw-semibold text-primary">{{ a.reference }}</td>
+                <td class="fw-medium">{{ a.titre }}</td>
+                <td class="pe-4">{{ a.nomClient }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div *ngIf="!affaires.length" class="p-4 text-center text-muted">
+          <i class="mdi mdi-folder-open-outline display-4 d-block mb-2"></i>
+          📂 Aucune affaire n’est disponible pour le moment.
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= PAGINATION ================= -->
+    <nav *ngIf="total > limit" class="mt-4">
+      <ul class="pagination justify-content-center">
+        <li class="page-item" [class.disabled]="page === 1">
+          <button class="page-link" (click)="changePage(page - 1)">Précédent</button>
+        </li>
+        <li class="page-item" *ngFor="let p of totalPages" [class.active]="p === page">
+          <button class="page-link" (click)="changePage(p)">{{ p }}</button>
+        </li>
+        <li class="page-item" [class.disabled]="page === totalPages.length">
+          <button class="page-link" (click)="changePage(page + 1)">Suivant</button>
+        </li>
+      </ul>
+    </nav>
+  </div>
+
+  <!-- ================= DETAILS ================= -->
+  <div class="col-md-5">
+    <div *ngIf="selectedAffaire; else noSelection" class="card shadow-sm border-0 sticky-top" style="top: 100px;">
+      <div class="card-header bg-white border-bottom py-3">
+        <h5 class="fw-bold mb-1">{{ selectedAffaire.titre }}</h5>
+        <p class="text-muted small mb-3">Client : {{ selectedAffaire.nomClient }}</p>
+
+        <div class="d-flex flex-wrap gap-2">
+          <button class="btn btn-sm btn-success flex-grow-1" (click)="goToAddLinkedAffaire(selectedAffaire)">
+            <i class="mdi mdi-plus-circle-outline me-1"></i> Intervention
+          </button>
+          <button class="btn btn-sm btn-outline-primary" (click)="goToEditAffaire(selectedAffaire)">
+            <i class="mdi mdi-pencil"></i>
+          </button>
+          <button class="btn btn-sm btn-outline-danger" (click)="deleteAffaire(selectedAffaire.affaireId)">
+            <i class="mdi mdi-delete"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div class="mb-4">
+          <h6 class="text-uppercase small fw-bold text-muted mb-3">Informations générales</h6>
+          <div class="d-flex flex-column gap-2">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="text-muted">Client</span>
+              <span class="fw-medium text-primary">{{ selectedAffaire.nomClient }}</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="text-muted">Dates</span>
+              <span class="fw-medium">{{ selectedAffaire.dateDebut | date:'dd/MM/yyyy' }} - {{ selectedAffaire.dateFin | date:'dd/MM/yyyy' }}</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="text-muted">Durée prévue</span>
+              <span class="fw-medium">{{ selectedAffaire.dureePrevueHeures || 0 }}h {{ selectedAffaire.dureePrevueMinutes || 0 }}m</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-4" *ngIf="selectedAffaire.referents?.length">
+          <h6 class="text-uppercase small fw-bold text-muted mb-2">Référents</h6>
+          <ul class="list-unstyled mb-0">
+            <li *ngFor="let r of selectedAffaire.referents" class="d-flex align-items-center mb-2">
+              <div class="avatar-circle-sm bg-light text-primary me-2">{{ r.prenom[0] }}{{ r.nom[0] }}</div>
+              <div>
+                <div class="small fw-bold">{{ r.prenom }} {{ r.nom }}</div>
+                <div class="text-muted smaller">{{ r.email }}</div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="mb-4">
+          <h6 class="text-uppercase small fw-bold text-muted mb-2">Mémo</h6>
+          <div class="bg-light p-3 rounded small text-secondary">
+            {{ selectedAffaire.memo || 'Aucun mémo disponible.' }}
+          </div>
+        </div>
+
+        <div>
+          <h6 class="text-uppercase small fw-bold text-muted mb-2">Fichiers joints</h6>
+          <div class="d-flex gap-2 mb-3">
+            <button class="btn btn-sm btn-light border flex-grow-1" (click)="fileInput.click()">
+              <i class="mdi mdi-attachment me-1"></i> Choisir
+            </button>
+            <button class="btn btn-sm btn-primary" [disabled]="!newFiles.length" (click)="uploadFiles()">
+              <i class="mdi mdi-upload"></i>
+            </button>
+            <input type="file" #fileInput class="d-none" multiple (change)="onFileSelected($event)">
+          </div>
+
+          <ul class="list-group list-group-flush border-top">
+            <li *ngFor="let f of selectedAffaire.fichiers" class="list-group-item d-flex justify-content-between align-items-center px-0">
+              <div class="text-truncate" style="max-width: 200px;" title="{{ f.nom }}">
+                <i class="mdi mdi-file-outline text-primary me-2"></i>
+                <span class="small">{{ f.nom }}</span>
+              </div>
+              <div class="btn-group">
+                <a class="btn btn-xs btn-link text-primary" [href]="url_upload + '/' + f.chemin" target="_blank"><i class="mdi mdi-eye"></i></a>
+                <button class="btn btn-xs btn-link text-danger" (click)="removeUploadedFile(f.id)"><i class="mdi mdi-delete"></i></button>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <ng-template #noSelection>
+      <div class="card bg-light border-0">
+        <div class="card-body text-center py-5">
+          <i class="mdi mdi-cursor-default-outline display-4 text-muted d-block mb-3"></i>
+          <p class="text-muted mb-0">Sélectionnez une affaire pour voir les détails</p>
+        </div>
+      </div>
+    </ng-template>
+  </div>
+</div>

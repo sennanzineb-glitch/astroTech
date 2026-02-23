@@ -1,0 +1,109 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h3 class="fw-bold mb-1">Techniciens</h3>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a routerLink="/dashboard">Home</a></li>
+        <li class="breadcrumb-item active">Techniciens</li>
+      </ol>
+    </nav>
+  </div>
+  <button class="btn btn-primary" [routerLink]="['/techniciens/edit']">
+    <i class="mdi mdi-plus me-2"></i> Nouveau technicien
+  </button>
+</div>
+
+<div class="row">
+  <div class="col-12">
+    <!-- ================= RECHERCHE ================= -->
+    <div class="card mb-4">
+      <div class="card-body py-3">
+        <div class="position-relative" style="max-width: 400px;">
+          <input type="text" class="form-control ps-5" placeholder="Rechercher un technicien..." [(ngModel)]="searchTerm"
+            (keyup)="searchTechniciens()" />
+          <span class="position-absolute top-50 start-0 translate-middle-y ps-3 text-muted">
+            <i class="mdi mdi-magnify fs-4"></i>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0" *ngIf="techniciens?.length > 0; else noTechniciens">
+            <thead>
+              <tr>
+                <th class="ps-4">Technicien</th>
+                <th>Téléphone</th>
+                <th>Email</th>
+                <th>Mot de passe</th>
+                <th>Spécialité</th>
+                <th class="text-center pe-4">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let technicien of techniciens; let i = index">
+                <td class="ps-4">
+                  <div class="d-flex align-items-center">
+                    <div class="avatar-circle-sm bg-primary-subtle text-primary me-3">
+                      {{ technicien.prenom[0] }}{{ technicien.nom[0] }}
+                    </div>
+                    <div>
+                      <div class="fw-bold">{{ technicien.prenom }} {{ technicien.nom }}</div>
+                      <div class="text-muted smaller">ID: #{{ technicien.id }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="small">{{ technicien.telephone }}</td>
+                <td class="small">{{ technicien.email }}</td>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <span class="smaller me-2">{{ technicien.showPassword ? technicien.pwd : '••••••••' }}</span>
+                    <button type="button" class="btn btn-xs btn-light border-0" (click)="togglePassword(technicien)">
+                      <i class="mdi" [ngClass]="technicien.showPassword ? 'mdi-eye-off' : 'mdi-eye'"></i>
+                    </button>
+                  </div>
+                </td>
+                <td><span class="badge rounded-pill bg-light text-secondary border small">{{ technicien.specialite }}</span></td>
+                <td class="text-center pe-4">
+                  <div class="btn-group">
+                    <button class="btn btn-sm btn-light me-1" [routerLink]="['/techniciens/edit', technicien.id]" title="Modifier">
+                      <i class="mdi mdi-pencil text-warning"></i>
+                    </button>
+                    <button class="btn btn-sm btn-light" (click)="deleteTechnicien(technicien.id)" title="Supprimer">
+                      <i class="mdi mdi-delete text-danger"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= PAGINATION ================= -->
+    <nav *ngIf="totalPages > 1" class="mt-4">
+      <ul class="pagination justify-content-center">
+        <li class="page-item" [class.disabled]="currentPage === 1">
+          <button class="page-link" (click)="changePage(currentPage - 1)">Précédent</button>
+        </li>
+        <li class="page-item" *ngFor="let page of [].constructor(totalPages); let idx = index"
+          [class.active]="currentPage === idx + 1">
+          <button class="page-link" (click)="changePage(idx + 1)">{{ idx + 1 }}</button>
+        </li>
+        <li class="page-item" [class.disabled]="currentPage === totalPages">
+          <button class="page-link" (click)="changePage(currentPage + 1)">Suivant</button>
+        </li>
+      </ul>
+    </nav>
+
+    <ng-template #noTechniciens>
+      <div class="p-5 text-center text-muted">
+        <i class="mdi mdi-account-wrench-outline display-4 d-block mb-3"></i>
+        <p>Aucun technicien n’est disponible pour le moment.</p>
+      </div>
+    </ng-template>
+  </div>
+</div>

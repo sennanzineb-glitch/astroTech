@@ -1,0 +1,73 @@
+<nav class="sidebar" id="sidebar">
+  <ul class="nav flex-column">
+    <li class="nav-item nav-profile mb-4">
+      <div class="d-flex align-items-center px-3">
+        <div class="avatar-circle me-3">{{ initials }}</div>
+        <div class="nav-profile-text d-flex flex-column">
+          <span class="fw-bold">{{currentUser?.full_name}}</span>
+          <span class="text-muted small">{{currentUser?.role}}</span>
+        </div>
+      </div>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" routerLink="dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <i class="mdi mdi-view-dashboard"></i>
+        <span class="menu-title">Tableau de bord</span>
+      </a>
+    </li>
+
+    <li class="sidebar-label">Listing</li>
+
+    <li class="nav-item">
+      <a class="nav-link" routerLink="affaires/list" routerLinkActive="active">
+        <i class="mdi mdi-book-multiple"></i>
+        <span class="menu-title">Affaires</span>
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" routerLink="interventions/list" routerLinkActive="active">
+        <i class="mdi mdi-map-marker-multiple"></i>
+        <span class="menu-title">Intervention</span>
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" routerLink="clients/list" routerLinkActive="active">
+        <i class="mdi mdi-folder-account"></i>
+        <span class="menu-title">Annuaire</span>
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" routerLink="referents/list" routerLinkActive="active">
+        <i class="mdi mdi-account-tie"></i>
+        <span class="menu-title">Référents</span>
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" routerLink="techniciens/list" routerLinkActive="active">
+        <i class="mdi mdi-account-wrench"></i>
+        <span class="menu-title">Techniciens</span>
+      </a>
+    </li>
+
+    <li class="sidebar-label">Actions</li>
+
+    <li class="nav-item">
+      <a class="nav-link" routerLink="affaires/edit" routerLinkActive="active">
+        <i class="mdi mdi-file-plus"></i>
+        <span class="menu-title">Nouvelle Affaire</span>
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" routerLink="interventions/planning" routerLinkActive="active">
+        <i class="mdi mdi-calendar"></i>
+        <span class="menu-title">Planning</span>
+      </a>
+    </li>
+  </ul>
+</nav>

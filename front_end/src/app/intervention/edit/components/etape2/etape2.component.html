@@ -1,0 +1,105 @@
+<div class="grid-margin stretch-card d-block">
+  <div class="card">
+    <div class="card-body">
+      <h4 class="card-title">Données initiales</h4>
+      <p class="card-description">
+        Remplissez les informations de l'intervention
+      </p>
+
+      <form [formGroup]="form" (ngSubmit)="saveStep()">
+        <div class="row">
+          <!-- Colonne gauche -->
+          <div class="col-sm-6">
+
+            <!-- Priorité -->
+            <div class="mb-3">
+              <label for="priorite">Priorité <strong class="text-danger">*</strong></label>
+              <select id="priorite" class="form-select form-select-sm" formControlName="priorite">
+                <option value="" disabled>Sélectionner la priorité</option>
+                <option value="haute">Haute</option>
+                <option value="moyenne">Moyenne</option>
+                <option value="basse">Basse</option>
+              </select>
+            </div>
+
+            <!-- Référent(s) -->
+            <div class="mb-3">
+              <label for="referents">Référent(s) <strong class="text-danger">*</strong></label>
+              <select id="referents" class="form-select" formControlName="referent_ids" multiple>
+                <option *ngFor="let referent of referentsList" [value]="referent.id">
+                  {{ referent.nom }}
+                </option>
+              </select>
+            </div>
+
+            <!-- État -->
+            <div class="mb-3">
+              <label for="etat">État <strong class="text-danger">*</strong></label>
+              <select id="etat" class="form-select form-select-sm" formControlName="etat">
+                <option value="" disabled>Sélectionner l'état</option>
+                <option value="en_cours">En cours</option>
+                <option value="terminee">Terminée</option>
+                <option value="annulee">Annulée</option>
+              </select>
+            </div>
+
+            <!-- Date butoir de réalisation -->
+            <div class="mb-3">
+              <label for="date_butoir_realisation">Date butoir de réalisation <strong class="text-danger">*</strong></label>
+              <input type="date" id="date_butoir_realisation" class="form-control form-control-sm" formControlName="date_butoir_realisation">
+            </div>
+
+            <!-- Date de clôture estimée de l'affaire -->
+            <div class="mb-3">
+              <label for="date_cloture_estimee">Date de clôture estimée de l'affaire</label>
+              <input type="date" id="date_cloture_estimee" class="form-control form-control-sm" formControlName="date_cloture_estimee">
+            </div>
+          </div>
+
+          <!-- Colonne droite -->
+          <div class="col-sm-6">
+
+            <!-- Mots-clés liés -->
+            <div class="mb-3">
+              <label for="exampleInputName1">Mots-clés liés</label>
+              <input type="text" class="form-control" id="exampleInputName1" placeholder="Name"
+                [(ngModel)]="enteredKeyword" (keyup.enter)="addKeyword()" [ngModelOptions]="{standalone: true}">
+
+              <div class="mt-2">
+                <span class="badge bg-primary me-2 mb-2" *ngFor="let keyword of keywords; let i = index">
+                  {{ keyword }}
+                  <button type="button" class="btn-close btn-close-white btn-sm ms-2" aria-label="Close"
+                    (click)="deleteKeyword(i)">
+                  </button>
+                </span>
+              </div>
+            </div>
+
+            <!-- Montant de l’intervention -->
+            <div class="mb-3">
+              <label for="montant_intervention">Montant de l’intervention</label>
+              <input type="number" id="montant_intervention" class="form-control form-control-sm"
+                formControlName="montant_intervention" placeholder="0.00">
+            </div>
+
+            <!-- Montant main-d'œuvre -->
+            <div class="mb-3">
+              <label for="montant_main_oeuvre">Montant main-d'œuvre</label>
+              <input type="number" id="montant_main_oeuvre" class="form-control form-control-sm"
+                formControlName="montant_main_oeuvre" placeholder="0.00">
+            </div>
+
+            <!-- Montant fournitures -->
+            <div class="mb-3">
+              <label for="montant_fournitures">Montant fournitures</label>
+              <input type="number" id="montant_fournitures" class="form-control form-control-sm"
+                formControlName="montant_fournitures" placeholder="0.00">
+            </div>
+
+          </div>
+        </div>
+      </form>
+      
+    </div>
+  </div>
+</div>

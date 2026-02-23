@@ -1,0 +1,390 @@
+<div class="container-fluid" *ngIf="intervention">
+  <!-- ===== TITRE ET ACTIONS ===== -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold mb-1">Détails Intervention <span class="text-primary">#{{ intervention.numero }}</span></h3>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item"><a routerLink="/dashboard">Home</a></li>
+          <li class="breadcrumb-item"><a routerLink="/interventions/list">Interventions</a></li>
+          <li class="breadcrumb-item active">Détails</li>
+        </ol>
+      </nav>
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-outline-warning" title="Modifier" (click)="editIntervention(intervention.id)">
+        <i class="mdi mdi-pencil me-1"></i> Modifier
+      </button>
+      <button class="btn btn-outline-danger" title="Supprimer" (click)="deleteIntervention(intervention.id)">
+        <i class="mdi mdi-delete me-1"></i> Supprimer
+      </button>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- ===== COLONNE GAUCHE ===== -->
+    <div class="col-lg-7">
+      <!-- Card : Informations Principales -->
+      <div class="card mb-4">
+        <div class="card-header bg-white py-3 border-0">
+          <h5 class="fw-bold mb-0 text-primary"><i class="mdi mdi-information-outline me-2"></i>Informations générales</h5>
+        </div>
+        <div class="card-body pt-0">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="text-muted smaller fw-bold text-uppercase d-block mb-1">Titre</label>
+              <p class="fw-medium">{{ intervention.titre }}</p>
+            </div>
+            <div class="col-md-6">
+              <label class="text-muted smaller fw-bold text-uppercase d-block mb-1">Type</label>
+              <p><span class="badge rounded-pill bg-light text-secondary border px-3">{{ intervention.type }}</span></p>
+            </div>
+            <div class="col-md-4">
+              <label class="text-muted smaller fw-bold text-uppercase d-block mb-1">Priorité</label>
+              <p><span class="badge rounded-pill bg-warning-subtle text-warning border border-warning-subtle px-3">{{ intervention.priorite || 'Normale' }}</span></p>
+            </div>
+            <div class="col-md-4">
+              <label class="text-muted smaller fw-bold text-uppercase d-block mb-1">État</label>
+              <p><span class="badge rounded-pill px-3" [ngClass]="getBadgeClass(intervention.etat)">{{ intervention.etat || 'Nouveau' }}</span></p>
+            </div>
+            <div class="col-md-4">
+              <label class="text-muted smaller fw-bold text-uppercase d-block mb-1">Créé le</label>
+              <p class="small text-muted">{{ intervention.date_creation | date:'dd/MM/yyyy HH:mm' }}</p>
+            </div>
+            <div class="col-12">
+              <label class="text-muted smaller fw-bold text-uppercase d-block mb-1">Description</label>
+              <div class="bg-light p-3 rounded-3 small text-secondary italic">
+                {{ intervention.description || 'Aucune description fournie.' }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card : Client & Localisation -->
+      <div class="card mb-4">
+        <div class="card-header bg-white py-3 border-0">
+          <h5 class="fw-bold mb-0 text-success"><i class="mdi mdi-map-marker-outline me-2"></i>Client & Localisation</h5>
+        </div>
+        <div class="card-body pt-0">
+          <div class="row g-4">
+            <!-- CLIENT -->
+            <div class="col-md-6" *ngIf="intervention?.client">
+              <p class="text-uppercase smaller fw-bold text-muted mb-2">Informations Client</p>
+              <div class="d-flex align-items-center mb-3">
+                <div class="avatar-circle-sm bg-success-subtle text-success me-3">
+                  {{ intervention.client.nom_client[0] }}
+                </div>
+                <div>
+                  <div class="fw-bold">{{ intervention.client.nom_client }}</div>
+                  <div class="text-muted smaller">{{ intervention.client.type_client }}</div>
+                </div>
+              </div>
+              <div class="small text-muted" *ngIf="intervention.client?.adresse">
+                <i class="mdi mdi-map-marker me-1"></i>
+                {{ intervention.client.adresse.adresse }}, {{ intervention.client.adresse.ville }}
+              </div>
+            </div>
+
+            <!-- ZONE -->
+            <div class="col-md-6 border-start ps-4" *ngIf="intervention?.zone_intervention?.data">
+              <p class="text-uppercase smaller fw-bold text-muted mb-2">Zone d'intervention</p>
+              <div class="mb-2 fw-bold text-success">
+                <i class="mdi mdi-layers-outline me-2"></i>{{ intervention.zone_intervention.data.reference }}
+              </div>
+              <div class="small text-muted" *ngIf="intervention.zone_intervention.data?.adresse">
+                <i class="mdi mdi-map-marker me-1"></i>
+                {{ intervention.zone_intervention.data.adresse.adresse }}<br>
+                {{ intervention.zone_intervention.data.adresse.code_postal }} {{ intervention.zone_intervention.data.adresse.ville }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card : Équipe & Personnel -->
+      <div class="card mb-4">
+        <div class="card-header bg-white py-3 border-0">
+          <h5 class="fw-bold mb-0 text-info"><i class="mdi mdi-account-group-outline me-2"></i>Personnel Affecté</h5>
+        </div>
+        <div class="card-body pt-0">
+          <!-- Équipe -->
+          <div *ngIf="intervention.equipe" class="mb-4">
+            <p class="text-uppercase smaller fw-bold text-muted mb-2">Équipe</p>
+            <div class="p-3 bg-light rounded-3 mb-3">
+              <div class="fw-bold text-primary">{{ intervention.equipe.nom }}</div>
+              <div class="smaller text-muted">{{ intervention.equipe.description }}</div>
+            </div>
+            
+            <div *ngIf="intervention.equipe.chef" class="d-flex align-items-center p-2 border rounded-3 mb-3 bg-white shadow-sm">
+              <div class="avatar-circle-sm bg-primary text-white me-3">
+                <i class="mdi mdi-account-star"></i>
+              </div>
+              <div>
+                <div class="smaller fw-bold text-muted text-uppercase">Chef d'équipe</div>
+                <div class="fw-bold">{{ intervention.equipe.chef.nom }} {{ intervention.equipe.chef.prenom }}</div>
+                <div class="smaller text-muted">{{ intervention.equipe.chef.email }} | {{ intervention.equipe.chef.telephone }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Techniciens Individuels -->
+          <div *ngIf="intervention.techniciens?.length">
+            <p class="text-uppercase smaller fw-bold text-muted mb-2">Techniciens</p>
+            <div class="row g-2">
+              <div class="col-md-6" *ngFor="let t of intervention.techniciens">
+                <div class="d-flex align-items-center p-2 border rounded-3 bg-white">
+                  <div class="avatar-circle-sm bg-info text-white me-2" style="width: 28px; height: 28px; font-size: 0.7rem;">{{ t.nom[0] }}</div>
+                  <span class="small fw-medium">{{ t.nom }} {{ t.prenom }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div *ngIf="!intervention.equipe && !intervention.techniciens?.length" class="text-center py-4 bg-light rounded-3 text-muted smaller">
+            <i class="mdi mdi-account-question-outline display-6 d-block mb-2"></i>
+            Aucun personnel n'est encore affecté à cette intervention.
+          </div>
+        </div>
+      </div>
+
+      <!-- Card : Workflow - Détails de l'intervention terrain -->
+      <div class="card mb-4" *ngIf="intervention.photos?.length || intervention.signatures?.length || intervention.workflow">
+        <div class="card-header bg-white py-3 border-0">
+          <h5 class="fw-bold mb-0 text-success"><i class="mdi mdi-clipboard-check-outline me-2"></i>Rapport d'intervention terrain</h5>
+        </div>
+        <div class="card-body pt-0">
+
+          <!-- Workflow completion status -->
+          <div *ngIf="intervention.workflow" class="mb-4 p-3 bg-success-subtle rounded-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="fw-bold text-success"><i class="mdi mdi-check-circle me-1"></i>Intervention complétée</span>
+              <span class="small text-muted">{{ intervention.workflow.completed_at | date:'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+            <div class="small text-muted" *ngIf="intervention.workflow.comment">
+              <strong>Commentaire:</strong> {{ intervention.workflow.comment }}
+            </div>
+          </div>
+
+          <!-- Photos Before -->
+          <div *ngIf="intervention.photos_by_type?.before?.length" class="mb-4">
+            <p class="text-uppercase smaller fw-bold text-muted mb-2">
+              <i class="mdi mdi-camera-outline me-1"></i>Photos Avant ({{ intervention.photos_by_type.before.length }})
+            </p>
+            <div class="row g-2">
+              <div class="col-4" *ngFor="let photo of intervention.photos_by_type.before">
+                <div class="photo-thumbnail border rounded-3 overflow-hidden position-relative" style="height: 100px;">
+                  <img [src]="photo.url" class="w-100 h-100 object-fit-cover" [alt]="'Photo avant ' + photo.id">
+                  <div class="position-absolute bottom-0 start-0 end-0 bg-dark bg-opacity-75 text-white px-2 py-1" style="font-size: 0.65rem;" *ngIf="photo.comment">
+                    {{ photo.comment }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Photos After -->
+          <div *ngIf="intervention.photos_by_type?.after?.length" class="mb-4">
+            <p class="text-uppercase smaller fw-bold text-muted mb-2">
+              <i class="mdi mdi-camera-outline me-1"></i>Photos Après ({{ intervention.photos_by_type.after.length }})
+            </p>
+            <div class="row g-2">
+              <div class="col-4" *ngFor="let photo of intervention.photos_by_type.after">
+                <div class="photo-thumbnail border rounded-3 overflow-hidden position-relative" style="height: 100px;">
+                  <img [src]="photo.url" class="w-100 h-100 object-fit-cover" [alt]="'Photo après ' + photo.id">
+                  <div class="position-absolute bottom-0 start-0 end-0 bg-dark bg-opacity-75 text-white px-2 py-1" style="font-size: 0.65rem;" *ngIf="photo.comment">
+                    {{ photo.comment }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Additional Work Photos -->
+          <div *ngIf="intervention.photos_by_type?.additional_work?.length" class="mb-4">
+            <p class="text-uppercase smaller fw-bold text-muted mb-2">
+              <i class="mdi mdi-camera-outline me-1"></i>Travaux Supplémentaires ({{ intervention.photos_by_type.additional_work.length }})
+            </p>
+            <div class="row g-2">
+              <div class="col-4" *ngFor="let photo of intervention.photos_by_type.additional_work">
+                <div class="photo-thumbnail border rounded-3 overflow-hidden position-relative" style="height: 100px;">
+                  <img [src]="photo.url" class="w-100 h-100 object-fit-cover" [alt]="'Photo travaux ' + photo.id">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Signatures -->
+          <div *ngIf="intervention.signatures?.length" class="mb-4">
+            <p class="text-uppercase smaller fw-bold text-muted mb-2">
+              <i class="mdi mdi-draw me-1"></i>Signatures
+            </p>
+            <div class="row g-2">
+              <div class="col-6" *ngFor="let signature of intervention.signatures">
+                <div class="border rounded-3 p-2 bg-light text-center">
+                  <div class="small fw-bold text-muted mb-1">{{ signature.signature_type }}</div>
+                  <div class="bg-white rounded-2 p-2" style="height: 80px; overflow: hidden;">
+                    <img [src]="signature.signature_data" class="w-100 h-100 object-fit-contain" [alt]="'Signature ' + signature.signature_type">
+                  </div>
+                  <div class="smaller text-muted mt-1">{{ signature.signed_at | date:'dd/MM HH:mm' }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Interruptions -->
+          <div *ngIf="intervention.interruptions?.length" class="mb-4">
+            <p class="text-uppercase smaller fw-bold text-muted mb-2">
+              <i class="mdi mdi-pause-circle-outline me-1"></i>Interruptions ({{ intervention.interruptions.length }})
+            </p>
+            <div *ngFor="let interruption of intervention.interruptions" class="p-2 border-start border-3 border-warning bg-light rounded-2 mb-2">
+              <div class="small fw-bold">{{ interruption.reason }}</div>
+              <div class="smaller text-muted">
+                <i class="mdi mdi-clock-outline me-1"></i>
+                {{ interruption.started_at | date:'HH:mm' }} - {{ interruption.ended_at | date:'HH:mm' }}
+                <span *ngIf="interruption.duration_minutes">({{ interruption.duration_minutes }} min)</span>
+              </div>
+              <div class="smaller text-muted" *ngIf="interruption.custom_reason">{{ interruption.custom_reason }}</div>
+            </div>
+          </div>
+
+          <!-- Technical Observations -->
+          <div *ngIf="intervention.workflow?.technical_observations" class="mb-4">
+            <p class="text-uppercase smaller fw-bold text-muted mb-2">
+              <i class="mdi mdi-text-box-outline me-1"></i>Observations Techniques
+            </p>
+            <div class="bg-light p-3 rounded-3 small">
+              {{ intervention.workflow.technical_observations }}
+            </div>
+          </div>
+
+          <!-- Client Observations -->
+          <div *ngIf="intervention.workflow?.client_observations" class="mb-4">
+            <p class="text-uppercase smaller fw-bold text-muted mb-2">
+              <i class="mdi mdi-comment-text-outline me-1"></i>Observations Client
+            </p>
+            <div class="bg-light p-3 rounded-3 small">
+              {{ intervention.workflow.client_observations }}
+            </div>
+          </div>
+
+          <!-- Client Rating -->
+          <div *ngIf="intervention.workflow?.client_rating" class="mb-0">
+            <p class="text-uppercase smaller fw-bold text-muted mb-2">
+              <i class="mdi mdi-star-outline me-1"></i>Évaluation Client
+            </p>
+            <div class="d-flex align-items-center">
+              <span class="h5 mb-0 me-2">{{ intervention.workflow.client_rating }}/5</span>
+              <div>
+                <i class="mdi mdi-star text-warning" *ngFor="let star of [1,2,3,4,5].slice(0, intervention.workflow.client_rating)"></i>
+                <i class="mdi mdi-star-outline text-muted" *ngFor="let star of [1,2,3,4,5].slice(intervention.workflow.client_rating)"></i>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== COLONNE DROITE ===== -->
+    <div class="col-lg-5">
+      <!-- Actions Rapides -->
+      <div class="card mb-4 shadow-sm border-primary-subtle border-2">
+        <div class="card-header bg-white py-3 border-0">
+          <h5 class="fw-bold mb-0 text-warning"><i class="mdi mdi-lightning-bolt-outline me-2"></i>Actions Rapides</h5>
+        </div>
+        <div class="card-body pt-0">
+          <div class="mb-4">
+            <label class="form-label small fw-bold text-muted text-uppercase">Mettre à jour l'état</label>
+            <div class="input-group">
+              <select class="form-select" [(ngModel)]="newEtat">
+                <option value="" disabled>Choisir un état...</option>
+                <option value="en_cours">En cours</option>
+                <option value="terminee">Terminée</option>
+                <option value="annulee">Annulée</option>
+              </select>
+              <button class="btn btn-warning" [disabled]="!newEtat" (click)="updateEtat()">
+                <i class="mdi mdi-check"></i> OK
+              </button>
+            </div>
+          </div>
+
+          <hr class="opacity-10">
+
+          <div class="mb-0">
+            <label class="form-label small fw-bold text-muted text-uppercase">Planifier une séance</label>
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <input type="date" class="form-control form-control-sm" [(ngModel)]="planning.date">
+              </div>
+              <div class="col-6">
+                <input type="time" class="form-control form-control-sm" [(ngModel)]="planning.heure">
+              </div>
+            </div>
+            <button class="btn btn-secondary btn-sm w-100" (click)="addPlanning()">
+              <i class="mdi mdi-calendar-plus me-1"></i> Ajouter au planning
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Planning Historique -->
+      <div class="card mb-4" *ngIf="intervention.plannings?.length">
+        <div class="card-header bg-white py-3 border-0">
+          <h5 class="fw-bold mb-0 text-secondary"><i class="mdi mdi-history me-2"></i>Séances prévues</h5>
+        </div>
+        <div class="card-body pt-0">
+          <div class="list-group list-group-flush">
+            <div *ngFor="let p of intervention.plannings" class="list-group-item px-0 border-0 mb-2 p-2 bg-light rounded-3 d-flex justify-content-between align-items-center">
+              <div class="d-flex align-items-center">
+                <div class="avatar-circle-sm bg-white text-secondary me-2" style="width: 32px; height: 32px;"><i class="mdi mdi-clock-outline"></i></div>
+                <div>
+                  <div class="fw-bold small">{{ p.date | date:'dd MMMM yyyy' }}</div>
+                  <div class="smaller text-muted">Heure: {{ p.heure }}</div>
+                </div>
+              </div>
+              <span class="badge bg-white text-secondary border smaller">Planifié</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Affectation Panel -->
+      <div class="card mb-4">
+        <div class="card-header bg-white py-3 border-0">
+          <h5 class="fw-bold mb-0 text-primary"><i class="mdi mdi-account-plus-outline me-2"></i>Affectation</h5>
+        </div>
+        <div class="card-body pt-0">
+          <div class="d-flex gap-4 mb-3">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="typeAffectation" id="affEquipe" value="equipe" [(ngModel)]="typeAffectation">
+              <label class="form-check-label small fw-medium" for="affEquipe">Équipe</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="typeAffectation" id="affTech" value="techniciens" [(ngModel)]="typeAffectation">
+              <label class="form-check-label small fw-medium" for="affTech">Individuel</label>
+            </div>
+          </div>
+
+          <div *ngIf="typeAffectation === 'equipe'" class="mb-3">
+            <select class="form-select form-select-sm" [(ngModel)]="selectedEquipeId">
+              <option value="">-- Choisir une équipe --</option>
+              <option *ngFor="let equipe of equipes" [value]="equipe.id">{{ equipe.nom }}</option>
+            </select>
+          </div>
+
+          <div *ngIf="typeAffectation === 'techniciens'" class="mb-3">
+            <select class="form-select form-select-sm" multiple [(ngModel)]="selectedTechniciens" style="height: 120px;">
+              <option *ngFor="let tech of techniciens" [value]="tech.id">{{ tech.nom }} {{ tech.prenom }}</option>
+            </select>
+            <p class="smaller text-muted mt-1 italic">(Maintenir Ctrl pour multi-sélection)</p>
+          </div>
+
+          <button class="btn btn-primary btn-sm w-100 mt-2" (click)="assign()">
+            <i class="mdi mdi-account-check me-1"></i> Affecter maintenant
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

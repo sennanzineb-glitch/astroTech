@@ -1,0 +1,122 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h3 class="fw-bold mb-1">{{ idReferent ? "Modifier le référent" : "Nouveau référent" }}</h3>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a routerLink="/dashboard">Home</a></li>
+        <li class="breadcrumb-item"><a routerLink="/referents/list">Référents</a></li>
+        <li class="breadcrumb-item active">{{ idReferent ? "Modification" : "Création" }}</li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <!-- Nav Tabs -->
+        <ul class="nav nav-pills mb-4" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active me-2" id="infos-generale-tab" data-bs-toggle="tab"
+                    data-bs-target="#infos-generale" type="button" role="tab" aria-controls="infos-generale"
+                    aria-selected="true">
+                    <i class="mdi mdi-information-outline me-1"></i> Informations Générales
+                </button>
+            </li>
+            <li class="nav-item" role="presentation" *ngIf="!idReferent">
+                <button class="nav-link" id="pieces-jointes-tab" data-bs-toggle="tab" data-bs-target="#pieces-jointes"
+                    type="button" role="tab" aria-controls="pieces-jointes" aria-selected="false">
+                    <i class="mdi mdi-attachment me-1"></i> Pièces jointes
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body p-4">
+                <div class="tab-content" id="myTabContent">
+                    <!-- Tab 1: Info -->
+                    <div class="tab-pane fade show active" id="infos-generale" role="tabpanel" aria-labelledby="infos-generale-tab">
+                        <form [formGroup]="referentForm">
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small">Nom <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" formControlName="nom" placeholder="Nom">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small">Prénom <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" formControlName="prenom" placeholder="Prénom">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small">Téléphone <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" formControlName="telephone" placeholder="Téléphone">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small">Email <span class="text-danger">*</span></label>
+                                    <input type="email" class="form-control" formControlName="email" placeholder="email@example.com">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small">Date naissance</label>
+                                    <input type="date" class="form-control" formControlName="dateNaissance">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small">Poste</label>
+                                    <input type="text" class="form-control" formControlName="poste" placeholder="Poste occupé">
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label fw-semibold small">Adresse</label>
+                                    <textarea class="form-control" rows="3" formControlName="adresse" placeholder="Adresse complète..."></textarea>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Tab 2: Pieces jointes (only on create) -->
+                    <div class="tab-pane fade" id="pieces-jointes" role="tabpanel" aria-labelledby="pieces-jointes-tab" *ngIf="!idReferent">
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <h6 class="fw-bold mb-3">Zone de dépôt</h6>
+                                <div class="file-drop-zone border-2 border-dashed rounded-4 p-5 text-center bg-light cursor-pointer"
+                                    (click)="fileInput.click()" (dragover)="onDragOver($event)"
+                                    (dragleave)="onDragLeave($event)" (drop)="onDrop($event)" [class.border-primary]="isDragOver">
+                                    <i class="mdi mdi-cloud-upload-outline display-4 text-primary"></i>
+                                    <p class="mb-0 text-muted mt-2">Déposer ici vos fichiers, ou cliquer pour parcourir</p>
+                                    <input type="file" #fileInput multiple hidden (change)="onFileSelected($event)">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="fw-bold mb-3">Liste des fichiers sélectionnés</h6>
+                                <div *ngIf="selectedFiles.length > 0; else noFiles" class="list-group list-group-flush border rounded-3 overflow-hidden">
+                                    <div *ngFor="let f of selectedFiles; let i = index" class="list-group-item d-flex justify-content-between align-items-center bg-white">
+                                        <div class="text-truncate" style="max-width: 80%;">
+                                            <i class="mdi mdi-file-outline text-primary me-2"></i>
+                                            <span class="small">{{ f.name }}</span>
+                                        </div>
+                                        <button type="button" class="btn btn-xs btn-link text-danger p-0" (click)="removeFileByIndex(i)">
+                                            <i class="mdi mdi-close"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <ng-template #noFiles>
+                                    <div class="alert alert-light border text-center py-4">
+                                        <p class="text-muted smaller mb-0">Aucun fichier sélectionné</p>
+                                    </div>
+                                </ng-template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-footer bg-light border-0 p-3 d-flex justify-content-end gap-2">
+                <button (click)="annuler()" type="button" class="btn btn-secondary px-4">Annuler</button>
+                <button (click)="save()" class="btn btn-primary px-4">
+                    <i class="mdi mdi-check me-1"></i> Sauvegarder
+                </button>
+            </div>
+        </div>
+        
+        <p class="smaller text-muted text-center">
+            Les champs marqués d'un <span class="text-danger">*</span> sont obligatoires.
+        </p>
+    </div>
+</div>

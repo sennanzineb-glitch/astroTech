@@ -1,0 +1,114 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h3 class="fw-bold mb-1">Planning</h3>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a routerLink="/dashboard">Home</a></li>
+        <li class="breadcrumb-item"><a routerLink="/interventions/list">Interventions</a></li>
+        <li class="breadcrumb-item active">Planning</li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <!-- FullCalendar Card -->
+    <div class="card h-100">
+      <div class="card-body">
+        <full-calendar [options]="calendarOptions" [events]="events"></full-calendar>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <!-- Formulaire pour ajouter une planification -->
+    <div class="card mb-4 sticky-top">
+      <div class="card-header bg-white py-3 border-0">
+        <h5 class="fw-bold mb-0">Programmer</h5>
+      </div>
+      <div class="card-body pt-0">
+        <form (ngSubmit)="addPlanification()" #planForm="ngForm">
+          <div class="mb-3">
+            <label for="id" class="form-label small fw-bold text-muted">Intervention</label>
+            <select id="id" class="form-select" required [(ngModel)]="newPlan.intervention_id" name="id">
+              <option value="" disabled>Sélectionner...</option>
+              <option *ngFor="let i of interventions" [value]="i.id">
+                #{{ i.numero }} - {{ i.titre }}
+              </option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="date" class="form-label small fw-bold text-muted">Date</label>
+            <input type="date" id="date" name="date" class="form-control" required [(ngModel)]="newPlan.date">
+          </div>
+          <div class="mb-3">
+            <label for="heure" class="form-label small fw-bold text-muted">Heure</label>
+            <input type="time" id="heure" name="heure" class="form-control" required [(ngModel)]="newPlan.heure">
+          </div>
+          <button type="submit" class="btn btn-primary w-100" [disabled]="planForm.invalid">
+            <i class="mdi mdi-calendar-plus me-1"></i> Ajouter au planning
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Bootstrap avec header blanc -->
+<div class="modal fade" id="eventModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg overflow-hidden" *ngIf="selectedEvent" style="border-radius: 24px;">
+      <div class="modal-header bg-white py-3 px-4 border-0">
+        <h5 class="modal-title fw-bold">
+          <span class="text-primary">#{{ selectedEvent.extendedProps.interventionNumero }}</span> - {{ selectedEvent.extendedProps.interventionTitre }}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body p-4 bg-light">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="card border-0 h-100">
+              <div class="card-body">
+                <h6 class="text-uppercase smaller fw-bold text-primary mb-3">Informations générales</h6>
+                <div class="mb-2"><span class="text-muted small">Type:</span> <span class="small fw-medium ms-2">{{ selectedEvent.extendedProps.interventionType }}</span></div>
+                <div class="mb-2"><span class="text-muted small">Adresse:</span> <span class="small fw-medium ms-2">{{ selectedEvent.extendedProps.interventionAdresseFacturation }}</span></div>
+                <div class="mb-2"><span class="text-muted small">Date planifiée:</span> <span class="small fw-medium ms-2">{{ selectedEvent.extendedProps.planningDate | date:'dd/MM/yyyy' }} à {{ selectedEvent.extendedProps.planningHeure }}</span></div>
+                <p class="smaller text-secondary mt-3 mb-0">{{ selectedEvent.extendedProps.interventionDescription }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="card border-0 h-100">
+              <div class="card-body">
+                <h6 class="text-uppercase smaller fw-bold text-primary mb-3">Statut & Détails</h6>
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-muted small">Priorité</span>
+                  <span class="badge rounded-pill bg-warning-subtle text-warning border border-warning-subtle px-3">{{ selectedEvent.extendedProps.interventionPriorite }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-muted small">État</span>
+                  <span class="badge rounded-pill bg-info-subtle text-info border border-info-subtle px-3">{{ selectedEvent.extendedProps.interventionEtat }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-muted small">Montant</span>
+                  <span class="small fw-bold">{{ selectedEvent.extendedProps.interventionMontant | number:'1.2-2' }} DH</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-muted small">Durée</span>
+                  <span class="small fw-medium">{{ selectedEvent.extendedProps.interventionDureeHeures }}h {{ selectedEvent.extendedProps.interventionDureeMinutes }}min</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer bg-white border-0 py-3">
+        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Fermer</button>
+      </div>
+    </div>
+  </div>
+</div>
