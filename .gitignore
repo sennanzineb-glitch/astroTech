@@ -1,0 +1,67 @@
+# =========================
+# OS / Editor
+# =========================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# =========================
+# Logs
+# =========================
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =========================
+# Environment variables
+# =========================
+.env
+.env.*
+!.env.example
+
+# =========================
+# Node.js
+# =========================
+node_modules/
+npm-cache/
+.yarn/
+.pnpm-store/
+
+# =========================
+# Angular
+# =========================
+dist/
+.angular/
+.cache/
+coverage/
+
+# =========================
+# Build outputs
+# =========================
+build/
+out/
+
+# =========================
+# Docker
+# =========================
+docker-data/
+*.pid
+
+# =========================
+# Temporary / misc
+# =========================
+tmp/
+temp/
+*.swp
+*.swo
+
+# =========================
+# Package locks (OPTIONAL)
+# =========================
+# If your team AGREES not to commit lock files, uncomment these:
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
