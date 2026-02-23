@@ -32,3 +32,10 @@ env/
 
 # Logs
 *.log
+
+# Flutter / Dart
+astrotech_mobile/build/
+astrotech_mobile/.dart_tool/
+astrotech_mobile/coverage/
+*.g.dart
+
