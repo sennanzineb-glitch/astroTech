@@ -351,6 +351,28 @@ class Intervention {
         }
     }
 
+    static async addPrevision(req, res) {
+        try {
+            const interventionId = req.params.id;
+            const { date_debut, duree_heures = 0, duree_minutes = 0 } = req.body;
+
+            if (!date_debut) {
+                return res.status(400).json({ message: 'La date prévisionnelle est obligatoire' });
+            }
+
+            const result = await InterventionService.addPrevision(interventionId, { date_debut, duree_heures, duree_minutes });
+
+            res.status(200).json({
+                message: 'Date prévisionnelle ajoutée avec succès',
+                data: result
+            });
+
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ message: 'Erreur lors de l’ajout de la date prévisionnelle' });
+        }
+    }
+
 }
 
 module.exports = Intervention;

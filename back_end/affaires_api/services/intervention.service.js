@@ -116,7 +116,6 @@ class InterventionService {
   }
 
 
-  // 🔹 Récupérer toutes les interventions (pagination + recherche)
   static async apiGetAllPaginated({ page = 1, limit = 10, search = '', userId }) {
     try {
       if (!userId) throw new Error('userId manquant');
@@ -145,23 +144,21 @@ class InterventionService {
       }
 
       /* ===================== QUERY ===================== */
-      // ⚠️ LIMIT / OFFSET injectés APRÈS validation
       const sql = `
       SELECT SQL_CALC_FOUND_ROWS
-        i.*
+        i.*,
+        it.libelle AS type_intervention   -- <-- ajout type_intervention
       FROM intervention i
+      LEFT JOIN intervention_type it ON it.id = i.type_id  -- <-- jointure
       ${whereClause}
       ORDER BY i.id DESC
       LIMIT ${limit} OFFSET ${offset}
     `;
 
-      // ✅ query() et NON execute()
       const [rows] = await pool.query(sql, params);
 
       /* ===================== TOTAL ===================== */
-      const [[{ total }]] = await pool.query(
-        `SELECT FOUND_ROWS() AS total`
-      );
+      const [[{ total }]] = await pool.query(`SELECT FOUND_ROWS() AS total`);
 
       /* ===================== REFERENTS & TECHNICIENS ===================== */
       for (const intervention of rows) {
@@ -190,6 +187,9 @@ class InterventionService {
         intervention.referents = referents;
         intervention.referent_ids = referents.map(r => r.id);
         intervention.techniciens = techniciens;
+
+        // si type_intervention est null, mettre "Non défini"
+        intervention.type_intervention = intervention.type_intervention || 'Non défini';
       }
 
       return {
@@ -355,7 +355,6 @@ class InterventionService {
     return { interventionId, techniciens };
   }
 
-
   static async addPlanning(interventionId, planning) {
     const { date, heure } = planning;
     const sql = `
@@ -391,14 +390,24 @@ class InterventionService {
 
   static async apiGetById(id) {
     try {
-      /* ===================== 🔹 INTERVENTION ===================== */
+      /* ===================== 🔹 INTERVENTION + TYPE ===================== */
       const [interventions] = await pool.execute(
-        'SELECT * FROM intervention WHERE id = ?',
+        `
+      SELECT 
+        i.*,
+        it.libelle AS type_intervention
+      FROM intervention i
+      LEFT JOIN intervention_type it ON it.id = i.type_id
+      WHERE i.id = ?
+      `,
         [id]
       );
 
       if (interventions.length === 0) return null;
       const intervention = interventions[0];
+
+      // valeur par défaut
+      intervention.type_intervention = intervention.type_intervention || 'Non défini';
 
       const clientId = intervention.client_id ?? null;
       const zoneClientId = intervention.zone_intervention_client_id ?? null;
@@ -428,10 +437,12 @@ class InterventionService {
 
       /* ===================== 🔹 RÉFÉRENTS ===================== */
       const [referents] = await pool.execute(
-        `SELECT r.id, r.nom, r.prenom, r.email, r.telephone
-       FROM referent r
-       JOIN intervention_referent ir ON r.id = ir.referent_id
-       WHERE ir.intervention_id = ?`,
+        `
+      SELECT r.id, r.nom, r.prenom, r.email, r.telephone
+      FROM referent r
+      JOIN intervention_referent ir ON r.id = ir.referent_id
+      WHERE ir.intervention_id = ?
+      `,
         [id]
       );
       intervention.referents = referents || [];
@@ -439,10 +450,12 @@ class InterventionService {
 
       /* ===================== 🔹 TECHNICIENS INDIVIDUELS ===================== */
       const [techniciens] = await pool.execute(
-        `SELECT t.id, t.nom, t.prenom, it.role
-       FROM technicien t
-       JOIN intervention_technicien it ON t.id = it.id_technicien
-       WHERE it.id_intervention = ?`,
+        `
+      SELECT t.id, t.nom, t.prenom, it.role
+      FROM technicien t
+      JOIN intervention_technicien it ON t.id = it.id_technicien
+      WHERE it.id_intervention = ?
+      `,
         [id]
       );
       intervention.techniciens = techniciens || [];
@@ -450,7 +463,8 @@ class InterventionService {
       /* ===================== 🔹 ÉQUIPE + CHEF + MEMBRES ===================== */
       let equipe = null;
       if (equipeId !== null) {
-        const [rows] = await pool.execute(`
+        const [rows] = await pool.execute(
+          `
         SELECT 
           eq.id AS equipeId,
           eq.nom AS equipeNom,
@@ -470,7 +484,9 @@ class InterventionService {
         LEFT JOIN technicien chef ON chef.id = eq.chefId
         WHERE eq.id = ?
         ORDER BY eq.id, t.nom
-      `, [equipeId]);
+        `,
+          [equipeId]
+        );
 
         if (rows.length > 0) {
           equipe = {
@@ -478,7 +494,13 @@ class InterventionService {
             nom: rows[0].equipeNom,
             description: rows[0].equipeDescription,
             chef: rows[0].chefId
-              ? { id: rows[0].chefId, nom: rows[0].chefNom, prenom: rows[0].chefPrenom, telephone: rows[0].chefTelephone, email: rows[0].chefEmail }
+              ? {
+                id: rows[0].chefId,
+                nom: rows[0].chefNom,
+                prenom: rows[0].chefPrenom,
+                telephone: rows[0].chefTelephone,
+                email: rows[0].chefEmail
+              }
               : null,
             techniciens: []
           };
@@ -753,7 +775,6 @@ class InterventionService {
     }
   }
 
-
   static async getInterventionTypes() {
     try {
       const sql = `
@@ -772,6 +793,23 @@ class InterventionService {
     }
   }
 
+  static async addPrevision(interventionId, planning) {
+    const { date_debut, duree_heures, duree_minutes } = planning;
+
+    // Calcul de la date de fin prévisionnelle
+    const dateDebut = new Date(date_debut);
+    const dateFin = new Date(dateDebut.getTime() + (duree_heures * 60 + duree_minutes) * 60000);
+
+    // Mettre à jour la table intervention
+    const sql = `
+        UPDATE intervention
+        SET date_debut_prevue = ?, date_fin_prevue = ?, duree_prevue_heures = ?, duree_prevue_minutes = ?
+        WHERE id = ?
+    `;
+    await pool.query(sql, [dateDebut, dateFin, duree_heures, duree_minutes, interventionId]);
+
+    return { interventionId, date_debut: dateDebut, date_fin: dateFin, duree_heures, duree_minutes };
+  }
 
 }
 

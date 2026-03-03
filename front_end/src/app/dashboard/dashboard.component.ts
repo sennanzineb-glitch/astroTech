@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { SharedModule } from '../_globale/shared/shared.module';
 import { DashboardService } from '../_services/affaires/dashboard.service';
 import { InterventionService } from '../_services/affaires/intervention.service';
+import { Router } from '@angular/router';
 
 declare var bootstrap: any;
 
@@ -10,6 +11,8 @@ interface CardItem {
   title: string;
   count: number;
   bg: string;
+  // … autres propriétés existantes
+  position?: { x: number; y: number }; // <-- ajouter cette ligne
 }
 
 @Component({
@@ -37,7 +40,8 @@ export class DashboardComponent implements OnInit {
 
   constructor(
     private dashboardService: DashboardService,
-    private interventionService: InterventionService
+    private interventionService: InterventionService,
+    private router: Router
   ) { }
 
   ngOnInit(): void {
@@ -148,7 +152,7 @@ export class DashboardComponent implements OnInit {
 
     this.interventionService
       .getByTypePaginated(
-        this.selectedItem.type_id, 
+        this.selectedItem.type_id,
         this.page, this.limit,
         etatBackend
       )
@@ -162,6 +166,74 @@ export class DashboardComponent implements OnInit {
     if (page < 1 || page > this.pagination.totalPages) return;
     this.page = page;
     this.loadInterventions();
+  }
+
+  /************************************** */
+
+  cardWidth = 127;  // largeur fixe des cartes
+  cardHeight = 200; // hauteur fixe des cartes
+
+  draggedItem: any = null;
+  offset = { x: 0, y: 0 };
+  dragging = false;
+
+  startDrag(event: MouseEvent, item: any) {
+    event.stopPropagation();
+    event.preventDefault();
+    this.draggedItem = item;
+    this.dragging = true;
+
+    // initialise la position si pas déjà
+    item.position = item.position || { x: 0, y: 0 };
+
+    // calcul de l’offset pour un drag fluide
+    this.offset.x = event.clientX - item.position.x;
+    this.offset.y = event.clientY - item.position.y;
+  }
+
+  @HostListener('document:mousemove', ['$event'])
+  onMouseMove(event: MouseEvent) {
+    if (this.dragging && this.draggedItem) {
+      this.draggedItem.position.x = event.clientX - this.offset.x;
+      this.draggedItem.position.y = event.clientY - this.offset.y;
+    }
+  }
+
+  @HostListener('document:mouseup')
+  onMouseUp() {
+    this.dragging = false;
+    this.draggedItem = null;
+  }
+
+  goToInterventions() {
+    this.router.navigate(['/interventions/list']);
+  }
+
+  deleteItem(item: any, bloc: any[]) {
+    const index = bloc.indexOf(item);
+    if (index > -1) {
+      // Remplacer l'élément par null pour garder la place vide
+      bloc[index] = null;
+    }
+  }
+
+  duplicateItem(item: any, bloc: any[]) {
+    const index = bloc.indexOf(item);
+    if (index > -1) {
+      // Créer une copie de l'objet (shallow copy suffisant ici)
+      const newItem = { ...item };
+
+      // Si tu veux éviter d'avoir le même id, tu peux générer un id unique
+      newItem.id = this.generateUniqueId();
+
+      // Insérer la copie juste après l'original
+      bloc.splice(index + 1, 0, newItem);
+    }
+  }
+
+  // Fonction pour générer un id unique (exemple simple)
+  generateUniqueId(): string {
+    return Math.random().toString(36).substring(2, 10);
   }
 
 }

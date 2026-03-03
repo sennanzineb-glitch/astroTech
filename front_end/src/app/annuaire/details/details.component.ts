@@ -1,4 +1,4 @@
-import { Component, ViewChild, OnInit } from '@angular/core';
+import { Component, ViewChild, OnInit, Output, EventEmitter } from '@angular/core';
 import { SharedModule } from '../../_globale/shared/shared.module';
 import { ModalSaveComponent } from '../modal-save/modal-save.component';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -8,6 +8,7 @@ import { HabitationService } from '../../_services/clients/habitation.service';
 import { OrganisationsService } from '../../_services/clients/organisations.service';
 import { ParticuliersService } from '../../_services/clients/particuliers.service';
 import { AgencesService } from '../../_services/clients/agences.service';
+import { AffairesService } from '../../_services/affaires/affaires.service';
 declare var bootstrap: any; // pour Bootstrap 5 JS
 
 @Component({
@@ -58,6 +59,9 @@ export class DetailsComponent implements OnInit {
       const type = this.route.snapshot.queryParams['type'];
       this.loadClient(this.id, type); // Appel avec deux paramètres
       this.loadHistoryInterventions();
+
+      this.searchAffaires();
+
       this.resetView();
     });
   }
@@ -92,31 +96,31 @@ export class DetailsComponent implements OnInit {
   }
 
   // Charger les clients enfants
- getAllClients(page: number = this.clientsPage) {
-  this.clientsPage = page;
+  getAllClients(page: number = this.clientsPage) {
+    this.clientsPage = page;
 
-  //const parentType: 'client' | 'secteur' | 'habitation' = this.client.type_client;
-  //console.log('***',this.client,'***');
+    //const parentType: 'client' | 'secteur' | 'habitation' = this.client.type_client;
+    //console.log('***',this.client,'***');
 
-  this.clientsService
-    .getClientsByParentWithDetails(
-      this.id,
-      this.client.type_client,
-      this.clientsPage,
-      this.clientsLimit,
-      ''
-    )
-    .subscribe((result: any) => {
-      this.clientsTotal = result.total;
+    this.clientsService
+      .getClientsByParentWithDetails(
+        this.id,
+        this.client.type_client,
+        this.clientsPage,
+        this.clientsLimit,
+        ''
+      )
+      .subscribe((result: any) => {
+        this.clientsTotal = result.total;
 
-      this.clients = (result.data as any[]).map(client => ({
-        ...client,
-        contacts: client.contacts || [],
-        type_parent: result.parentType
-      }));
-      //console.log('* client *',this.clients);
-    });
-}
+        this.clients = (result.data as any[]).map(client => ({
+          ...client,
+          contacts: client.contacts || [],
+          type_parent: result.parentType
+        }));
+        //console.log('* client *',this.clients);
+      });
+  }
 
 
   nextClientsPage() {
@@ -201,8 +205,6 @@ export class DetailsComponent implements OnInit {
 
   // Ouvrir le modal pour éditer un client
   editClient(client: any) {
-    //client = {...client, type_parent:client.}
-
     if (this.modalSave) {
       this.modalSave.editClient(client);
     } else {
@@ -281,5 +283,69 @@ export class DetailsComponent implements OnInit {
     const modal = new bootstrap.Modal(modalEl);
     modal.show();
   }
+
+
+
+  //***** ***** **** ***** ***** */
+  // ===== Pagination historique affaires =====
+  affaires: any[] = [];
+  affairesPage = 1;
+  affairesLimit = 10;
+  affairesTotal = 0;
+  affairesSearch = '';
+
+  // Getter pour le nombre total de pages
+  get affairesTotalPages(): number {
+    return Math.ceil(this.affairesTotal / this.affairesLimit);
+  }
+
+  // Charger les affaires pour un client
+  loadHistoriqueAffaire(page: number = this.affairesPage) {
+    this.affairesPage = page;
+
+    this.clientsService.getAffairesByClient(
+      this.id,              // ID du client
+      this.affairesPage,    // page courante
+      this.affairesLimit,   // nombre d'éléments par page
+      this.affairesSearch   // texte de recherche
+    ).subscribe({
+      next: (res) => {
+        this.affaires = res.affaires;   // liste des affaires
+        this.affairesTotal = res.total; // total pour pagination
+      },
+      error: (err) => {
+        console.error('Erreur chargement historique des affaires :', err);
+        alert('Impossible de charger l’historique des affaires.');
+      }
+    });
+  }
+
+  nextAffairesPage() {
+    if (this.affairesPage < this.affairesTotalPages) {
+      this.loadHistoriqueAffaire(this.affairesPage + 1);
+    }
+  }
+
+  prevAffairesPage() {
+    if (this.affairesPage > 1) {
+      this.loadHistoriqueAffaire(this.affairesPage - 1);
+    }
+  }
+
+  searchAffaires() {
+    this.affairesPage = 1;
+    this.loadHistoriqueAffaire();
+  }
+
+  // Retourne le nombre total de pages pour la pagination
+  totalPages(): number {
+    return Math.ceil(this.affairesTotal / this.affairesLimit);
+  }
+
+  // Retourne true si c'est la dernière page
+  isLastPage(): boolean {
+    return this.affairesPage === this.totalPages();
+  }
+
 
 }

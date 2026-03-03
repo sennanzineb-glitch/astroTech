@@ -20,7 +20,7 @@
   <div class="row g-4">
 
     <!-- ===== COLONNE GAUCHE ===== -->
-    <div class="col-md-6">
+    <div class="col-md-5">
 
       <!-- Card : Détails de l'intervention -->
       <div class="card shadow-sm border-0 mb-4">
@@ -31,11 +31,12 @@
           <p class="list-group-item"><i class="fa fa-tag me-2 text-primary"></i><strong>Titre :</strong> {{
             intervention.titre }}</p>
           <p class="list-group-item"><i class="fa fa-list me-2 text-primary"></i><strong>Type :</strong> {{
-            intervention.type }}</p>
+            intervention.type_intervention }}</p>
           <p class="list-group-item"><i class="fa fa-exclamation-circle me-2 text-primary"></i><strong>Priorité
               :</strong> {{ intervention.priorite || '—' }}</p>
-          <p class="list-group-item"><i class="fa fa-tasks me-2 text-primary"></i><strong>État :</strong> {{
-            intervention.etat || '—' }}</p>
+          <p class="list-group-item"><i class="fa fa-tasks me-2 text-primary"></i><strong>État :</strong>
+            {{ formatEtat(intervention.etat) }}
+          </p>
           <p class="list-group-item"><i class="fa fa-calendar me-2 text-primary"></i><strong>Date de création :</strong>
             {{ intervention.date_creation | date:'short' }}</p>
           <div class="list-group-item bg-light rounded mt-2">
@@ -215,126 +216,146 @@
     </div> <!-- Fin colonne gauche -->
 
     <!-- ===== COLONNE DROITE ===== -->
-    <div class="col-md-6">
+    <div class="col-md-7">
 
-      <!-- ===== MODIFIER L'ÉTAT ===== -->
-      <div class="card shadow-sm border-0 mb-4">
-        <div class="card-header bg-white text-warning">
-          <h5 class="mb-0">
-            <i class="fa fa-tasks me-2"></i>Modifier l’état
-          </h5>
+      <!-- <div class="timeline">
+
+        <div *ngFor="let item of interventionItems" class="timeline-item">
+
+          <div class="timeline-circle"></div>
+
+          <div class="timeline-content">
+            <small class="timeline-date">{{ item.date }}</small>
+            <h6 class="timeline-title">{{ item.title }}</h6>
+
+            <ng-container [ngSwitch]="item.type">
+
+              <div *ngSwitchCase="'text'" class="timeline-text">{{ item.content }}</div>
+
+              <div *ngSwitchCase="'photo'" class="timeline-photos">
+                <img *ngFor="let img of item.content" [src]="img" class="timeline-img">
+              </div>
+
+              <div *ngSwitchCase="'signature'" class="timeline-signature">
+                <img *ngFor="let img of item.content" [src]="img" class="timeline-img">
+              </div>
+
+              <div *ngSwitchCase="'table'" class="timeline-table timeline-text">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Type</th>
+                      <th>Durée</th>
+                      <th>Correction</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let type of item.content; let i = index">
+                      <td>{{ type }}</td>
+                      <td>{{ type === 'Intervention' ? '6 heures 57 minutes' : '-' }}</td>
+                      <td><input type="checkbox" [checked]="item.checked[i]"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+            </ng-container>
+          </div>
+
         </div>
 
-        <div class="card-body">
+      </div> -->
 
-          <p>
-            <strong>État actuel :</strong>
-            <span class="badge ms-2" [ngClass]="getBadgeClass(intervention.etat)">
-              {{ intervention.etat || '—' }}
+      <div class="card shadow-sm border-0 text-center p-3" *ngIf="intervention">
+
+        <!-- ===== TITRE ===== -->
+        <h6 class="fw-bold text-uppercase mb-3" style="letter-spacing:0.5px;">
+          INTERVENTION PLANIFIÉE
+        </h6>
+
+        <!-- ===== ASSIGNATION ===== -->
+        <div class="small mb-3">
+          <div class="text-muted" *ngIf="intervention?.equipe || intervention?.techniciens?.length">Assignée à</div>
+          <div class="my-2 d-flex flex-wrap justify-content-center gap-2">
+
+            <!-- ✅ Si équipe -->
+            <div class="d-flex flex-column align-items-center" *ngIf="intervention?.equipe">
+              <!-- Badge circulaire avec icône -->
+              <span class="badge rounded-circle bg-primary d-inline-flex align-items-center justify-content-center mb-1"
+                style="width:48px; height:48px; font-size:16px;" [title]="intervention.equipe.nom">
+                <i class="fa fa-users"></i>
+              </span>
+              <!-- Nom de l'équipe en dessous de l'icône -->
+              <strong class="text-center">{{ intervention.equipe.nom }}</strong>
+            </div>
+
+            <!-- ✅ Sinon techniciens -->
+            <ng-container *ngIf="!intervention?.equipe && intervention?.techniciens?.length">
+              <span *ngFor="let tech of intervention.techniciens"
+                class="badge rounded-circle bg-success d-inline-flex align-items-center justify-content-center"
+                style="width:48px; height:48px; font-size:12px;" [title]="tech.nom + ' ' + tech.prenom">
+                {{ tech.nom.charAt(0) }}{{ tech.prenom.charAt(0) }}
+              </span>
+            </ng-container>
+
+            <!-- ❌ Aucun -->
+            <span *ngIf="!intervention?.equipe && !intervention?.techniciens?.length" class="text-muted">
+              Non assignée
             </span>
-          </p>
 
-          <div class="mb-3">
-            <label class="form-label fw-bold">Nouvel état</label>
-            <select class="form-select form-select-sm" [(ngModel)]="newEtat">
-              <option value="" disabled>Sélectionner l'état</option>
-              <option value="en_cours">En cours</option>
-              <option value="terminee">Terminée</option>
-              <option value="annulee">Annulée</option>
-            </select>
+          </div>
+        </div>
+
+        <!-- ===== DATES ===== -->
+        <div class="mb-3 small" *ngIf="intervention?.date_debut_intervention; else noPlanning">
+
+          <div>du</div>
+          <div class="fw-semibold">
+            {{ intervention.date_debut_intervention | date:'dd/MM/yyyy' }}
+            à {{ intervention.heure_debut_intervention_h }}:{{ intervention.heure_debut_intervention_min | number:'2.0'
+            }}
           </div>
 
-          <div class="d-flex justify-content-center">
-            <button class="btn btn-warning btn-sm rounded-pill w-75" [disabled]="!newEtat" (click)="updateEtat()">
-              <i class="fa fa-save me-1"></i>
-              Mettre à jour
-            </button>
+          <div class="mt-1">au</div>
+          <div class="fw-semibold">
+            {{ intervention.date_fin_intervention | date:'dd/MM/yyyy' }}
+            à {{ intervention.heure_fin_intervention_h }}:{{ intervention.heure_fin_intervention_min | number:'2.0' }}
           </div>
+
+        </div>
+
+        <!-- ❌ Aucun planning -->
+        <ng-template #noPlanning>
+          <div class="text-muted small mb-3">
+            Aucune planification enregistrée
+          </div>
+        </ng-template>
+
+        <!-- ===== BOUTONS ===== -->
+        <div class="d-flex justify-content-center gap-2 flex-wrap">
+
+          <button class="btn btn-outline-primary btn-sm" (click)="editPlanning()">
+            <i class="fa fa-edit me-1"></i>
+            MODIFIER
+          </button>
+
+          <button class="btn btn-primary btn-sm" (click)="modePlanification(intervention)">
+            <i class="fa fa-exchange-alt me-1"></i>
+            CHANGER MODE
+          </button>
 
         </div>
 
       </div>
 
-      <!-- Card : Ajouter un planning -->
-      <div class="card shadow-sm border-0 mb-4">
-        <div class="card-header bg-white text-secondary rounded-top">
-          <h5 class="mb-0"><i class="fa fa-plus-circle me-2"></i>Ajouter un planning</h5>
-        </div>
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Date</label>
-              <input type="date" class="form-control" [(ngModel)]="planning.date">
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Heure</label>
-              <input type="time" class="form-control" [(ngModel)]="planning.heure">
-            </div>
-          </div>
-          <!-- Bouton Ajouter le planning -->
-          <div class="d-flex justify-content-center mt-3">
-            <button type="button"
-              class="btn btn-secondary btn-sm rounded-pill w-75 d-flex align-items-center justify-content-center gap-2 border"
-              (click)="addPlanning()">
-              <i class="fa fa-plus"></i>
-              Ajouter le planning
-            </button>
-          </div>
-        </div>
-      </div>
 
-      <!-- Card : Affectation -->
-      <div class="card shadow-sm border-0 mb-4">
-        <div class="card-header bg-light border-bottom">
-          <h5 class="mb-0 text-primary"><i class="fa fa-users-cog me-2"></i>Affectation des techniciens / équipes</h5>
-        </div>
-
-        <div class="card-body">
-          <div class="mb-3">
-            <label class="form-label fw-bold">Type d’affectation</label>
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="typeAffectation" value="equipe"
-                [(ngModel)]="typeAffectation">
-              <label class="form-check-label">Équipe de techniciens</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="typeAffectation" value="techniciens"
-                [(ngModel)]="typeAffectation">
-              <label class="form-check-label">Techniciens individuels</label>
-            </div>
-          </div>
-
-          <!-- Sélection équipe -->
-          <div *ngIf="typeAffectation === 'equipe'" class="mb-3">
-            <label class="form-label fw-bold">Choisir une équipe</label>
-            <select class="form-select form-select-sm" [(ngModel)]="selectedEquipeId">
-              <option value="">-- Sélectionner une équipe --</option>
-              <option *ngFor="let equipe of equipes" [value]="equipe.id">{{ equipe.nom }}</option>
-            </select>
-          </div>
-
-          <!-- Sélection techniciens -->
-          <div *ngIf="typeAffectation === 'techniciens'" class="mb-3">
-            <label class="form-label fw-bold">Choisir des techniciens</label>
-            <select class="form-select" multiple [(ngModel)]="selectedTechniciens">
-              <option *ngFor="let tech of techniciens" [value]="tech.id">{{ tech.nom }} {{ tech.prenom }}</option>
-            </select>
-          </div>
-
-          <!-- Bouton Affecter -->
-          <div class="d-flex justify-content-center mt-4">
-            <button type="button"
-              class="btn btn-primary btn-sm rounded-pill w-75 d-flex align-items-center justify-content-center gap-2 border"
-              (click)="assign()">
-              <i class="fa fa-check"></i>
-              Affecter
-            </button>
-          </div>
-
-        </div>
-      </div>
 
     </div> <!-- Fin colonne droite -->
 
   </div> <!-- Fin row -->
 </div>
+
+
+<!-- Inclusion du composant modal-save -->
+<app-modal-save #modalSave (clientAdded)="loadData()" (clientUpdated)="loadData()">
+</app-modal-save>

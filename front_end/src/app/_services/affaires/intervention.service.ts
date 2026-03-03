@@ -106,13 +106,17 @@ export class InterventionService {
       params: {
         page: page.toString(),
         limit: limit.toString(),
-        etat   // 🔹 le backend utilisera req.query.etat
+        etat   // 🔹 le backend utilisera req.query.estat
       }
     });
   }
 
   getInterventionTypes() {
     return this.http.get(`${this.baseUrl}/type/all`);
+  }
+
+  addPrevision(interventionId: number, data: { date_debut: string, duree_heures: number, duree_minutes: number }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/${interventionId}/add-prevision`, data);
   }
 
 }

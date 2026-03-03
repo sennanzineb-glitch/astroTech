@@ -12,7 +12,7 @@
 </div>
 
 <!-- ================= AJOUT AFFAIRE ================= -->
-<button class="btn btn-gradient-success mb-3" (click)="goToAddAffaire()">
+<button class="btn btn-sm btn-gradient-success mb-3" (click)="goToAddAffaire()">
   ➕ Nouvelle affaire
 </button>
 
@@ -92,16 +92,16 @@
         <!-- Barre actions -->
         <div class="d-flex justify-content-between align-items-center bg-light rounded p-2">
 
-          <button class="btn btn-success btn-sm" (click)="goToAddLinkedAffaire(selectedAffaire)">
+          <button class="btn btn-success btn-sm f-13" (click)="goToAddLinkedAffaire(selectedAffaire)">
             ➕ Créer une intervention
           </button>
 
           <div class="d-flex gap-1">
-            <button class="btn btn-outline-primary btn-sm" (click)="goToEditAffaire(selectedAffaire)">
+            <button class="btn btn-outline-primary btn-sm f-13" (click)="goToEditAffaire(selectedAffaire)">
               ✏ Modifier
             </button>
 
-            <button class="btn btn-outline-danger btn-sm" (click)="deleteAffaire(selectedAffaire.affaireId)">
+            <button class="btn btn-outline-danger btn-sm f-13" (click)="deleteAffaire(selectedAffaire.affaireId)">
               🗑 Supprimer
             </button>
           </div>

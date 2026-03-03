@@ -179,9 +179,9 @@ class Client {
     static async getClientsByParentWithDetails(req, res) {
         try {
             const { parentId } = req.params;
-            const { parentType } = req.query; // 👈 NOUVEAU
+            const { parentType, page = 1, limit = 10, search = "" } = req.query;
 
-            if (!parentId || isNaN(parseInt(parentId, 10))) {
+            if (!parentId || isNaN(Number(parentId))) {
                 return res.status(400).json({ error: "parentId invalide" });
             }
 
@@ -189,45 +189,31 @@ class Client {
                 return res.status(400).json({ error: "parentType requis" });
             }
 
-            // Pagination
-            const page = parseInt(req.query.page, 10) || 1;
-            const limit = parseInt(req.query.limit, 10) || 10;
-            const offset = (page - 1) * limit;
-
-            // Recherche
-            const search = req.query.search ? req.query.search.trim() : "";
-
-            // User connecté
             const userId = req.user?.id;
             if (!userId) {
                 return res.status(401).json({ error: "Utilisateur non authentifié" });
             }
 
             const result = await ClientService.getClientsByParentWithDetails({
-                parentId: parseInt(parentId, 10),
-                parentType, // 👈 ENVOYÉ AU SERVICE
-                page,
-                limit,
-                offset,
-                search,
+                parentId: Number(parentId),
+                parentType,
+                page: Number(page),
+                limit: Number(limit),
+                search: search.trim(),
                 userId
             });
 
-            res.status(200).json({
-                success: true,
-                page,
-                limit,
-                parentId,
-                parentType, // 👈 RENVOYÉ AU FRONT
-                data: result.data
-            });
+            if (!result.success) {
+                return res.status(400).json({ error: result.error });
+            }
+
+            res.status(200).json(result);
 
         } catch (error) {
             console.error("Erreur getClientsByParentWithDetails:", error);
             res.status(500).json({ error: "Erreur serveur" });
         }
     }
-
 
     // 🔹 Récupérer interventions d'un client avec pagination et recherche
     static async getClientInterventions(req, res) {
@@ -261,6 +247,29 @@ class Client {
                 error: "Internal Server Error",
                 details: err.message
             });
+        }
+    }
+
+
+    /**
+ * Controller pour récupérer l'historique des affaires
+ * avec pagination et recherche
+ */
+    static async getAffairesByClientId(req, res) {
+        const clientId = req.params.clientId;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const search = req.query.search || '';
+
+        if (!clientId) {
+            return res.status(400).json({ error: 'clientId est requis' });
+        }
+
+        try {
+            const data = await ClientService.getAffairesByClient(clientId, page, limit, search);
+            return res.json(data);
+        } catch (error) {
+            return res.status(500).json({ error: 'Erreur serveur' });
         }
     }
 

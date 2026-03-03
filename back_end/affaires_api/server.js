@@ -54,10 +54,11 @@ app.put(`${URI}/interventions/:id/assign-equipe`, authenticateToken, Interventio
 app.put(`${URI}/interventions/:id/type`, authenticateToken, InterventionController.updateEtat);
 app.get(`${URI}/interventions/by-type/:type_id`, authenticateToken, InterventionController.getByTypePaginated);
 app.get(`${URI}/interventions/type/all`, authenticateToken, InterventionController.getInterventionTypes);
+app.post(`${URI}/interventions/:id/add-prevision`, authenticateToken, InterventionController.addPrevision);
 
 
 // ➕ Ajouter une planification pour une intervention
-app.post(`${URI}/interventions/:interventionId/planning`, authenticateToken, PlanningController.addPlanning);
+app.post(`${URI}/interventions/:id/planning`, authenticateToken, PlanningController.addPlanning);
 app.get(`${URI}/planning`, authenticateToken, PlanningController.getAll);
 app.put(`${URI}/planning/:id`, authenticateToken, PlanningController.updatePlanning);
 app.delete(`${URI}/planning/:id`, authenticateToken, PlanningController.deletePlanning);
@@ -72,8 +73,6 @@ app.get(`${URI}`, authenticateToken, controllerAffaire.apiGetAllPaginated);
 app.get(`${URI}/:id`, authenticateToken, controllerAffaire.apiGetById);
 app.put(`${URI}/:id`, authenticateToken, controllerAffaire.apiUpdateById);
 app.delete(`${URI}/:id`, authenticateToken, controllerAffaire.apiDeleteById);
-
-
 
 
 // === Start the server ===

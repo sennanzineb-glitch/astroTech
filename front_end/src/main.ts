@@ -3,11 +3,23 @@ import { AppComponent } from './app/app.component';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { tokenInterceptor } from './app/_interceptors/token.interceptor';
 import { provideRouter } from '@angular/router';
-import { routes } from './app/app.routes'; // tes routes
+import { routes } from './app/app.routes';
+
+import { LOCALE_ID } from '@angular/core';
+import { DatePipe, registerLocaleData } from '@angular/common';
+import localeFr from '@angular/common/locales/fr';
+
+// ✅ ENREGISTRER LE LOCALE FRANÇAIS
+registerLocaleData(localeFr);
 
 bootstrapApplication(AppComponent, {
   providers: [
     provideHttpClient(withInterceptors([tokenInterceptor])),
-    provideRouter(routes) // ⚠️ obligatoire si tu utilises Router
+    provideRouter(routes),
+
+    DatePipe, // ✅ Fournit DatePipe globalement
+
+    { provide: LOCALE_ID, useValue: 'fr-FR' } // ✅ Définir la langue globale
   ]
-});
+})
+.catch(err => console.error(err));

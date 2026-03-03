@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, Output, EventEmitter, AfterViewInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -6,6 +6,7 @@ import { InterventionService } from '../../_services/affaires/intervention.servi
 import { TechnicienService } from '../../_services/techniciens/technicien.service';
 import { EquipeTechniciensService } from '../../_services/techniciens/equipe-techniciens.service';
 import { SharedModule } from '../../_globale/shared/shared.module';
+import { ModalSaveComponent } from '../modal-save/modal-save.component';
 
 @Component({
   selector: 'app-details',
@@ -13,12 +14,17 @@ import { SharedModule } from '../../_globale/shared/shared.module';
   imports: [
     CommonModule, // Pour *ngIf, *ngFor, pipes comme date
     FormsModule,  // Pour [(ngModel)]
-    SharedModule
+    SharedModule,
+    ModalSaveComponent
   ],
   templateUrl: './details.component.html',
   styleUrls: ['./details.component.css']
 })
 export class DetailsComponent implements OnInit {
+  @ViewChild('modalSave') modalSave!: ModalSaveComponent;
+  @Output() clientAdded = new EventEmitter<void>();
+  @Output() clientUpdated = new EventEmitter<void>();
+
   intervention: any;
   interventionId!: number;
 
@@ -44,6 +50,10 @@ export class DetailsComponent implements OnInit {
 
   ngOnInit(): void {
     this.interventionId = Number(this.route.snapshot.paramMap.get('id'));
+    this.loadData();
+  }
+
+  loadData(){
     this.loadIntervention();
     this.loadTechniciens();
     this.loadEquipes();
@@ -59,8 +69,6 @@ export class DetailsComponent implements OnInit {
 
   loadTechniciens() {
     this.technicienService.getAll().subscribe(res => {
-      console.log("*** liste des techniciens ***",res);
-      
       this.techniciens = res as any[]; // ✅ Assurer que c’est bien un tableau
     });
   }
@@ -150,15 +158,81 @@ export class DetailsComponent implements OnInit {
   getBadgeClass(etat: string): string {
     switch (etat) {
       case 'en_cours':
-        return 'bg-primary'; // bleu
+        return 'bg-primary';                 // 🔵 En cours
       case 'terminee':
-        return 'bg-success'; // vert
+        return 'bg-success';                 // ✅ Terminée
       case 'annulee':
-        return 'bg-danger';  // rouge
+        return 'bg-danger';                  // ❌ Annulée
+      case 'prevue':
+        return 'bg-info';                    // 📅 Prévue
+      case 'terminee_avec_interruption':
+        return 'bg-warning text-dark';       // ⚠ Terminée avec interruption
+      case 'terminee_avec_succes':
+        return 'bg-success';                 // 🎉 Terminée avec succès
+      case 'trajet_en_cours':
+        return 'bg-info';                    // 🚗 Trajet en cours
+      case 'pause':
+        return 'bg-secondary';               // ⏸ Pause
+      case 'refusee':
+        return 'bg-danger';                  // ❌ Refusée
       default:
-        return 'bg-secondary'; // gris par défaut
+        return 'bg-secondary';               // ℹ️ Inconnu
     }
   }
 
+  // Si tu veux afficher l'icône à côté du badge
+  getEtatIcon(etat: string): string {
+    switch (etat) {
+      case 'en_cours': return 'mdi mdi-timer-sand';        // sablier
+      case 'terminee': return 'mdi mdi-check-circle';      // check
+      case 'annulee': return 'mdi mdi-close-circle';       // close
+      case 'prevue': return 'mdi mdi-calendar';            // calendrier
+      case 'terminee_avec_interruption': return 'mdi mdi-alert-circle'; // warning
+      case 'terminee_avec_succes': return 'mdi mdi-star-circle';         // succès
+      case 'trajet_en_cours': return 'mdi mdi-car';        // voiture
+      case 'pause': return 'mdi mdi-pause-circle';         // pause
+      case 'refusee': return 'mdi mdi-cancel';             // refus
+      default: return 'mdi mdi-help-circle';               // inconnu
+    }
+  }
+
+
+  formatEtat(etat: string | null | undefined): string {
+    if (!etat) return '—';
+    return etat
+      .replace(/_/g, ' ')
+      .toLowerCase()
+      .replace(/^\w/, c => c.toUpperCase());
+  }
+
+  interventionItems: any = [
+    { date: '12 févr. 2026 à 7:54', title: 'DÉBUT DE L’INTERVENTION', type: 'text', content: 'Bonjour tous le monde (contient text)' },
+    { date: '12 févr. 2026 à 7:54', title: 'PHOTO DU NUMÉRO DE MODULE', type: 'photo', content: ['https://images.unsplash.com/photo-1575936123452-b67c3203c357?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8aW1hZ2V8ZW58MHx8MHx8fDA%3D'] },
+    { date: '12 févr. 2026 à 8:09', title: 'ZONE DE TRAVAUX DÉBARRASSÉE ?', type: 'text', content: 'Oui' },
+    { date: '12 févr. 2026 à 8:09', title: 'PHOTO AVANT TRAVAUX', type: 'photo', content: ['https://images.unsplash.com/photo-1575936123452-b67c3203c357?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8aW1hZ2V8ZW58MHx8MHx8fDA%3D', 'https://images.unsplash.com/photo-1575936123452-b67c3203c357?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8aW1hZ2V8ZW58MHx8MHx8fDA%3D'] },
+    { date: '12 févr. 2026 à 8:10', title: 'MISE EN PLACE DE LA BAIGNOIRE / DOUCHE', type: 'photo', content: ['https://images.unsplash.com/photo-1575936123452-b67c3203c357?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8aW1hZ2V8ZW58MHx8MHx8fDA%3D'] },
+    { date: '12 févr. 2026 à 14:50', title: 'NETTOYAGE', type: 'text', content: 'Conforme' },
+    { date: '12 févr. 2026 à 14:51', title: 'SIGNATURE', type: 'signature', content: ['https://images.unsplash.com/photo-1575936123452-b67c3203c357?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8aW1hZ2V8ZW58MHx8MHx8fDA%3D'] },
+    {
+      date: '12 févr. 2026 à 14:51',
+      title: 'FIN DE L’INTERVENTION',
+      type: 'table',
+      content: ['Intervention', 'Trajet Aller', 'Trajet Retour'],
+      checked: [true, false, false]
+    }
+  ];
+
+
+  modePlanification(intervention :any){
+    if (this.modalSave) {
+      this.modalSave.initializeModal(intervention);
+    } else {
+      console.error('ModalSaveComponent non initialisé !');
+    }
+  }
+
+  editPlanning(){
+    this.router.navigate(['/interventions/planning']);
+  }
 
 }

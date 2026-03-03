@@ -2,116 +2,318 @@
   <h3 class="page-title">Intervention</h3>
   <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
-      <li class="breadcrumb-item">
-        <a [routerLink]="['/interventions/list']">Intervention</a>
-      </li>
+      <li class="breadcrumb-item"><a [routerLink]="['/interventions/list']">Intervention</a></li>
       <li class="breadcrumb-item active">Planning</li>
     </ol>
   </nav>
 </div>
 
-<div class="container py-4">
-  <!-- <h2 class="text-center mb-4">Planning des interventions</h2> -->
+<div class="container-fluid py-4">
+  <div class="row">
 
-  <!-- FullCalendar Card -->
-  <div class="card shadow-sm mb-4">
-    <div class="card-body">
-      <full-calendar [options]="calendarOptions" [events]="events"></full-calendar>
-    </div>
-  </div>
+    <!-- 🔎 SIDEBAR FILTRE -->
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body d-flex flex-column">
 
-  <!-- Formulaire pour ajouter une planification -->
-  <div class="card shadow-sm p-4 mb-4">
-    <h4 class="mb-3">Ajouter une planification</h4>
-    <form (ngSubmit)="addPlanification()" #planForm="ngForm">
-      <div class="row g-3">
-        <div class="col-md-4">
-          <label for="id" class="form-label">Intervention</label>
-          <select id="id" class="form-select form-select-sm" required [(ngModel)]="newPlan.intervention_id"
-            name="id">
-            <option value="" disabled>-- Sélectionnez une intervention --</option>
-            <option *ngFor="let i of interventions" [value]="i.id">
-              #{{ i.numero }} - {{ i.titre }}
-            </option>
-          </select>
-        </div>
-        <div class="col-md-4">
-          <label for="date" class="form-label">Date</label>
-          <input type="date" id="date" name="date" class="form-control form-control-sm" required [(ngModel)]="newPlan.date">
-        </div>
-        <div class="col-md-4">
-          <label for="heure" class="form-label">Heure</label>
-          <input type="time" id="heure" name="heure" class="form-control form-control-sm" required [(ngModel)]="newPlan.heure">
+          <h6 class="fw-bold mb-3 text-primary">🔎 Filtres</h6>
+
+          <!-- 📅 Mini calendrier -->
+          <div class="mb-4">
+            <label class="form-label small fw-semibold d-block mb-2">📅 Sélectionner une date</label>
+            <div class="mini-calendar-box bg-white p-2 rounded shadow-sm mb-2">
+              <!-- Mini-calendrier -->
+              <div class="mini-calendar-wrapper">
+                <full-calendar #miniCalendar [options]="miniCalendarOptions">
+                </full-calendar>
+              </div>
+            </div>
+
+            <!-- Affichage des dates sélectionnées -->
+            <div *ngIf="search.dateDebut && search.dateFin" class="mb-2">
+              <small class="text-muted">Plage sélectionnée :</small>
+              <div class="fw-semibold">
+                {{ search.dateDebut | date:'dd/MM/yyyy' }} → {{ search.dateFin | date:'dd/MM/yyyy' }}
+              </div>
+            </div>
+
+            <!-- Boutons rapides -->
+            <div class="row g-2 mt-2">
+              <div class="col-6">
+                <button class="btn btn-info btn-sm w-100 text-white" (click)="goToDate('hier')">Hier</button>
+              </div>
+              <div class="col-6">
+                <button class="btn btn-info btn-sm w-100 text-white"
+                  (click)="goToDate('aujourdhui')">Aujourd'hui</button>
+              </div>
+              <div class="col-6">
+                <button class="btn btn-info btn-sm w-100 text-white" (click)="goToDate('demain')">Demain</button>
+              </div>
+              <div class="col-6">
+                <button class="btn btn-info btn-sm w-100 text-white" (click)="goToDate('semaine_cours')">Semaine en
+                  cours</button>
+              </div>
+              <div class="col-6">
+                <button class="btn btn-info btn-sm w-100 text-white" (click)="goToDate('semaine_prochaine')">Semaine
+                  prochaine</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 🔄 Statut -->
+          <div class="mb-3">
+            <label class="form-label small fw-semibold mb-1">🔄 Statut</label>
+            <select class="form-select form-select-sm" [(ngModel)]="search.etat" (change)="applyFilters()">
+              <option value="">Tous</option>
+              <option *ngFor="let etat of etatsConfig" [value]="etat.value">{{ etat.label }}</option>
+            </select>
+          </div>
+
+          <!-- 🏷️ Type -->
+          <div class="mb-3">
+            <label class="form-label small fw-semibold mb-1">🏷️ Type d'intervention</label>
+            <select class="form-select form-select-sm" [(ngModel)]="search.type" (change)="applyFilters()">
+              <option value="">Tous</option>
+              <option *ngFor="let t of typesIntervention" [value]="t.libelle">{{ t.libelle }}</option>
+            </select>
+          </div>
+
+          <!-- 🔁 Reset -->
+          <div class="mt-auto">
+            <button class="btn btn-outline-secondary btn-sm w-100" (click)="resetFilters()">Réinitialiser</button>
+          </div>
+
         </div>
       </div>
-      <button type="submit" class="btn btn-sm btn-primary mt-3" [disabled]="planForm.invalid">Ajouter</button>
-    </form>
+    </div>
+
+    <!-- 🗓️ CALENDRIER PRINCIPAL -->
+    <div class="col-md-8">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <full-calendar [options]="calendarOptions" [events]="events"></full-calendar>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
-<!-- Modal Bootstrap avec header blanc -->
-<div class="modal fade" id="eventModal" tabindex="-1" aria-labelledby="eventModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content" *ngIf="selectedEvent" style="border-radius: 15px; overflow: hidden;">
+<!-- Modal Détails Événement -->
+<div class="modal fade" id="eventDetailModal" tabindex="-1">
+  <div class="modal-dialog modal-sm modal-dialog-centered"> <!-- modal-sm pour plus petit -->
+    <div class="modal-content" *ngIf="selectedEvent">
 
-      <!-- Header -->
-      <div class="modal-header" style="background-color: #ffffff; color: #000;">
-        <h5 class="modal-title">
-          #{{ selectedEvent.extendedProps.interventionNumero }} - {{ selectedEvent.extendedProps.interventionTitre }}
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      <div class="modal-header border-0 pb-1">
+        <h6 class="fw-bold mb-0">{{ selectedEvent.title }}</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
 
-      <!-- Body -->
-      <div class="modal-body p-4" style="background-color: #f4f6f8;">
-        <div class="row g-3">
+      <div class="modal-body py-2 px-3">
 
-          <!-- Carte Informations générales -->
-          <div class="col-md-6">
-            <div class="card shadow-sm h-100">
-              <div class="card-body">
-                <h6 class="card-title text-primary mb-3">Informations générales</h6>
-                <p><strong>Type :</strong> {{ selectedEvent.extendedProps.interventionType || 'N/A' }}</p>
-                <p><strong>Description :</strong> {{ selectedEvent.extendedProps.interventionDescription || 'N/A' }}</p>
-                <p><strong>Adresse :</strong> {{ selectedEvent.extendedProps.interventionAdresseFacturation || 'N/A' }}</p>
-                <p><strong>Date planifiée :</strong> 
-                  {{ selectedEvent.extendedProps.planningDate | date:'dd/MM/yyyy' }} à {{ selectedEvent.extendedProps.planningHeure }}
-                </p>
-              </div>
-            </div>
+        <!-- Client -->
+        <div class="mb-1" *ngIf="selectedEvent.extendedProps?.client">
+          <small class="text-muted">Client</small>
+          <div class="fw-semibold small">
+            {{ selectedEvent.extendedProps.client.nom }} ({{ selectedEvent.extendedProps.client.type }}) - N° {{
+            selectedEvent.extendedProps.client.numero }}
           </div>
-
-          <!-- Carte Détails financiers et durée -->
-          <div class="col-md-6">
-            <div class="card shadow-sm h-100">
-              <div class="card-body">
-                <h6 class="card-title text-primary mb-3">Détails financiers & durée</h6>
-                <p>
-                  <strong>Priorité :</strong> 
-                  <span class="badge bg-warning text-dark">{{ selectedEvent.extendedProps.interventionPriorite || 'N/A' }}</span>
-                </p>
-                <p>
-                  <strong>État :</strong> 
-                  <span class="badge bg-info text-dark">{{ selectedEvent.extendedProps.interventionEtat || 'N/A' }}</span>
-                </p>
-                <p><strong>Montant :</strong> {{ selectedEvent.extendedProps.interventionMontant || '0.00' }} DH</p>
-                <p><strong>Durée :</strong> 
-                  {{ selectedEvent.extendedProps.interventionDureeHeures }}h {{ selectedEvent.extendedProps.interventionDureeMinutes }}min
-                </p>
-                <p><strong>Créé le :</strong> {{ selectedEvent.extendedProps.interventionDateCreation | date:'dd/MM/yyyy' }}</p>
-                <p><strong>Dernière modification :</strong> {{ selectedEvent.extendedProps.interventionDateModification | date:'dd/MM/yyyy' }}</p>
-              </div>
-            </div>
-          </div>
-
         </div>
+
+        <!-- Zone d'intervention -->
+        <div class="zone-int">
+          <small class="text-muted">Zone d'intervention</small>
+          <div class="p-1 mb-2 bg-light text-dark shadow-sm rounded">
+            <div class="mb-1" *ngIf="selectedEvent.extendedProps?.zone_intervention">
+              <div class="fw-semibold small">{{ selectedEvent.extendedProps.zone_intervention.nom }}</div>
+            </div>
+
+            <!-- Adresse complète -->
+            <div class="mb-2" *ngIf="selectedEvent.extendedProps?.zone_intervention">
+              <small class="text-muted">Adresse</small>
+              <div class="small">
+                {{ selectedEvent.extendedProps.zone_intervention.adresse }},
+                {{ selectedEvent.extendedProps.zone_intervention.ville }},
+                {{ selectedEvent.extendedProps.zone_intervention.codePostal }},
+                {{ selectedEvent.extendedProps.zone_intervention.province }},
+                {{ selectedEvent.extendedProps.zone_intervention.pays }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- Description -->
+        <div class="mb-1" *ngIf="selectedEvent.extendedProps?.description">
+          <small class="text-muted">Description</small>
+          <div class="small">{{ selectedEvent.extendedProps.description || 'Aucune description' }}</div>
+        </div>
+
+        <!-- Type & Priorité -->
+        <div class="d-flex justify-content-between mb-2 small">
+          <div>
+            <small class="text-muted">Type</small>
+            <div>{{ selectedEvent.extendedProps?.type || 'Non défini' }}</div>
+          </div>
+          <div>
+            <small class="text-muted">Priorité</small>
+            <span class="badge" [ngClass]="{
+                'bg-danger': selectedEvent.extendedProps?.priorite === 'haute',
+                'bg-warning text-dark': selectedEvent.extendedProps?.priorite === 'moyenne',
+                'bg-info text-dark': selectedEvent.extendedProps?.priorite === 'basse',
+                'bg-secondary': !selectedEvent.extendedProps?.priorite
+              }">
+              {{ selectedEvent.extendedProps?.priorite || 'Non définie' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Début / Fin -->
+        <div class="row text-center mb-2 small">
+          <div class="col-6">
+            <small class="text-muted">Début</small>
+            <div class="fw-semibold">{{ selectedEvent.start | date:'dd/MM/yyyy' }}</div>
+            <div><small>{{ selectedEvent.start | date:'HH:mm' }}</small></div>
+          </div>
+          <div class="col-6">
+            <small class="text-muted">Fin</small>
+            <div class="fw-semibold">{{ selectedEvent.end | date:'dd/MM/yyyy' }}</div>
+            <div><small>{{ selectedEvent.end | date:'HH:mm' }}</small></div>
+          </div>
+        </div>
+
+        <!-- Status -->
+        <div *ngIf="selectedEvent?.extendedProps">
+          <small class="text-muted">Statut</small>
+          <div class="d-flex align-items-center gap-2">
+
+            <!-- Badge circulaire avec icône sécurisée -->
+            <span class="badge rounded-circle d-inline-flex align-items-center justify-content-center"
+              [ngClass]="getEtatConfig(selectedEvent.extendedProps.etat)?.class ?? 'bg-secondary'"
+              style="width: 25px; height: 25px;"
+              [title]="getEtatConfig(selectedEvent.extendedProps.etat)?.label ?? 'Inconnu'">
+
+              <i
+                [ngClass]="['fs-7', getEtatConfig(selectedEvent.extendedProps.etat)?.icon ?? 'mdi mdi-help-circle']"></i>
+            </span>
+
+            <!-- Texte du statut -->
+            <span class="small text-truncate" [title]="selectedEvent.extendedProps.etat">
+              {{ getEtatConfig(selectedEvent.extendedProps.etat)?.label ?? 'Inconnu' }}
+            </span>
+
+          </div>
+        </div>
+
       </div>
 
-      <!-- Footer -->
-      <div class="modal-footer" style="background-color: #e9ecef;">
-        <button type="button" class="btn btn-primary rounded-pill px-4" data-bs-dismiss="modal">Fermer</button>
+      <div class="modal-footer border-0 py-1">
+        <button class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Fermer</button>
+        <!-- <button class="btn btn-primary btn-sm">Modifier</button> -->
       </div>
 
+    </div>
+  </div>
+</div>
+
+<!-- Modal Ajouter Planning -->
+<div class="modal fade" id="addPlanningModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+
+      <!-- HEADER -->
+      <div class="modal-header bg-white text-dark py-2">
+        <h5 class="modal-title mb-0">Ajouter une planification</h5>
+        <button type="button" class="btn-close" (click)="annuler()"></button>
+      </div>
+
+      <!-- BODY -->
+      <div class="modal-body p-3">
+
+        <!-- INTERVENTION -->
+        <div class="mb-3 col-md-6 mx-auto">
+          <label class="fw-bold text-uppercase small mb-1">Intervention</label>
+          <select class="form-select form-select-sm" [(ngModel)]="planning.interventionId">
+            <option [ngValue]="null" disabled selected>-- Sélectionnez --</option>
+            <option *ngFor="let i of interventions" [ngValue]="i.id">
+              {{ i.titre }} (#{{ i.numero }})
+            </option>
+          </select>
+        </div>
+
+        <div class="row g-2">
+
+          <!-- LEFT: Début -->
+          <div class="col-md-6 text-center">
+
+            <!-- DATE DEBUT -->
+            <div class="fw-bold text-uppercase small mb-1">Date début</div>
+            <div class="d-flex justify-content-center align-items-center gap-1 mb-2">
+              <span class="text-info fw-semibold small">
+                {{ (planning.dateDebut | date:'EEEE d MMMM y')?.toUpperCase() }}
+              </span>
+              <input type="date" #dateDebutInput class="visually-hidden" [(ngModel)]="planning.dateDebut">
+              <button type="button" class="btn btn-light btn-sm py-0 px-2" (click)="dateDebutInput.showPicker()">
+                <i class="mdi mdi-calendar fs-6"></i>
+              </button>
+            </div>
+
+            <!-- HEURE DEBUT -->
+            <div class="fw-bold text-uppercase small mb-1">Heure début</div>
+            <div class="d-flex justify-content-center align-items-center gap-1 mb-2">
+              <input type="number" class="form-control form-control-sm text-center p-1" style="width:50px"
+                [(ngModel)]="planning.heureDebutH" placeholder="HH"> :
+              <input type="number" class="form-control form-control-sm text-center p-1" style="width:50px"
+                [(ngModel)]="planning.heureDebutM" placeholder="MM">
+            </div>
+
+          </div>
+
+          <!-- RIGHT: Fin -->
+          <div class="col-md-6 text-center">
+
+            <!-- DATE FIN -->
+            <div class="fw-bold text-uppercase small mb-1">Date fin</div>
+            <div class="d-flex justify-content-center align-items-center gap-1 mb-2">
+              <span class="text-info fw-semibold small">
+                {{ (planning.dateFin | date:'EEEE d MMMM y')?.toUpperCase() }}
+              </span>
+              <input type="date" #dateFinInput class="visually-hidden" [(ngModel)]="planning.dateFin">
+              <button type="button" class="btn btn-light btn-sm py-0 px-2" (click)="dateFinInput.showPicker()">
+                <i class="mdi mdi-calendar fs-6"></i>
+              </button>
+            </div>
+
+            <!-- HEURE FIN -->
+            <div class="fw-bold text-uppercase small mb-1">Heure fin</div>
+            <div class="d-flex justify-content-center align-items-center gap-1 mb-2">
+              <input type="number" class="form-control form-control-sm text-center p-1" style="width:50px"
+                [(ngModel)]="planning.heureFinH" placeholder="HH"> :
+              <input type="number" class="form-control form-control-sm text-center p-1" style="width:50px"
+                [(ngModel)]="planning.heureFinM" placeholder="MM">
+            </div>
+
+            <!-- TRAJET -->
+            <div class="fw-bold text-uppercase small mb-1">Temps trajet</div>
+            <div class="d-flex justify-content-center align-items-center gap-1 mb-2">
+              <input type="number" class="form-control form-control-sm text-center p-1" style="width:50px"
+                [(ngModel)]="planning.tempsTrajetEstimeH">
+              <span class="small">h</span>
+              <input type="number" class="form-control form-control-sm text-center p-1" style="width:50px"
+                [(ngModel)]="planning.tempsTrajetEstimeMin">
+              <span class="small">min</span>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- BUTTONS -->
+        <div class="mt-3 d-flex justify-content-end gap-2">
+          <button type="button" class="btn btn-secondary btn-sm" (click)="annuler()">Annuler</button>
+          <button type="button" class="btn btn-success btn-sm" (click)="addPlanning()">Valider</button>
+        </div>
+
+      </div>
     </div>
   </div>
 </div>

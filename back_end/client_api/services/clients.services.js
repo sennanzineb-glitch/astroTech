@@ -547,6 +547,129 @@ class ClientService {
     return client;
   }
 
+  // static async getInterventionsByClient({
+  //   clientId,
+  //   page = 1,
+  //   limit = 10,
+  //   search = '',
+  //   userId = null
+  // }) {
+  //   try {
+  //     page = Number(page);
+  //     limit = Number(limit);
+  //     if (!Number.isInteger(page) || page < 1) page = 1;
+  //     if (!Number.isInteger(limit) || limit < 1) limit = 10;
+
+  //     const offset = (page - 1) * limit;
+
+  //     /* ===================== CONDITIONS ===================== */
+  //     let whereClauses = ['i.client_id = ?'];
+  //     let params = [clientId];
+
+  //     if (userId) {
+  //       whereClauses.push('i.createur_id = ?');
+  //       params.push(userId);
+  //     }
+
+  //     let searchCondition = '';
+  //     if (search && search.trim() !== '') {
+  //       searchCondition = `AND (i.titre LIKE ? OR i.description LIKE ?)`;
+  //       const like = `%${search}%`;
+  //       params.push(like, like);
+  //     }
+
+  //     const whereSQL =
+  //       'WHERE ' + whereClauses.join(' AND ') + ' ' + searchCondition;
+
+  //     /* ===================== QUERY ===================== */
+  //     const query = `
+  //     SELECT SQL_CALC_FOUND_ROWS
+  //       i.id AS interventionId,
+  //       i.numero AS interventionNumero,
+  //       i.titre AS interventionTitre,
+  //       i.description AS interventionDescription,
+  //       i.type AS interventionType,
+  //       i.priorite AS interventionPriorite,
+  //       i.etat AS interventionEtat,
+  //       i.date_prevue AS interventionDatePrevue,
+  //       i.date_creation AS interventionDateCreation,
+
+  //       COALESCE(
+  //         MAX(o.nom_entreprise),
+  //         MAX(ag.nom_agence),
+  //         MAX(p.nom_complet)
+  //       ) AS clientNom,
+
+  //       CASE
+  //         WHEN MAX(p.client_id) IS NOT NULL THEN 'Particulier'
+  //         WHEN MAX(ag.client_id) IS NOT NULL THEN 'Agence'
+  //         WHEN MAX(o.client_id) IS NOT NULL THEN 'Organisation'
+  //         ELSE 'Inconnu'
+  //       END AS typeClient,
+
+  //       MAX(h.reference) AS habitation,
+  //       MAX(s.nom) AS secteur,
+
+  //       GROUP_CONCAT(
+  //         DISTINCT CONCAT(t.nom, ' ', t.prenom)
+  //         SEPARATOR ', '
+  //       ) AS techniciens,
+
+  //       GROUP_CONCAT(
+  //         DISTINCT CONCAT(r.nom, ' ', r.prenom)
+  //         SEPARATOR ', '
+  //       ) AS referents
+
+  //     FROM intervention i
+  //     INNER JOIN client c ON c.id = i.client_id
+  //     LEFT JOIN particulier p ON p.client_id = c.id
+  //     LEFT JOIN agence ag ON ag.client_id = c.id
+  //     LEFT JOIN organisation o ON o.client_id = c.id
+  //     LEFT JOIN habitation h ON h.id = i.zone_intervention_client_id
+  //     LEFT JOIN secteur s ON s.id = h.secteur_id
+  //     LEFT JOIN intervention_technicien it ON it.id_intervention = i.id
+  //     LEFT JOIN technicien t ON t.id = it.id_technicien
+  //     LEFT JOIN intervention_referent ir ON ir.intervention_id = i.id
+  //     LEFT JOIN referent r ON r.id = ir.referent_id
+
+  //     ${whereSQL}
+
+  //     GROUP BY
+  //       i.id,
+  //       i.numero,
+  //       i.titre,
+  //       i.description,
+  //       i.type,
+  //       i.priorite,
+  //       i.etat,
+  //       i.date_prevue,
+  //       i.date_creation
+
+  //     ORDER BY i.date_creation DESC
+  //     LIMIT ? OFFSET ?;
+  //   `;
+
+  //     // pagination
+  //     params.push(limit, offset);
+
+  //     /* ===================== EXEC ===================== */
+  //     const [rows] = await db.query(query, params);
+  //     const [[{ total }]] = await db.query(
+  //       'SELECT FOUND_ROWS() AS total'
+  //     );
+
+  //     return {
+  //       total,
+  //       page,
+  //       limit,
+  //       data: rows
+  //     };
+
+  //   } catch (err) {
+  //     console.error('Erreur getInterventionsByClient:', err);
+  //     throw err;
+  //   }
+  // }
 
   static async getInterventionsByClient({
     clientId,
@@ -556,8 +679,10 @@ class ClientService {
     userId = null
   }) {
     try {
+      /* ===================== PAGINATION ===================== */
       page = Number(page);
       limit = Number(limit);
+
       if (!Number.isInteger(page) || page < 1) page = 1;
       if (!Number.isInteger(limit) || limit < 1) limit = 10;
 
@@ -572,15 +697,13 @@ class ClientService {
         params.push(userId);
       }
 
-      let searchCondition = '';
       if (search && search.trim() !== '') {
-        searchCondition = `AND (i.titre LIKE ? OR i.description LIKE ?)`;
+        whereClauses.push('(i.titre LIKE ? OR i.description LIKE ?)');
         const like = `%${search}%`;
         params.push(like, like);
       }
 
-      const whereSQL =
-        'WHERE ' + whereClauses.join(' AND ') + ' ' + searchCondition;
+      const whereSQL = 'WHERE ' + whereClauses.join(' AND ');
 
       /* ===================== QUERY ===================== */
       const query = `
@@ -589,7 +712,9 @@ class ClientService {
         i.numero AS interventionNumero,
         i.titre AS interventionTitre,
         i.description AS interventionDescription,
-        i.type AS interventionType,
+
+        itype.libelle AS interventionType, -- ✅ correction ici
+
         i.priorite AS interventionPriorite,
         i.etat AS interventionEtat,
         i.date_prevue AS interventionDatePrevue,
@@ -622,6 +747,10 @@ class ClientService {
         ) AS referents
 
       FROM intervention i
+
+      -- ✅ JOIN pour récupérer le libellé du type
+      LEFT JOIN intervention_type itype ON itype.id = i.type_id
+
       INNER JOIN client c ON c.id = i.client_id
       LEFT JOIN particulier p ON p.client_id = c.id
       LEFT JOIN agence ag ON ag.client_id = c.id
@@ -640,7 +769,7 @@ class ClientService {
         i.numero,
         i.titre,
         i.description,
-        i.type,
+        itype.libelle,
         i.priorite,
         i.etat,
         i.date_prevue,
@@ -650,11 +779,11 @@ class ClientService {
       LIMIT ? OFFSET ?;
     `;
 
-      // pagination
+      /* ===================== EXECUTION ===================== */
       params.push(limit, offset);
 
-      /* ===================== EXEC ===================== */
       const [rows] = await db.query(query, params);
+
       const [[{ total }]] = await db.query(
         'SELECT FOUND_ROWS() AS total'
       );
@@ -671,280 +800,6 @@ class ClientService {
       throw err;
     }
   }
-
-  // static async getClientsByParentWithDetails({ parentId, parentType, page = 1, limit = 10 }) {
-  //   try {
-  //     page = Number(page);
-  //     limit = Number(limit);
-  //     const offset = (page - 1) * limit;
-
-  //     // 🔹 Normalisation du type parent
-  //     const rawParentType = parentType;
-  //     if (['agence', 'organisation', 'particulier'].includes(parentType)) parentType = 'client';
-  //     if (!['client', 'secteur', 'habitation'].includes(parentType)) throw new Error('parentType invalide');
-
-  //     // 🔹 Conditions parent
-  //     let clientParentCondition = '', secteurParentCondition = '', habitationParentCondition = '';
-  //     switch (parentType) {
-  //       case "client":
-  //         clientParentCondition = "c.parent_id = ?";
-  //         secteurParentCondition = "s.parent_id = ? OR s.agence_id = ? OR s.organisation_id = ?";
-  //         habitationParentCondition = "h.secteur_id = ? OR h.agence_id = ? OR h.organisation_id = ? OR h.particulier_id = ?";
-  //         break;
-  //       case "secteur":
-  //         clientParentCondition = "1=0";
-  //         secteurParentCondition = "s.parent_id = ?";
-  //         habitationParentCondition = "h.secteur_id = ?";
-  //         break;
-  //       case "habitation":
-  //         clientParentCondition = "1=0";
-  //         secteurParentCondition = "1=0";
-  //         habitationParentCondition = "h.id = ?";
-  //         break;
-  //     }
-
-  //     // 🔹 Requête SQL avec UNION ALL (colonnes alignées)
-  //     const query = `
-  //     SELECT * FROM (
-  //       /* ================= CLIENTS ================= */
-  //       SELECT
-  //         c.id AS item_id,
-  //         c.numero,
-  //         c.compte,
-  //         COALESCE(p.nom_complet, a.nom_agence, o.nom_entreprise) AS nom_client,
-  //         NULL AS reference,
-  //         CASE
-  //           WHEN p.id IS NOT NULL THEN 'particulier'
-  //           WHEN a.id IS NOT NULL THEN 'agence'
-  //           WHEN o.id IS NOT NULL THEN 'organisation'
-  //           ELSE 'client'
-  //         END AS type_item,
-  //         c.parent_id,
-  //         p.id AS particulier_id,
-  //         a.id AS agence_id,
-  //         o.id AS organisation_id,
-  //         NULL AS secteur_id,
-  //         NULL AS habitation_id,
-  //         COALESCE(ad_particulier.id, ad_agence.id) AS adresse_id,
-  //         COALESCE(ad_particulier.adresse, ad_agence.adresse) AS adresse,
-  //         COALESCE(ad_particulier.code_postal, ad_agence.code_postal) AS code_postal,
-  //         COALESCE(ad_particulier.ville, ad_agence.ville) AS ville,
-  //         COALESCE(ad_particulier.province, ad_agence.province) AS province,
-  //         COALESCE(ad_particulier.pays, ad_agence.pays) AS pays,
-  //         COALESCE(ad_particulier.etage, ad_agence.etage) AS etage,
-  //         COALESCE(ad_particulier.appartement_local, ad_agence.appartement_local) AS appartement_local,
-  //         COALESCE(ad_particulier.batiment, ad_agence.batiment) AS batiment,
-  //         COALESCE(ad_particulier.interphone_digicode, ad_agence.interphone_digicode) AS interphone_digicode,
-  //         COALESCE(ad_particulier.escalier, ad_agence.escalier) AS escalier,
-  //         COALESCE(ad_particulier.porte_entree, ad_agence.porte_entree) AS porte_entree,
-  //         ct.id AS contact_id,
-  //         ct.nom_complet,
-  //         ct.poste,
-  //         ct.date_du,
-  //         ct.date_au,
-  //         ct.memo_note,
-  //         e.id AS email_id,
-  //         e.email,
-  //         e.type AS email_type,
-  //         t.id AS tel_id,
-  //         t.tel,
-  //         t.type AS tel_type
-  //       FROM client c
-  //       LEFT JOIN particulier p ON p.client_id = c.id
-  //       LEFT JOIN agence a ON a.client_id = c.id
-  //       LEFT JOIN organisation o ON o.client_id = c.id
-  //       LEFT JOIN adresse ad_particulier ON ad_particulier.id = p.adresse_id
-  //       LEFT JOIN adresse ad_agence ON ad_agence.id = a.adresse_id
-  //       LEFT JOIN contact ct ON ct.client_id = c.id
-  //       LEFT JOIN adresse_email e ON e.contact_id = ct.id
-  //       LEFT JOIN num_tel t ON t.contact_id = ct.id
-  //       WHERE ${clientParentCondition}
-
-  //       UNION ALL
-
-  //       /* ================= SECTEURS ================= */
-  //       SELECT
-  //         s.id AS item_id,
-  //         NULL AS numero,
-  //         NULL AS compte,
-  //         s.nom AS nom_client,
-  //         s.reference,
-  //         'secteur' AS type_item,
-  //         s.parent_id,
-  //         NULL AS particulier_id,
-  //         s.agence_id,
-  //         s.organisation_id,
-  //         s.id AS secteur_id,
-  //         NULL AS habitation_id,
-  //         NULL AS adresse_id,
-  //         NULL AS adresse,
-  //         NULL AS code_postal,
-  //         NULL AS ville,
-  //         NULL AS province,
-  //         NULL AS pays,
-  //         NULL AS etage,
-  //         NULL AS appartement_local,
-  //         NULL AS batiment,
-  //         NULL AS interphone_digicode,
-  //         NULL AS escalier,
-  //         NULL AS porte_entree,
-  //         ct.id AS contact_id,
-  //         ct.nom_complet,
-  //         ct.poste,
-  //         ct.date_du,
-  //         ct.date_au,
-  //         ct.memo_note,
-  //         e.id AS email_id,
-  //         e.email,
-  //         e.type AS email_type,
-  //         t.id AS tel_id,
-  //         t.tel,
-  //         t.type AS tel_type
-  //       FROM secteur s
-  //       LEFT JOIN contact ct ON ct.secteur_id = s.id
-  //       LEFT JOIN adresse_email e ON e.contact_id = ct.id
-  //       LEFT JOIN num_tel t ON t.contact_id = ct.id
-  //       WHERE ${secteurParentCondition}
-
-  //       UNION ALL
-
-  //       /* ================= HABITATIONS ================= */
-  //       SELECT
-  //         h.id AS item_id,
-  //         NULL AS numero,
-  //         NULL AS compte,
-  //         h.reference AS nom_client,
-  //         h.reference AS reference,
-  //         'habitation' AS type_item,
-  //         COALESCE(h.secteur_id, h.agence_id, h.organisation_id, h.particulier_id) AS parent_id,
-  //         h.particulier_id,
-  //         h.agence_id,
-  //         h.organisation_id,
-  //         h.secteur_id,
-  //         h.id AS habitation_id,
-  //         NULL AS adresse_id,
-  //         NULL AS adresse,
-  //         NULL AS code_postal,
-  //         NULL AS ville,
-  //         NULL AS province,
-  //         NULL AS pays,
-  //         NULL AS etage,
-  //         NULL AS appartement_local,
-  //         NULL AS batiment,
-  //         NULL AS interphone_digicode,
-  //         NULL AS escalier,
-  //         NULL AS porte_entree,
-  //         ct.id AS contact_id,
-  //         ct.nom_complet,
-  //         ct.poste,
-  //         ct.date_du,
-  //         ct.date_au,
-  //         ct.memo_note,
-  //         e.id AS email_id,
-  //         e.email,
-  //         e.type AS email_type,
-  //         t.id AS tel_id,
-  //         t.tel,
-  //         t.type AS tel_type
-  //       FROM habitation h
-  //       LEFT JOIN contact ct ON ct.habitation_id = h.id
-  //       LEFT JOIN adresse_email e ON e.contact_id = ct.id
-  //       LEFT JOIN num_tel t ON t.contact_id = ct.id
-  //       WHERE ${habitationParentCondition}
-  //     ) AS full_data
-  //     ORDER BY type_item, item_id
-  //     LIMIT ? OFFSET ?;
-  //   `;
-
-  //     // 🔹 Paramètres (alignés)
-  //     const params = [];
-  //     if (parentType === 'client') {
-  //       params.push(parentId); // client
-  //       params.push(parentId, parentId, parentId); // secteur
-  //       params.push(parentId, parentId, parentId, parentId); // habitation
-  //     } else if (parentType === 'secteur') {
-  //       params.push(parentId); // secteur
-  //       params.push(parentId); // habitation
-  //     } else if (parentType === 'habitation') {
-  //       params.push(parentId); // habitation
-  //     }
-  //     params.push(limit, offset);
-
-  //     const [rows] = await db.query(query, params);
-
-  //     // 🔹 Formatage
-  //     const map = new Map();
-  //     for (const r of rows) {
-  //       if (!map.has(r.item_id)) {
-  //         map.set(r.item_id, {
-  //           id: r.item_id,
-  //           numero: r.numero,
-  //           compte: r.compte,
-  //           nom_client: r.nom_client,
-  //           reference: r.reference,
-  //           type_client: r.type_item,
-  //           parent_id: r.parent_id,
-  //           particulier_id: r.particulier_id,
-  //           agence_id: r.agence_id,
-  //           organisation_id: r.organisation_id,
-  //           secteur_id: r.secteur_id,
-  //           habitation_id: r.habitation_id,
-  //           adresse: r.adresse_id ? {
-  //             id: r.adresse_id,
-  //             adresse: r.adresse,
-  //             code_postal: r.code_postal,
-  //             ville: r.ville,
-  //             province: r.province,
-  //             pays: r.pays,
-  //             etage: r.etage,
-  //             appartement_local: r.appartement_local,
-  //             batiment: r.batiment,
-  //             interphone_digicode: r.interphone_digicode,
-  //             escalier: r.escalier,
-  //             porte_entree: r.porte_entree
-  //           } : null,
-  //           contacts: []
-  //         });
-  //       }
-
-  //       const item = map.get(r.item_id);
-  //       if (r.contact_id) {
-  //         let contact = item.contacts.find(c => c.id === r.contact_id);
-  //         if (!contact) {
-  //           contact = {
-  //             id: r.contact_id,
-  //             nom_complet: r.nom_complet,
-  //             poste: r.poste,
-  //             date_du: r.date_du,
-  //             date_au: r.date_au,
-  //             memo_note: r.memo_note,
-  //             listEmails: [],
-  //             listTels: []
-  //           };
-  //           item.contacts.push(contact);
-  //         }
-
-  //         if (r.email_id && !contact.listEmails.some(e => e.id === r.email_id)) {
-  //           contact.listEmails.push({ id: r.email_id, email: r.email, type: r.email_type });
-  //         }
-  //         if (r.tel_id && !contact.listTels.some(t => t.id === r.tel_id)) {
-  //           contact.listTels.push({ id: r.tel_id, tel: r.tel, type: r.tel_type });
-  //         }
-  //       }
-  //     }
-
-  //     return {
-  //       success: true,
-  //       page,
-  //       limit,
-  //       data: Array.from(map.values())
-  //     };
-  //   } catch (error) {
-  //     console.error("Erreur getClientsByParentWithDetails:", error);
-  //     return { success: false, error: error.message };
-  //   }
-  // }
-
 
   static async getClientsByParentWithDetails({ parentId, parentType, page = 1, limit = 10 }) {
     try {
@@ -972,13 +827,11 @@ class ClientService {
           habitationParentCondition =
             'h.secteur_id = ? OR h.agence_id = ? OR h.organisation_id = ? OR h.particulier_id = ?';
           break;
-
         case 'secteur':
           clientParentCondition = '1=0';
           secteurParentCondition = 's.parent_id = ?';
           habitationParentCondition = 'h.secteur_id = ?';
           break;
-
         case 'habitation':
           clientParentCondition = '1=0';
           secteurParentCondition = '1=0';
@@ -988,170 +841,178 @@ class ClientService {
 
       /* ======================= SQL ======================= */
       const query = `
-    SELECT * FROM (
+      SELECT * FROM (
+        /* ================= CLIENTS ================= */
+        SELECT
+          c.id AS item_id,
+          c.numero,
+          c.compte,
+          COALESCE(p.nom_complet, a.nom_agence, o.nom_entreprise) AS nom_client,
+          NULL AS reference,
+          CASE
+            WHEN p.id IS NOT NULL THEN 'particulier'
+            WHEN a.id IS NOT NULL THEN 'agence'
+            WHEN o.id IS NOT NULL THEN 'organisation'
+            ELSE 'organisation'
+          END AS type_item,
+          c.parent_id,
+          p.id AS particulier_id,
+          a.id AS agence_id,
+          o.id AS organisation_id,
+          NULL AS secteur_id,
+          NULL AS habitation_id,
 
-      /* ================= CLIENTS ================= */
-      SELECT
-        c.id AS item_id,
-        c.numero,
-        c.compte,
-        COALESCE(p.nom_complet, a.nom_agence, o.nom_entreprise) AS nom_client,
-        NULL AS reference,
-        CASE
-          WHEN p.id IS NOT NULL THEN 'particulier'
-          WHEN a.id IS NOT NULL THEN 'agence'
-          WHEN o.id IS NOT NULL THEN 'organisation'
-          ELSE 'client'
-        END AS type_item,
-        c.parent_id,
-        p.id AS particulier_id,
-        a.id AS agence_id,
-        o.id AS organisation_id,
-        NULL AS secteur_id,
-        NULL AS habitation_id,
+          /* Adresse */
+          COALESCE(adp.id, ada.id) AS adresse_id,
+          COALESCE(adp.adresse, ada.adresse) AS adresse,
+          COALESCE(adp.code_postal, ada.code_postal) AS code_postal,
+          COALESCE(adp.ville, ada.ville) AS ville,
+          COALESCE(adp.province, ada.province) AS province,
+          COALESCE(adp.pays, ada.pays) AS pays,
+          COALESCE(adp.etage, ada.etage) AS etage,
+          COALESCE(adp.appartement_local, ada.appartement_local) AS appartement_local,
+          COALESCE(adp.batiment, ada.batiment) AS batiment,
+          COALESCE(adp.interphone_digicode, ada.interphone_digicode) AS interphone_digicode,
+          COALESCE(adp.escalier, ada.escalier) AS escalier,
+          COALESCE(adp.porte_entree, ada.porte_entree) AS porte_entree,
 
-        COALESCE(adp.id, ada.id) AS adresse_id,
-        COALESCE(adp.adresse, ada.adresse) AS adresse,
-        COALESCE(adp.code_postal, ada.code_postal) AS code_postal,
-        COALESCE(adp.ville, ada.ville) AS ville,
-        COALESCE(adp.province, ada.province) AS province,
-        COALESCE(adp.pays, ada.pays) AS pays,
-        COALESCE(adp.etage, ada.etage) AS etage,
-        COALESCE(adp.appartement_local, ada.appartement_local) AS appartement_local,
-        COALESCE(adp.batiment, ada.batiment) AS batiment,
-        COALESCE(adp.interphone_digicode, ada.interphone_digicode) AS interphone_digicode,
-        COALESCE(adp.escalier, ada.escalier) AS escalier,
-        COALESCE(adp.porte_entree, ada.porte_entree) AS porte_entree,
+          /* Contact du client */
+          ct.id AS contact_id,
+          ct.nom_complet,
+          ct.poste,
+          ct.date_du,
+          ct.date_au,
+          ct.memo_note,
+          e.id AS email_id,
+          e.email,
+          e.type AS email_type,
+          t.id AS tel_id,
+          t.tel,
+          t.type AS tel_type,
 
-        ct.id AS contact_id,
-        ct.nom_complet,
-        ct.poste,
-        ct.date_du,
-        ct.date_au,
-        ct.memo_note,
-        e.id AS email_id,
-        e.email,
-        e.type AS email_type,
-        t.id AS tel_id,
-        t.tel,
-        t.type AS tel_type
-      FROM client c
-      LEFT JOIN particulier p ON p.client_id = c.id
-      LEFT JOIN agence a ON a.client_id = c.id
-      LEFT JOIN organisation o ON o.client_id = c.id
-      LEFT JOIN adresse adp ON adp.id = p.adresse_id
-      LEFT JOIN adresse ada ON ada.id = a.adresse_id
-      LEFT JOIN contact ct ON ct.client_id = c.id
-      LEFT JOIN adresse_email e ON e.contact_id = ct.id
-      LEFT JOIN num_tel t ON t.contact_id = ct.id
-      WHERE ${clientParentCondition}
+          /* Infos du particulier */
+          p.nom_complet AS particulier_nom,
+          p.email AS particulier_email,
+          p.telephone AS particulier_tel
 
-      UNION ALL
+        FROM client c
+        LEFT JOIN particulier p ON p.client_id = c.id
+        LEFT JOIN agence a ON a.client_id = c.id
+        LEFT JOIN organisation o ON o.client_id = c.id
+        LEFT JOIN adresse adp ON adp.id = p.adresse_id
+        LEFT JOIN adresse ada ON ada.id = a.adresse_id
+        LEFT JOIN contact ct ON ct.client_id = c.id
+        LEFT JOIN adresse_email e ON e.contact_id = ct.id
+        LEFT JOIN num_tel t ON t.contact_id = ct.id
+        WHERE ${clientParentCondition}
 
-      /* ================= SECTEURS ================= */
-      SELECT
-        s.id AS item_id,
-        NULL,
-        NULL,
-        s.nom AS nom_client,
-        s.reference,
-        'secteur' AS type_item,
-        s.parent_id,
-        NULL,
-        s.agence_id,
-        s.organisation_id,
-        s.id AS secteur_id,
-        NULL,
+        UNION ALL
 
-        ad.id AS adresse_id,
-        ad.adresse,
-        ad.code_postal,
-        ad.ville,
-        ad.province,
-        ad.pays,
-        ad.etage,
-        ad.appartement_local,
-        ad.batiment,
-        ad.interphone_digicode,
-        ad.escalier,
-        ad.porte_entree,
+        /* ================= SECTEURS ================= */
+        SELECT
+          s.id AS item_id,
+          NULL,
+          NULL,
+          s.nom AS nom_client,
+          s.reference,
+          'secteur' AS type_item,
+          s.parent_id,
+          NULL,
+          s.agence_id,
+          s.organisation_id,
+          s.id AS secteur_id,
+          NULL,
+          ad.id AS adresse_id,
+          ad.adresse,
+          ad.code_postal,
+          ad.ville,
+          ad.province,
+          ad.pays,
+          ad.etage,
+          ad.appartement_local,
+          ad.batiment,
+          ad.interphone_digicode,
+          ad.escalier,
+          ad.porte_entree,
+          ct.id AS contact_id,
+          ct.nom_complet,
+          ct.poste,
+          ct.date_du,
+          ct.date_au,
+          ct.memo_note,
+          e.id AS email_id,
+          e.email,
+          e.type AS email_type,
+          t.id AS tel_id,
+          t.tel,
+          t.type AS tel_type,
+          NULL AS particulier_nom,
+          NULL AS particulier_email,
+          NULL AS particulier_tel
+        FROM secteur s
+        LEFT JOIN adresse ad ON ad.id = s.adresse_id
+        LEFT JOIN contact ct ON ct.secteur_id = s.id
+        LEFT JOIN adresse_email e ON e.contact_id = ct.id
+        LEFT JOIN num_tel t ON t.contact_id = ct.id
+        WHERE ${secteurParentCondition}
 
-        ct.id AS contact_id,
-        ct.nom_complet,
-        ct.poste,
-        ct.date_du,
-        ct.date_au,
-        ct.memo_note,
-        e.id AS email_id,
-        e.email,
-        e.type AS email_type,
-        t.id AS tel_id,
-        t.tel,
-        t.type AS tel_type
-      FROM secteur s
-      LEFT JOIN adresse ad ON ad.id = s.adresse_id
-      LEFT JOIN contact ct ON ct.secteur_id = s.id
-      LEFT JOIN adresse_email e ON e.contact_id = ct.id
-      LEFT JOIN num_tel t ON t.contact_id = ct.id
-      WHERE ${secteurParentCondition}
+        UNION ALL
 
-      UNION ALL
+        /* ================= HABITATIONS ================= */
+        SELECT
+          h.id AS item_id,
+          NULL,
+          NULL,
+          h.reference AS nom_client,
+          h.reference,
+          'habitation' AS type_item,
+          COALESCE(h.secteur_id, h.agence_id, h.organisation_id, h.particulier_id),
+          h.particulier_id,
+          h.agence_id,
+          h.organisation_id,
+          h.secteur_id,
+          h.id AS habitation_id,
+          ad.id AS adresse_id,
+          ad.adresse,
+          ad.code_postal,
+          ad.ville,
+          ad.province,
+          ad.pays,
+          ad.etage,
+          ad.appartement_local,
+          ad.batiment,
+          ad.interphone_digicode,
+          ad.escalier,
+          ad.porte_entree,
+          ct.id AS contact_id,
+          ct.nom_complet,
+          ct.poste,
+          ct.date_du,
+          ct.date_au,
+          ct.memo_note,
+          e.id AS email_id,
+          e.email,
+          e.type AS email_type,
+          t.id AS tel_id,
+          t.tel,
+          t.type AS tel_type,
+          NULL AS particulier_nom,
+          NULL AS particulier_email,
+          NULL AS particulier_tel
+        FROM habitation h
+        LEFT JOIN adresse ad ON ad.id = h.adresse_id
+        LEFT JOIN contact ct ON ct.habitation_id = h.id
+        LEFT JOIN adresse_email e ON e.contact_id = ct.id
+        LEFT JOIN num_tel t ON t.contact_id = ct.id
+        WHERE ${habitationParentCondition}
 
-      /* ================= HABITATIONS ================= */
-      SELECT
-        h.id AS item_id,
-        NULL,
-        NULL,
-        h.reference AS nom_client,
-        h.reference,
-        'habitation' AS type_item,
-        COALESCE(h.secteur_id, h.agence_id, h.organisation_id, h.particulier_id),
-        h.particulier_id,
-        h.agence_id,
-        h.organisation_id,
-        h.secteur_id,
-        h.id AS habitation_id,
-
-        ad.id AS adresse_id,
-        ad.adresse,
-        ad.code_postal,
-        ad.ville,
-        ad.province,
-        ad.pays,
-        ad.etage,
-        ad.appartement_local,
-        ad.batiment,
-        ad.interphone_digicode,
-        ad.escalier,
-        ad.porte_entree,
-
-        ct.id AS contact_id,
-        ct.nom_complet,
-        ct.poste,
-        ct.date_du,
-        ct.date_au,
-        ct.memo_note,
-        e.id AS email_id,
-        e.email,
-        e.type AS email_type,
-        t.id AS tel_id,
-        t.tel,
-        t.type AS tel_type
-      FROM habitation h
-      LEFT JOIN adresse ad ON ad.id = h.adresse_id
-      LEFT JOIN contact ct ON ct.habitation_id = h.id
-      LEFT JOIN adresse_email e ON e.contact_id = ct.id
-      LEFT JOIN num_tel t ON t.contact_id = ct.id
-      WHERE ${habitationParentCondition}
-
-    ) AS full_data
-    ORDER BY type_item, item_id
-    LIMIT ? OFFSET ?;
+      ) AS full_data
+      ORDER BY type_item, item_id
+      LIMIT ? OFFSET ?;
     `;
 
       /* ================= PARAMS ================= */
       const params = [];
-
       if (parentType === 'client') {
         params.push(parentId);
         params.push(parentId, parentId, parentId);
@@ -1159,17 +1020,15 @@ class ClientService {
       } else if (parentType === 'secteur') {
         params.push(parentId);
         params.push(parentId);
-      } else {
+      } else if (parentType === 'habitation') {
         params.push(parentId);
       }
-
       params.push(limit, offset);
 
       const [rows] = await db.query(query, params);
 
       /* ================= FORMATAGE ================= */
       const map = new Map();
-
       for (const r of rows) {
         if (!map.has(`${r.type_item}_${r.item_id}`)) {
           map.set(`${r.type_item}_${r.item_id}`, {
@@ -1180,6 +1039,8 @@ class ClientService {
             reference: r.reference,
             type_client: r.type_item,
             parent_id: r.parent_id,
+            email: r.particulier_email || r.email || null,
+            telephone: r.particulier_tel || r.telephone || null,
             particulier_id: r.particulier_id,
             agence_id: r.agence_id,
             organisation_id: r.organisation_id,
@@ -1207,6 +1068,7 @@ class ClientService {
 
         const item = map.get(`${r.type_item}_${r.item_id}`);
 
+        /* Ajouter le contact et les emails/tel */
         if (r.contact_id) {
           let contact = item.contacts.find(c => c.id === r.contact_id);
           if (!contact) {
@@ -1222,13 +1084,22 @@ class ClientService {
             };
             item.contacts.push(contact);
           }
-
           if (r.email_id && !contact.listEmails.some(e => e.id === r.email_id)) {
             contact.listEmails.push({ id: r.email_id, email: r.email, type: r.email_type });
           }
-
           if (r.tel_id && !contact.listTels.some(t => t.id === r.tel_id)) {
             contact.listTels.push({ id: r.tel_id, tel: r.tel, type: r.tel_type });
+          }
+
+          /* Ajouter info du particulier */
+          if (r.particulier_id) {
+            contact.listEmails.push(
+              ...(r.particulier_email ? [{ id: r.particulier_id, email: r.particulier_email, type: 'particulier' }] : [])
+            );
+            contact.listTels.push(
+              ...(r.particulier_tel ? [{ id: r.particulier_id, tel: r.particulier_tel, type: 'particulier' }] : [])
+            );
+            contact.nom_complet_particulier = r.particulier_nom || null;
           }
         }
       }
@@ -1246,7 +1117,72 @@ class ClientService {
     }
   }
 
+  static async getAffairesByClient(clientId, page = 1, limit = 10, search = '') {
+    try {
+      // Validation des paramètres
+      const clientIdInt = Number(clientId);
+      const pageInt = Number(page);
+      const limitInt = Number(limit);
 
+      if (!Number.isInteger(clientIdInt) || !Number.isInteger(pageInt) || !Number.isInteger(limitInt)) {
+        throw new Error('clientId, page et limit doivent être des nombres entiers valides');
+      }
+      if (clientIdInt <= 0 || pageInt <= 0 || limitInt <= 0) {
+        throw new Error('clientId, page et limit doivent être positifs');
+      }
+
+      const offset = (pageInt - 1) * limitInt;
+
+      // Construction du WHERE
+      let whereClause = 'WHERE a.client_id = ?';
+      const params = [clientIdInt];
+
+      if (search && search.trim() !== '') {
+        whereClause += ' AND (a.titre LIKE ? OR a.reference LIKE ?)';
+        params.push(`%${search}%`, `%${search}%`);
+      }
+
+      // Requête principale — LIMIT et OFFSET injectés directement dans la query
+      const query = `
+      SELECT 
+        a.id AS affaireId,
+        a.reference,
+        a.titre AS affaireTitre,
+        a.description AS affaireDescription,
+        a.etatLogement,
+        a.dateDebut,
+        a.dateFin,
+        a.motsCles,
+        a.dureePrevueHeures,
+        a.dureePrevueMinutes
+      FROM affaire a
+      ${whereClause}
+      ORDER BY a.dateDebut DESC
+      LIMIT ${limitInt} OFFSET ${offset}
+    `;
+
+      const [rows] = await db.execute(query, params);
+
+      // Requête pour total (pas de LIMIT/OFFSET)
+      const countQuery = `
+      SELECT COUNT(*) AS total
+      FROM affaire a
+      ${whereClause}
+    `;
+      const [countRows] = await db.execute(countQuery, params);
+
+      return {
+        total: countRows[0].total,
+        page: pageInt,
+        limit: limitInt,
+        affaires: rows
+      };
+
+    } catch (error) {
+      console.error('Erreur getAffairesByClient:', error);
+      throw error;
+    }
+  }
 
 }
 

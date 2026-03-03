@@ -39,32 +39,26 @@ export class ClientsService {
     });
   }
 
-  // getClientsByParentWithDetails(parentId: number): Observable<any[]> {
-  //   return this.http.get<any[]>(`${this.API_URL}/parent/${parentId}`);
-  // }
+  getClientsByParentWithDetails(
+    parentId: number,
+    parentType: string = '',
+    page: number = 1,
+    limit: number = 10,
+    search: string = ''
+  ): Observable<any> {
 
-getClientsByParentWithDetails(
-  parentId: number,
-  parentType: string = '',
-  page: number = 1,
-  limit: number = 10,
-  search: string = ''
-): Observable<any> {
+    const params = {
+      parentType, // 👈 NOUVEAU
+      page: page.toString(),
+      limit: limit.toString(),
+      ...(search ? { search } : {})
+    };
 
-  const params = {
-    parentType, // 👈 NOUVEAU
-    page: page.toString(),
-    limit: limit.toString(),
-    ...(search ? { search } : {})
-  };
-
-  return this.http.get<any>(
-    `${this.API_URL}/parent/${parentId}`,
-    { params }
-  );
-}
-
-
+    return this.http.get<any>(
+      `${this.API_URL}/parent/${parentId}`,
+      { params }
+    );
+  }
 
   getItemById(id: number): Observable<any> {
     return this.http.get<any>(`${this.API_URL}/${id}`);
@@ -78,16 +72,18 @@ getClientsByParentWithDetails(
     return this.http.delete<any>(`${this.API_URL}/${id}`);
   }
 
-  /**
-   * 🔹 Historique des interventions par client
-  */
+ 
   // async getByClient(clientId: number): Promise<any> {
   //   // 🔹 Convertir Observable en Promise
   //   return await firstValueFrom(
   //     this.http.get(`${this.API_URL}/${clientId}/interventions`)
   //   );
   // }
+  
 
+   /**
+   * 🔹 Historique des interventions par client
+  */
   async getByClient(
     clientId: number,
     page: number = 1,
@@ -107,6 +103,18 @@ getClientsByParentWithDetails(
     return await firstValueFrom(
       this.http.get(`${this.API_URL}/${clientId}/interventions`, { params })
     );
+  }
+
+  getAffairesByClient(clientId: number, page: number = 1, limit: number = 10, search: string = ''){
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('limit', limit.toString());
+
+    if (search.trim() !== '') {
+      params = params.set('search', search);
+    }
+
+    return this.http.get<any>(`${this.API_URL}/${clientId}/affaires`, { params });
   }
 
 }

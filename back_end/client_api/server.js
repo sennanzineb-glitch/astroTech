@@ -121,6 +121,9 @@ app.get(`${CLIENT_URI}/parent/:parentId`, authenticateToken, controllerClient.ge
 app.get(`${CLIENT_URI}/:clientId/interventions`, authenticateToken, controllerClient.getClientInterventions);
 app.get(`${CLIENT_URI}/details/:id`, authenticateToken, controllerClient.getRecordDetails);
 
+// Route pour récupérer l'historique des affaires
+app.get(`${CLIENT_URI}/:clientId/affaires`, controllerClient.getAffairesByClientId);
+
 // CRUD générique
 app.get(`${CLIENT_URI}`, authenticateToken, controllerClient.apiGetAll);
 app.get(`${CLIENT_URI}/:id`, authenticateToken, controllerClient.apiGetById);

@@ -8,3 +8,17 @@
   line-height: 1.35;
   font-weight: bold !important;
 }
+
+/************/
+.card {
+  user-select: none;
+}
+
+/* .card button {
+  cursor: grab;
+} */
+
+/* .card button:active {
+  cursor: grabbing;
+} */
+

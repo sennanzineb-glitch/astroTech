@@ -58,3 +58,226 @@
   color: #2e7d32;
   font-weight: 700;
 }
+
+/** *** *** ***/
+/* Suppression des bordures du tableau */
+::ng-deep .mini-calendar-box .fc-theme-standard td, 
+::ng-deep .mini-calendar-box .fc-theme-standard th,
+::ng-deep .mini-calendar-box .fc-theme-standard .fc-scrollgrid {
+    border: none !important;
+}
+
+/* Style des entêtes (Lun, Mar...) */
+::ng-deep .mini-calendar-box .fc-col-header-cell-cushion {
+    font-size: 0.8rem;
+    color: #6c757d;
+    text-decoration: none !important;
+    font-weight: 500;
+}
+
+/* Style des numéros de jours */
+::ng-deep .mini-calendar-box .fc-daygrid-day-number {
+    font-size: 0.85rem;
+    color: #333;
+    padding: 8px !important;
+    text-decoration: none !important;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+/* Cercle bleu sur le jour actuel (ou sélectionné) */
+::ng-deep .mini-calendar-box .fc-day-today {
+    background-color: transparent !important;
+}
+
+::ng-deep .mini-calendar-box .fc-day-today .fc-daygrid-day-number {
+    background-color: #00acee; /* Bleu de l'image */
+    color: white !important;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    margin: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Style de la barre d'outils (Titre et flèches) */
+::ng-deep .mini-calendar-box .fc-toolbar-title {
+    font-size: 1rem !important;
+    font-weight: bold;
+    color: #444;
+}
+
+::ng-deep .mini-calendar-box .fc-button {
+    background: transparent !important;
+    border: none !important;
+    color: #888 !important;
+    padding: 0 !important;
+}
+
+::ng-deep .mini-calendar-box .fc-button:focus {
+    box-shadow: none !important;
+}
+
+
+/* =========================
+   Page Header
+========================= */
+.page-header {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.page-title {
+  font-weight: 600;
+}
+
+/* =========================
+   Mini-Calendrier
+========================= */
+.mini-calendar-box {
+  width: 100%;
+  overflow: hidden;
+}
+
+.fc .fc-toolbar-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.fc .fc-button {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.fc .fc-daygrid-day-number {
+  font-size: 0.75rem;
+}
+
+.fc .fc-event {
+  font-size: 0.75rem;
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+/* =========================
+   Badges Statut
+========================= */
+.badge.rounded-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  width: 25px;
+  height: 25px;
+}
+
+.badge.rounded-circle i {
+  font-size: 0.7rem;
+}
+
+/* =========================
+   Event Modal
+========================= */
+.modal-body .small {
+  font-size: 0.75rem;
+}
+
+.modal-body .fw-semibold {
+  font-weight: 600;
+}
+
+.zone-int .bg-light {
+  font-size: 0.75rem;
+  padding: 4px 6px;
+}
+
+/* =========================
+   Planning Modal Inputs
+========================= */
+input.form-control-sm {
+  font-size: 0.75rem;
+  height: 28px;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input.visually-hidden {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+/* Boutons calendrier date picker */
+button.btn-light i.mdi-calendar {
+  font-size: 1rem;
+}
+
+/* =========================
+   Responsive
+========================= */
+@media (max-width: 768px) {
+  .mini-calendar-box {
+    height: 160px !important;
+  }
+
+  .fc .fc-daygrid-day-number {
+    font-size: 0.65rem;
+  }
+
+  .fc .fc-event {
+    font-size: 0.65rem;
+  }
+}
+
+
+
+/***************************************/
+
+
+/* Cibler uniquement le mini-calendrier */
+/* ::ng-deep .mini-calendar-wrapper .fc {
+  background: red;
+} */
+
+::ng-deep .mini-calendar-wrapper .fc .fc-daygrid-body-unbalanced .fc-daygrid-day-events {
+  min-height: 0px !important;
+}
+
+::ng-deep .mini-calendar-wrapper .fc .fc-daygrid-body-natural .fc-daygrid-day-events{
+  margin-bottom: 0em !important;
+}
+
+::ng-deep .mini-calendar-wrapper .fc .fc-daygrid-day-events{
+  margin-top: 0px !important;
+}
+
+::ng-deep .mini-calendar-wrapper .fc .fc-toolbar.fc-header-toolbar {
+    margin-bottom: 0em;
+}
+
+::ng-deep .mini-calendar-box .fc-daygrid-day-number{
+  font-size: 0.7rem !important;
+}
+
+.mini-calendar-wrapper .mb-4 {
+    margin-bottom: 0.7rem !important;
+}
+
+.btn.btn-sm,
+.ajax-upload-dragdrop .btn-sm.ajax-file-upload,
+.btn-group-sm > .btn,
+.ajax-upload-dragdrop .btn-group-sm > .ajax-file-upload {
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+}
+

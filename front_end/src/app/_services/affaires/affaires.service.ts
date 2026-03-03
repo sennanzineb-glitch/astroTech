@@ -26,23 +26,6 @@ export class AffairesService {
     return this.http.get<any[]>(`${this.apiUrl}/all`);
   }
 
-  // ================= GET ALL (PAGINATION + SEARCH) =================
-  // getAllPaginated(
-  //   page: number = 1,
-  //   limit: number = 10,
-  //   search: string = ''
-  // ) {
-  //   let params = new HttpParams()
-  //     .set('page', page)
-  //     .set('limit', limit);
-
-  //   if (search && search.trim() !== '') {
-  //     params = params.set('search', search);
-  //   }
-
-  //   return this.http.get<any>(this.apiUrl, { params });
-  // }
-
 
   getAllPaginated(page: number, limit: number, search: string) {
   return this.http.get<any[]>(
@@ -67,4 +50,5 @@ export class AffairesService {
   delete(id: number) {
     return this.http.delete<any>(`${this.apiUrl}/${id}`);
   }
+
 }

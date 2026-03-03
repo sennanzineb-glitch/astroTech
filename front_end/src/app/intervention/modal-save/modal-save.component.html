@@ -1,0 +1,421 @@
+<!-- ================= MODAL ACTIONS RAPIDES ================= -->
+<div class="modal fade" id="saveModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+
+      <!-- HEADER -->
+      <div class="modal-header">
+        <h5 class="modal-title">
+          Changer le mode de planification –
+          <span class="text-primary">
+            intervention n° {{ intervention?.numero }}
+          </span>
+        </h5>
+
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <!-- BODY -->
+      <div class="modal-body" style="max-height:75vh; overflow-y:auto;">
+
+        <p class="text-muted">
+          <strong>{{ intervention?.titre }}</strong>
+        </p>
+
+        <!-- ================= QUICK ACTIONS ================= -->
+        <div *ngIf="!selectedAction" class="row g-3">
+          <div class="col-md-6" *ngFor="let action of quickActions">
+
+            <div class="card h-100 shadow-sm border-0">
+              <div class="card-body d-flex align-items-center">
+
+                <i [class]="action.icon + ' fs-3 me-3 text-primary'"></i>
+
+                <div class="flex-grow-1">
+                  <h6 class="fw-bold mb-1">
+                    {{ action.title }}
+                  </h6>
+                  <small class="text-muted">
+                    {{ action.description }}
+                  </small>
+                </div>
+
+                <button type="button" class="btn btn-outline-success btn-sm" (click)="selectAction(action.action)">
+                  Continuer →
+                </button>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Contenu Date prévisionnelle -->
+        <div *ngIf="selectedAction === 'date'" class="card p-3 shadow-sm">
+
+          <span class="text-muted h-6 mb-3">
+            Choisir une date prévisionnelle
+          </span>
+
+          <!-- Ligne dates et durée -->
+          <div class="row g-3">
+
+            <!-- Date début -->
+            <div class="col-md-4">
+              <label class="form-label" for="dateDebut">Début prévue</label>
+              <input type="date" id="dateDebut" class="form-control form-control-sm"
+                [(ngModel)]="formPrevision.date_debut_prevue" name="date_debut_prevue" required>
+            </div>
+
+            <!-- Date fin -->
+            <div class="col-md-4">
+              <label class="form-label" for="dateFin">Fin prévue</label>
+              <input type="date" id="dateFin" class="form-control form-control-sm"
+                [(ngModel)]="formPrevision.date_fin_prevue" name="date_fin_prevue" required>
+            </div>
+
+            <!-- Durée -->
+            <div class="col-md-4">
+              <label class="form-label">Durée</label>
+              <div class="input-group input-group-sm">
+                <input type="number" class="form-control" min="0" [(ngModel)]="formPrevision.heures" name="heures"
+                  placeholder="H">
+                <span class="input-group-text">h</span>
+                <input type="number" class="form-control" min="0" [(ngModel)]="formPrevision.minutes" name="minutes"
+                  placeholder="Min">
+                <span class="input-group-text">min</span>
+              </div>
+            </div>
+
+            <!-- Affichage message et infos après ajout -->
+            <div *ngIf="previsionAjoutee?.date_debut" class="alert alert-success mt-2 p-1 small position-relative"
+              style="width: 400px;">
+
+              <!-- Bouton supprimer -->
+              <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-2"
+                aria-label="Close" (click)="previsionAjoutee = null">
+              </button>
+
+              <div class="fw-bold mb-1" style="font-size:0.95rem;">
+                📅 Planification enregistrée !
+              </div>
+
+              <div style="font-size:0.8rem; line-height:1.1;">
+                L’intervention est prévue du
+                <strong>{{ previsionAjoutee.date_debut | date:'dd/MM/yyyy' }}</strong>
+                au
+                <strong>{{ previsionAjoutee.date_fin | date:'dd/MM/yyyy' }}</strong>.<br>
+
+                Durée estimée :
+                <strong>
+                  {{ previsionAjoutee.duree_heures }} h
+                  {{ previsionAjoutee.duree_minutes }} min
+                </strong>.<br>
+
+                Vous pouvez maintenant suivre cette intervention dans la liste.
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- Boutons -->
+          <div class="d-flex justify-content-end mt-3">
+            <button type="button" class="btn btn-sm btn-outline-secondary me-2" (click)="annuler()">
+              Annuler
+            </button>
+
+            <button type="button" class="btn btn-sm btn-success" (click)="validerPrevision()">
+              Valider
+            </button>
+          </div>
+        </div>
+
+        <!-- Contenu Ajouter un technicien -->
+        <div *ngIf="selectedAction === 'tech'" class="card p-3 shadow-sm">
+
+          <span class="text-muted h-6 mb-3">
+            <i class="fa fa-users-cog me-2"></i>Affectation des techniciens / équipes
+          </span>
+
+          <div class="mb-3">
+            <label class="form-label small">Type d’affectation</label>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="typeAffectation" value="equipe"
+                [(ngModel)]="typeAffectation">
+              <label class="form-check-label">Équipe de techniciens</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="typeAffectation" value="techniciens"
+                [(ngModel)]="typeAffectation">
+              <label class="form-check-label small">Techniciens individuels</label>
+            </div>
+          </div>
+
+          <!-- Sélection équipe -->
+          <div *ngIf="typeAffectation === 'equipe'" class="mb-3">
+            <label class="form-label">Choisir une équipe</label>
+            <select class="form-select form-select-sm" [(ngModel)]="selectedEquipeId">
+              <option [ngValue]="null">-- Sélectionner une équipe --</option>
+              <option *ngFor="let equipe of equipes" [ngValue]="equipe.id">
+                {{ equipe.nom }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Sélection techniciens -->
+          <div *ngIf="typeAffectation === 'techniciens'" class="mb-3">
+            <label class="form-label">Choisir des techniciens</label>
+            <select class="form-select form-select-sm form-select-tech" multiple [(ngModel)]="selectedTechniciens"
+              style="height: 70px !important;">
+              <option *ngFor="let tech of techniciens" [value]="tech.id">{{ tech.nom }} {{ tech.prenom }}</option>
+            </select>
+          </div>
+
+          <div *ngIf="affectationResult" class="alert alert-success mt-2 p-2 small position-relative"
+            style="font-size:0.75rem; line-height:1.1; width: 400px;">
+
+            <!-- Bouton supprimer -->
+            <button type="button" class="btn-close position-absolute top-0 end-0 m-1" aria-label="Close"
+              (click)="affectationResult = null">
+            </button>
+
+            <!-- 🧑‍🔧 Techniciens affectés -->
+            <div *ngIf="affectationResult.type === 'techniciens'">
+              <strong style="font-size:0.8rem;">✅ Techniciens affectés avec succès :</strong>
+              <ul class="mb-0 mt-1" style="padding-left:1rem;">
+                <li *ngFor="let tech of affectationResult.techniciens">
+                  {{ tech.nom }} {{ tech.prenom }}
+                </li>
+              </ul>
+            </div>
+
+            <!-- 👥 Équipe affectée -->
+            <div *ngIf="affectationResult.type === 'equipe'" class="mt-1">
+              <strong style="font-size:0.8rem;">✅ Équipe affectée avec succès :</strong>
+              <p class="mb-0">
+                {{ affectationResult.equipe?.nom }}
+              </p>
+            </div>
+
+            <!-- ❌ Message générique -->
+            <div *ngIf="!affectationResult.type">
+              <strong style="font-size:0.8rem;">ℹ️ Affectation effectuée avec succès.</strong>
+            </div>
+
+          </div>
+
+          <!-- Boutons -->
+          <div class="d-flex justify-content-end mt-3">
+            <button type="button" class="btn btn-sm btn-outline-secondary me-2" (click)="annuler()">
+              Annuler
+            </button>
+
+            <button type="button" class="btn btn-sm btn-success" (click)="assign()">
+              Valider
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Contenu planning -->
+        <div *ngIf="selectedAction === 'planning'" class="card p-3 shadow-sm">
+
+          <div class="fw-semibold text-muted mb-2">
+            Ajouter au planning
+          </div>
+
+          <div class="row g-2">
+
+            <!-- ================= LEFT ================= -->
+            <div class="col-md-6 text-center">
+
+              <!-- DATE DEBUT -->
+              <div class="fw-bold text-uppercase small">Date début</div>
+              <div class="d-flex justify-content-center align-items-center gap-1 mb-2">
+                <span class="text-info fw-semibold">
+                  {{ (planning.dateDebut | date:'EEEE d MMMM y')?.toUpperCase() }}
+                </span>
+
+                <input type="date" #dateDebutInput class="visually-hidden" [(ngModel)]="planning.dateDebut">
+
+                <button type="button" class="btn btn-light btn-sm py-0 px-2" (click)="dateDebutInput.showPicker()">
+                  <i class="mdi mdi-calendar fs-6"></i>
+                </button>
+              </div>
+
+              <!-- HEURE DEBUT -->
+              <div class="fw-bold text-uppercase small">Heure début</div>
+              <div class="d-flex justify-content-center align-items-center gap-1 mb-2">
+                <input type="number" class="form-control form-control-sm text-center p-1" style="width:55px"
+                  [(ngModel)]="planning.heureDebutH" placeholder="HH"> :
+                <input type="number" class="form-control form-control-sm text-center p-1" style="width:55px"
+                  [(ngModel)]="planning.heureDebutM" placeholder="MM">
+              </div>
+
+            </div>
+
+            <!-- ================= RIGHT ================= -->
+            <div class="col-md-6 text-center">
+
+              <!-- DATE FIN -->
+              <div class="fw-bold text-uppercase small">Date fin</div>
+              <div class="d-flex justify-content-center align-items-center gap-1 mb-2">
+                <span class="text-info fw-semibold">
+                  {{ (planning.dateFin | date:'EEEE d MMMM y')?.toUpperCase() }}
+                </span>
+
+                <input type="date" #dateFinInput class="visually-hidden" [(ngModel)]="planning.dateFin">
+
+                <button type="button" class="btn btn-light btn-sm py-0 px-2" (click)="dateFinInput.showPicker()">
+                  <i class="mdi mdi-calendar fs-6"></i>
+                </button>
+              </div>
+
+              <!-- HEURE FIN -->
+              <div class="fw-bold text-uppercase small">Heure fin</div>
+              <div class="d-flex justify-content-center align-items-center gap-1 mb-2">
+                <input type="number" class="form-control form-control-sm text-center p-1" style="width:55px"
+                  [(ngModel)]="planning.heureFinH" placeholder="HH">
+                :
+                <input type="number" class="form-control form-control-sm text-center p-1" style="width:55px"
+                  [(ngModel)]="planning.heureFinM" placeholder="MM">
+              </div>
+
+              <!-- TRAJET -->
+              <div class="fw-bold text-uppercase small mb-1">Temps trajet</div>
+              <div class="d-flex justify-content-center align-items-center gap-1 mb-2">
+                <input type="number" class="form-control form-control-sm text-center p-1" style="width:55px"
+                  [(ngModel)]="planning.tempsTrajetEstimeH">
+
+                <span class="small">h</span>
+
+                <input type="number" class="form-control form-control-sm text-center p-1" style="width:55px"
+                  [(ngModel)]="planning.tempsTrajetEstimeMin">
+                <span class="small">min</span>
+              </div>
+
+              <!-- ALERT PETITE -->
+              <!-- <div class="alert alert-warning small mt-2">
+                ⚠ <strong>Information :</strong><br>
+                Le calcul automatique du temps de trajet est actuellement indisponible.
+                Veuillez saisir la durée manuellement.
+              </div> -->
+
+            </div>
+
+          </div>
+
+          <!-- Affichage message et infos après ajout -->
+          <div *ngIf="planningAjoute?.date_debut_intervention"
+            class="alert alert-success mt-2 p-2 small position-relative"
+            style="font-size:0.85rem; line-height:1.1; width: 490px;">
+
+            <!-- Bouton fermer -->
+            <button type="button" class="btn-close position-absolute top-0 end-0 m-2" aria-label="Close"
+              (click)="planningAjoute = null">
+            </button>
+
+            <div class="fw-bold mb-1" style="font-size:0.8rem;">
+              📅 Planification enregistrée avec succès !
+            </div>
+
+            <div>
+              L’intervention est programmée du
+              <strong>{{ planningAjoute.date_debut_intervention | date:'dd/MM/yyyy' }}</strong>
+              de
+              <strong>
+                {{ planningAjoute.heure_debut_intervention_h }}h
+                {{ planningAjoute.heure_debut_intervention_min | number:'2.0' }}
+              </strong>
+              à
+              <strong>
+                {{ planningAjoute.heure_fin_intervention_h }}h
+                {{ planningAjoute.heure_fin_intervention_min | number:'2.0' }}
+              </strong>.
+            </div>
+
+            <div *ngIf="planningAjoute.date_fin_intervention !== planningAjoute.date_debut_intervention">
+              Fin prévue le
+              <strong>{{ planningAjoute.date_fin_intervention | date:'dd/MM/yyyy' }}</strong>.
+            </div>
+
+            <div>
+              Temps de trajet estimé :
+              <strong>
+                {{ planningAjoute.temps_trajet_estime_heures }} h
+                {{ planningAjoute.temps_trajet_estime_minutes }} min
+              </strong>.
+            </div>
+
+            <div>
+              Vous pouvez maintenant consulter cette intervention dans le planning.
+            </div>
+          </div>
+
+          <!-- BOUTONS -->
+          <div class="d-flex justify-content-end mt-2 gap-2">
+            <button type="button" class="btn btn-outline-secondary btn-sm px-2" (click)="annuler()">
+              Annuler
+            </button>
+
+            <button type="button" class="btn btn-success btn-sm px-3" (click)="addPlanning()">
+              Valider
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Section : Modification de l'état de l'intervention -->
+        <div *ngIf="selectedAction === 'etat'" class="card p-3 shadow-sm">
+
+          <!-- En-tête avec titre et description -->
+          <div class="mb-4">
+            <h5 class="fw-bold text-primary mb-1">Modifier l'état de l'intervention</h5>
+            <p class="text-muted mb-0">
+              ⚙️ Utilisez cette section pour <strong>mettre à jour l'état</strong> de l'intervention sélectionnée.
+              L'état actuel est affiché ci-dessous.
+            </p>
+          </div>
+
+          <!-- État actuel -->
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <span class="text-muted fw-semibold">État actuel :</span>
+            <span class="badge py-1 px-2" [ngClass]="getBadgeClass(intervention.etat)">
+              {{ formatEtat(intervention.etat) }}
+            </span>
+          </div>
+
+          <!-- Sélecteur d'état -->
+          <div class="mb-4">
+            <label class="form-label small text-muted mb-1">Changer l'état :</label>
+            <select class="form-select form-select-sm w-50" [(ngModel)]="etat" name="etat" required>
+              <option value="" disabled>Choisir...</option>
+              <option value="annulee">Annulée</option>
+              <option value="en_cours">En cours</option>
+              <option value="prevue">Prévue</option>
+              <option value="terminee_avec_interruption">Terminée avec interruption</option>
+              <option value="terminee_avec_succes">Terminée avec succès</option>
+              <option value="trajet_en_cours">Trajet en cours</option>
+              <option value="pause">Pause</option>
+              <option value="refusee">Refusée</option>
+            </select>
+          </div>
+
+          <!-- Boutons d'action -->
+          <div class="d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-outline-secondary btn-sm px-3" (click)="annuler()">
+              Annuler
+            </button>
+            <button type="button" class="btn btn-success btn-sm px-3" (click)="updateEtat()">
+              Valider
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>

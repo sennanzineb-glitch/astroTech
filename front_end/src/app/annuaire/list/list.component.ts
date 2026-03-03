@@ -83,9 +83,8 @@ export class ListComponent {
   }
 
   viewDetails(client: any) {
-    console.log(client);
-    
-    this.router.navigate(['/clients/details', client.id]);
+    //this.router.navigate(['/clients/details', client.id]);
+    this.router.navigate(['/clients/details', client.id], { queryParams: { type: client.type_client } });
   }
 
 }

@@ -27,7 +27,7 @@
                 Nom de l'équipe
                 <strong class="text-danger">*</strong>
               </label>
-              <input id="nomEquipe" type="text" formControlName="nomEquipe" class="form-control"
+              <input id="nomEquipe" type="text" formControlName="nomEquipe" class="form-control form-control-sm"
                 placeholder="Saisir le nom de l'équipe" />
             </div>
 
@@ -37,7 +37,7 @@
                 Chef d'équipe (Digne)
                 <strong class="text-danger">*</strong>
               </label>
-              <select id="chefId" formControlName="chefId" class="form-select">
+              <select id="chefId" formControlName="chefId" class="form-select form-select-sm">
                 <option value="">-- Sélectionner le digne --</option>
                 <option *ngFor="let t of techniciens || []" [value]="t.id">
                   {{ t.nom }} {{ t.prenom }}
@@ -54,7 +54,7 @@
                 Techniciens de l'équipe
                 <strong class="text-danger">*</strong>
               </label>
-              <select id="techniciensIds" multiple formControlName="techniciensIds" class="form-select" size="6">
+              <select id="techniciensIds" multiple formControlName="techniciensIds" class="form-select form-select-sm" size="6" style="height: 67px !important;">
                 <option *ngFor="let t of techniciens || []" [value]="t.id">
                   {{ t.nom }} {{ t.prenom }}
                 </option>

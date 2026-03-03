@@ -10,7 +10,7 @@ export class PlanningService {
   constructor(private http: HttpClient) { }
 
   // 🔹 Ajouter une planification pour une intervention
-  addPlanning(interventionId: number, planning: { date: string; heure: string }){
+  addPlanning(interventionId: number, planning: any){
     return this.http.post(`${environment.url_affaire}/affaires/interventions/${interventionId}/planning`, planning);
   }
 

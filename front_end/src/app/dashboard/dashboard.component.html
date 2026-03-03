@@ -6,32 +6,60 @@
       <div class="row g-3">
 
         <ng-container *ngFor="let bloc of leftBlocs">
-          <div class="col-12 col-md-4 d-flex" *ngFor="let item of bloc">
-            <div class="card text-white h-100 {{ item.bg }} flex-fill d-flex flex-column cursor-pointer"
-              (click)="openModal(item)">
+          <div class="col-12 col-md-4 d-flex" *ngFor="let item of bloc; let i = index">
 
-              <!-- ETAT -->
-              <div class="card-header text-center py-1">
-                <span class="badge">{{ getEtatFromBg(item.bg) }}</span>
+            <!-- Si item existe, afficher la carte -->
+            <div *ngIf="item; else emptySlot" class="card-wrapper" style="position: relative;">
+              <div class="card text-white {{ item.bg }} d-flex flex-column cursor-pointer" [ngStyle]="{
+             'position': item.position ? 'absolute' : 'relative',
+             'top.px': item.position?.y || 0,
+             'left.px': item.position?.x || 0,
+             'width.px': cardWidth,
+             'height.px': cardHeight,
+             'z-index': item === draggedItem ? 1000 : 1
+           }">
+
+                <div class="card-header text-center py-1">
+                  <span class="badge">{{ getEtatFromBg(item.bg) }}</span>
+                </div>
+
+                <div class="card-body text-center py-4 d-flex flex-column justify-content-center">
+                  <div (click)="openModal(item)">
+                    <div class="fw-semibold text-uppercase small" title="{{ item.title }}">
+                      {{ item.title.length > 30 ? (item.title | slice:0:30) + '...' : item.title }}
+                    </div>
+
+                    <div class="fw-bold display-6 my-2">
+                      {{ item.count }}
+                    </div>
+
+                    <div class="small mb-2">
+                      Intervention{{ item.count > 1 ? 's' : '' }}
+                    </div>
+                  </div>
+
+                  <div class="d-flex gap-1 text-white small mt-auto pb-2 ms-2">
+                    <i class="mdi mdi-content-duplicate" style="cursor:pointer" (click)="duplicateItem(item, bloc)"></i>
+                    <i class="mdi mdi-delete" style="cursor:pointer" (click)="deleteItem(item, bloc)"></i>
+                    <!-- <i class="mdi mdi-pen"></i> -->
+                    <i class="mdi mdi-open-in-new" (click)="goToInterventions()" style="cursor:pointer"></i>
+                    <i class="mdi mdi-cursor-move" (mousedown)="startDrag($event, item)" style="cursor: move;"></i>
+                  </div>
+                </div>
               </div>
-
-              <div class="card-body text-center py-4 d-flex flex-column justify-content-center">
-                <div class="fw-semibold text-uppercase small" title="{{ item.title }}">
-                  {{ item.title.length > 30 ? (item.title | slice:0:30) + '...' : item.title }}
-                </div>
-
-                <div class="fw-bold display-6 my-2">
-                  {{ item.count }}
-                </div>
-
-                <div class="small">
-                  Intervention{{ item.count > 1 ? 's' : '' }}
-                </div>
-              </div>
-
             </div>
+
+            <!-- Placeholder si item est null -->
+            <ng-template #emptySlot>
+              <div class="card-wrapper" [style.width.px]="cardWidth" [style.height.px]="cardHeight">
+                <!-- Optionnel : ajouter un style de bordure ou background pour voir la place -->
+                <div class="card bg-light border border-dashed h-100 w-100"></div>
+              </div>
+            </ng-template>
+
           </div>
         </ng-container>
+
 
       </div>
     </div>
@@ -44,8 +72,12 @@
 
         <ng-container *ngFor="let bloc of rightBlocs">
           <div class="col-12 col-md-4 d-flex" *ngFor="let item of bloc">
+
             <div class="card text-white h-100 {{ item.bg }} flex-fill d-flex flex-column cursor-pointer"
-              (click)="openModal(item)">
+              (click)="openModal(item)" [ngStyle]="{'position': item.position ? 'absolute' : 'relative', 
+                 'top.px': item.position?.y || 0, 
+                 'left.px': item.position?.x || 0,
+                 'z-index': item === draggedItem ? 1000 : 1}">
 
               <div class="card-header text-center py-1">
                 <span class="badge">{{ getEtatFromBg(item.bg) }}</span>
@@ -60,12 +92,18 @@
                   {{ item.count }}
                 </div>
 
-                <div class="small">
+                <div class="small mb-2">
                   Intervention{{ item.count > 1 ? 's' : '' }}
                 </div>
+
+                <!-- Bouton pour déplacer -->
+                <button class="btn btn-light btn-sm" (mousedown)="startDrag($event, item)">
+                  Déplacer
+                </button>
               </div>
 
             </div>
+
           </div>
         </ng-container>
 
@@ -183,10 +221,7 @@
 
 
 <!-- ================= TABLEAU DE BORD VIDE ================= -->
-<div
-  *ngIf="leftBlocs?.length === 0 && rightBlocs?.length === 0"
-  class="alert alert-secondary text-center mt-4"
->
+<div *ngIf="leftBlocs?.length === 0 && rightBlocs?.length === 0" class="alert alert-secondary text-center mt-4">
   📊 Aucun élément à afficher pour le moment.
   <br />
   Les interventions apparaîtront ici dès qu’elles seront créées.
