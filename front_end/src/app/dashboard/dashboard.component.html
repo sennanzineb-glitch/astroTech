@@ -1,228 +1,388 @@
-<div class="container-fluid">
-  <div class="row g-4">
+<div class="container-fluid py-3 bg-light min-vh-100">
 
-    <!-- ================= COLONNE GAUCHE ================= -->
-    <div class="col-md-5">
-      <div class="row g-3">
-
-        <ng-container *ngFor="let bloc of leftBlocs">
-          <div class="col-12 col-md-4 d-flex" *ngFor="let item of bloc; let i = index">
-
-            <!-- Si item existe, afficher la carte -->
-            <div *ngIf="item; else emptySlot" class="card-wrapper" style="position: relative;">
-              <div class="card text-white {{ item.bg }} d-flex flex-column cursor-pointer" [ngStyle]="{
-             'position': item.position ? 'absolute' : 'relative',
-             'top.px': item.position?.y || 0,
-             'left.px': item.position?.x || 0,
-             'width.px': cardWidth,
-             'height.px': cardHeight,
-             'z-index': item === draggedItem ? 1000 : 1
-           }">
-
-                <div class="card-header text-center py-1">
-                  <span class="badge">{{ getEtatFromBg(item.bg) }}</span>
-                </div>
-
-                <div class="card-body text-center py-4 d-flex flex-column justify-content-center">
-                  <div (click)="openModal(item)">
-                    <div class="fw-semibold text-uppercase small" title="{{ item.title }}">
-                      {{ item.title.length > 30 ? (item.title | slice:0:30) + '...' : item.title }}
-                    </div>
-
-                    <div class="fw-bold display-6 my-2">
-                      {{ item.count }}
-                    </div>
-
-                    <div class="small mb-2">
-                      Intervention{{ item.count > 1 ? 's' : '' }}
-                    </div>
-                  </div>
-
-                  <div class="d-flex gap-1 text-white small mt-auto pb-2 ms-2">
-                    <i class="mdi mdi-content-duplicate" style="cursor:pointer" (click)="duplicateItem(item, bloc)"></i>
-                    <i class="mdi mdi-delete" style="cursor:pointer" (click)="deleteItem(item, bloc)"></i>
-                    <!-- <i class="mdi mdi-pen"></i> -->
-                    <i class="mdi mdi-open-in-new" (click)="goToInterventions()" style="cursor:pointer"></i>
-                    <i class="mdi mdi-cursor-move" (mousedown)="startDrag($event, item)" style="cursor: move;"></i>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Placeholder si item est null -->
-            <ng-template #emptySlot>
-              <div class="card-wrapper" [style.width.px]="cardWidth" [style.height.px]="cardHeight">
-                <!-- Optionnel : ajouter un style de bordure ou background pour voir la place -->
-                <div class="card bg-light border border-dashed h-100 w-100"></div>
-              </div>
-            </ng-template>
-
-          </div>
-        </ng-container>
-
-
+  <div class="mb-4">
+    <div
+      class="section-toggle d-flex align-items-center justify-content-between p-2 bg-white shadow-sm rounded-3 cursor-pointer"
+      (click)="showLeft = !showLeft">
+      <div class="d-flex align-items-center">
+        <div class="icon-circle-sm bg-primary text-white me-2 shadow-sm">
+          <i class="mdi mdi-view-grid-outline"></i>
+        </div>
+        <h6 class="fw-bold mb-0 text-dark">Tableau de Bord Gauche</h6>
       </div>
+      <i class="mdi" [ngClass]="showLeft ? 'mdi-chevron-up' : 'mdi-chevron-down'"></i>
     </div>
 
-    <div class="col-md-2"></div>
-
-    <!-- ================= COLONNE DROITE ================= -->
-    <div class="col-md-5">
-      <div class="row g-3">
-
-        <ng-container *ngFor="let bloc of rightBlocs">
-          <div class="col-12 col-md-4 d-flex" *ngFor="let item of bloc">
-
-            <div class="card text-white h-100 {{ item.bg }} flex-fill d-flex flex-column cursor-pointer"
-              (click)="openModal(item)" [ngStyle]="{'position': item.position ? 'absolute' : 'relative', 
-                 'top.px': item.position?.y || 0, 
-                 'left.px': item.position?.x || 0,
-                 'z-index': item === draggedItem ? 1000 : 1}">
-
-              <div class="card-header text-center py-1">
-                <span class="badge">{{ getEtatFromBg(item.bg) }}</span>
-              </div>
-
-              <div class="card-body text-center py-4 d-flex flex-column justify-content-center">
-                <div class="fw-semibold text-uppercase small" title="{{ item.title }}">
-                  {{ item.title.length > 30 ? (item.title | slice:0:30) + '...' : item.title }}
-                </div>
-
-                <div class="fw-bold display-6 my-2">
-                  {{ item.count }}
-                </div>
-
-                <div class="small mb-2">
-                  Intervention{{ item.count > 1 ? 's' : '' }}
-                </div>
-
-                <!-- Bouton pour déplacer -->
-                <button class="btn btn-light btn-sm" (mousedown)="startDrag($event, item)">
-                  Déplacer
-                </button>
-              </div>
-
-            </div>
-
-          </div>
-        </ng-container>
-
-      </div>
+    <div class="row g-2 mt-1" *ngIf="showLeft">
+      <ng-container *ngFor="let bloc of leftBlocs">
+        <div class="col-6 col-md-4 col-lg-3 col-xl-2 d-flex" *ngFor="let item of bloc">
+          <ng-container *ngTemplateOutlet="cardTemplate; context: { $implicit: item, parentBloc: bloc }">
+          </ng-container>
+        </div>
+      </ng-container>
     </div>
-
   </div>
+
+  <div class="mb-4">
+    <div
+      class="section-toggle d-flex align-items-center justify-content-between p-2 bg-white shadow-sm rounded-3 cursor-pointer"
+      (click)="showRight = !showRight">
+      <div class="d-flex align-items-center">
+        <div class="icon-circle-sm bg-success text-white me-2 shadow-sm">
+          <i class="mdi mdi-chart-line"></i>
+        </div>
+        <h6 class="fw-bold mb-0 text-dark">Tableau de Bord Droit</h6>
+      </div>
+      <i class="mdi" [ngClass]="showRight ? 'mdi-chevron-up' : 'mdi-chevron-down'"></i>
+    </div>
+
+    <div class="row g-2 mt-1" *ngIf="showRight">
+      <ng-container *ngFor="let bloc of rightBlocs">
+        <div class="col-6 col-md-4 col-lg-3 col-xl-2 d-flex" *ngFor="let item of bloc">
+          <ng-container *ngTemplateOutlet="cardTemplate; context: { $implicit: item, parentBloc: bloc }">
+          </ng-container>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+
 </div>
 
+<ng-template #cardTemplate let-item let-parentBloc="parentBloc">
+  <div *ngIf="!item" class="card-wrapper w-100">
+    <div
+      class="card border-dashed h-100 min-height-110 d-flex align-items-center justify-content-center bg-transparent opacity-50">
+      <i class="mdi mdi-plus small text-muted"></i>
+    </div>
+  </div>
 
-<div class="modal modal-lg fade" id="cardModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
+  <div *ngIf="item" class="card border-0 shadow-sm w-100 card-mini transition-all {{ item.bg }}"
+    [ngStyle]="{'z-index': item === draggedItem ? 1000 : 1}">
+
+    <div class="card-header border-0 bg-transparent d-flex justify-content-between align-items-center pt-2 pb-0 px-2">
+      <span class="mini-badge text-white border border-white border-opacity-25">
+        {{ getEtatFromBg(item.bg) }}
+      </span>
+      <i class="mdi mdi-drag-variant cursor-grab text-white-50" (mousedown)="startDrag($event, item)"></i>
+    </div>
+
+    <div class="card-body text-center py-2 px-1 cursor-pointer" (click)="openModal(item)">
+      <div class="text-white text-opacity-90 fw-bold x-small text-truncate mb-1 px-2" [title]="item.title">
+        {{ item.title }}
+      </div>
+      <div class="h3 fw-black text-white mb-0">{{ item.count }}</div>
+    </div>
+
+    <div class="card-footer bg-black bg-opacity-10 border-0 d-flex justify-content-around py-1 px-0">
+      <button class="btn btn-xs text-white opacity-75" (click)="duplicateItem(item, parentBloc)"><i
+          class="mdi mdi-content-copy"></i></button>
+      <button class="btn btn-xs text-white opacity-75" (click)="goToInterventions()"><i
+          class="mdi mdi-open-in-new"></i></button>
+      <button class="btn btn-xs text-white opacity-75" (click)="deleteItem(item, parentBloc)"><i
+          class="mdi mdi-trash-can-outline"></i></button>
+    </div>
+  </div>
+</ng-template>
+
+<ng-template #cardTemplate let-item let-parentBloc="parentBloc">
+  <div *ngIf="!item" class="card-wrapper w-100">
+    <div
+      class="card border-dashed h-100 min-height-110 d-flex align-items-center justify-content-center bg-transparent opacity-50">
+      <i class="mdi mdi-plus small text-muted"></i>
+    </div>
+  </div>
+
+  <div *ngIf="item" class="card border-0 shadow-sm w-100 card-mini transition-all {{ item.bg }}"
+    [ngStyle]="{'z-index': item === draggedItem ? 1000 : 1}">
+
+    <div class="card-header border-0 bg-transparent d-flex justify-content-between align-items-center pt-2 pb-0 px-2">
+      <span class="mini-badge text-white border border-white border-opacity-25">
+        {{ getEtatFromBg(item.bg) }}
+      </span>
+      <i class="mdi mdi-drag-variant cursor-grab text-white-50" (mousedown)="startDrag($event, item)"></i>
+    </div>
+
+    <div class="card-body text-center py-2 px-1 cursor-pointer" (click)="openModal(item)">
+      <div class="text-white text-opacity-90 fw-bold x-small text-truncate mb-1 px-2" [title]="item.title">
+        {{ item.title }}
+      </div>
+      <div class="h3 fw-black text-white mb-0">{{ item.count }}</div>
+    </div>
+
+    <div class="card-footer bg-black bg-opacity-10 border-0 d-flex justify-content-around py-1 px-0">
+      <button class="btn btn-xs text-white opacity-75" (click)="duplicateItem(item, parentBloc)"><i
+          class="mdi mdi-content-copy"></i></button>
+      <button class="btn btn-xs text-white opacity-75" (click)="goToInterventions()"><i
+          class="mdi mdi-open-in-new"></i></button>
+      <button class="btn btn-xs text-white opacity-75" (click)="deleteItem(item, parentBloc)"><i
+          class="mdi mdi-trash-can-outline"></i></button>
+    </div>
+  </div>
+</ng-template>
+
+<ng-template #cardTemplate let-item let-parentBloc="parentBloc">
+  <div *ngIf="!item" class="card-wrapper w-100">
+    <div
+      class="card border-dashed h-100 min-height-160 d-flex align-items-center justify-content-center bg-transparent">
+      <i class="mdi mdi-plus-circle-outline h3 mb-0 text-muted opacity-50"></i>
+    </div>
+  </div>
+
+  <div *ngIf="item" class="card border-0 shadow-sm w-100 card-custom transition-all {{ item.bg }}"
+    [ngStyle]="{'z-index': item === draggedItem ? 1000 : 1}">
+
+    <div class="card-header border-0 bg-transparent d-flex justify-content-between align-items-center pt-3 pb-0">
+      <span class="badge bg-white bg-opacity-25 backdrop-blur text-white border border-white border-opacity-25">
+        {{ getEtatFromBg(item.bg) }}
+      </span>
+      <i class="mdi mdi-drag-variant cursor-grab text-white-50 fs-5" (mousedown)="startDrag($event, item)"></i>
+    </div>
+
+    <div class="card-body text-center py-4 cursor-pointer" (click)="openModal(item)">
+      <h6 class="text-white text-opacity-75 text-uppercase fw-bold small mb-2">{{ item.title }}</h6>
+      <div class="display-4 fw-black text-white mb-0">{{ item.count }}</div>
+      <div class="small text-white text-opacity-75">Intervention{{ item.count > 1 ? 's' : '' }}</div>
+    </div>
+
+    <div class="card-footer bg-black bg-opacity-10 border-0 d-flex justify-content-around py-2">
+      <button class="btn btn-sm text-white opacity-75 hover-opacity-100" (click)="duplicateItem(item, parentBloc)"><i
+          class="mdi mdi-content-copy"></i></button>
+      <button class="btn btn-sm text-white opacity-75 hover-opacity-100" (click)="goToInterventions()"><i
+          class="mdi mdi-open-in-new"></i></button>
+      <button class="btn btn-sm text-white opacity-75 hover-opacity-100" (click)="deleteItem(item, parentBloc)"><i
+          class="mdi mdi-delete-outline"></i></button>
+    </div>
+  </div>
+</ng-template>
+
+<ng-template #cardTemplate let-item let-parentBloc="parentBloc">
+  <div *ngIf="item" class="card border-0 shadow-sm w-100 card-custom transition-all {{ item.bg }}">
+    <div class="card-body text-center py-4 cursor-pointer" (click)="openModal(item)">
+      <h6 class="text-white text-opacity-75 text-uppercase small fw-bold mb-1">{{ item.title }}</h6>
+      <div class="display-6 fw-bold text-white mb-0">{{ item.count }}</div>
+    </div>
+  </div>
+</ng-template>
+
+<ng-template #cardTemplate let-item let-isLeft="isLeft" let-parentBloc="parentBloc">
+
+  <div *ngIf="!item" class="card-wrapper w-100">
+    <div class="card border-dashed h-100 min-height-140 d-flex align-items-center justify-content-center">
+      <div class="text-center text-muted opacity-50">
+        <i class="mdi mdi-plus-circle-outline h2 mb-1"></i>
+        <p class="small fw-medium mb-0">Emplacement libre</p>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="item" class="card border-0 shadow-sm w-100 card-custom transition-all" [ngClass]="item.bg" [ngStyle]="{
+         'position': item.position ? 'absolute' : 'relative',
+         'z-index': item === draggedItem ? 1000 : 1
+       }">
+
+    <div class="card-header border-0 bg-transparent d-flex justify-content-between align-items-center pt-3 pb-0">
+      <span class="badge bg-white bg-opacity-25 backdrop-blur text-white border border-white border-opacity-25 px-2">
+        {{ getEtatFromBg(item.bg) }}
+      </span>
+      <i class="mdi mdi-drag-variant cursor-grab text-white-50 fs-5" (mousedown)="startDrag($event, item)"></i>
+    </div>
+
+    <div class="card-body text-center py-4 cursor-pointer" (click)="openModal(item)">
+      <h6 class="text-white text-opacity-75 text-uppercase fw-bold letter-spacing-1 mb-1">{{ item.title }}</h6>
+      <div class="display-5 fw-black text-white mb-0">{{ item.count }}</div>
+      <div class="small text-white text-opacity-75">Dossier{{ item.count > 1 ? 's' : '' }}</div>
+    </div>
+
+    <div class="card-footer bg-white bg-opacity-10 border-0 d-flex justify-content-around py-2">
+      <button class="btn btn-action text-white" (click)="duplicateItem(item, parentBloc)" title="Dupliquer">
+        <i class="mdi mdi-content-copy"></i>
+      </button>
+      <button class="btn btn-action text-white" (click)="goToInterventions()" title="Ouvrir">
+        <i class="mdi mdi-external-link"></i>
+      </button>
+      <button class="btn btn-action text-white" (click)="deleteItem(item, parentBloc)" title="Supprimer">
+        <i class="mdi mdi-trash-can-outline"></i>
+      </button>
+    </div>
+  </div>
+</ng-template>
+
+
+
+<ng-template #cardTemplate let-item let-isLeft="isLeft" let-parentBloc="parentBloc">
+
+  <div *ngIf="!item" class="card-wrapper w-100">
+    <div
+      class="card bg-light border-dashed h-100 min-height-150 d-flex align-items-center justify-content-center text-muted">
+      <div class="text-center">
+        <i class="mdi mdi-plus-circle-outline d-block h4 mb-0"></i>
+        <small>Vide</small>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="item" class="card {{ item.bg }} text-white w-100 shadow-sm transition-all card-hover" [ngStyle]="{
+         'position': item.position ? 'absolute' : 'relative',
+         'top.px': item.position?.y,
+         'left.px': item.position?.x,
+         'z-index': item === draggedItem ? 1000 : 1,
+         'cursor': 'default'
+       }">
+
+    <div
+      class="card-header border-bottom border-white border-opacity-10 d-flex justify-content-between align-items-center py-2">
+      <span class="badge bg-white text-dark shadow-sm">{{ getEtatFromBg(item.bg) }}</span>
+      <i class="mdi mdi-cursor-move cursor-grab text-white-50" (mousedown)="startDrag($event, item)"
+        title="Maintenir pour déplacer"></i>
+    </div>
+
+    <div class="card-body text-center p-3" (click)="openModal(item)">
+      <div class="fw-bold text-uppercase small text-truncate mb-2" [title]="item.title">
+        {{ item.title }}
+      </div>
+      <div class="display-6 fw-bold mb-0">{{ item.count }}</div>
+      <div class="small opacity-75">Intervention{{ item.count > 1 ? 's' : '' }}</div>
+    </div>
+
+    <div class="card-footer bg-dark bg-opacity-10 border-top-0 d-flex justify-content-around py-2">
+      <button class="btn btn-link btn-sm text-white p-0" (click)="duplicateItem(item, parentBloc)" title="Dupliquer">
+        <i class="mdi mdi-content-duplicate"></i>
+      </button>
+      <button class="btn btn-link btn-sm text-white p-0" (click)="goToInterventions()" title="Voir détails">
+        <i class="mdi mdi-open-in-new"></i>
+      </button>
+      <button class="btn btn-link btn-sm text-white p-0" (click)="deleteItem(item, parentBloc)" title="Supprimer">
+        <i class="mdi mdi-delete-outline"></i>
+      </button>
+    </div>
+  </div>
+</ng-template>
+
+<!-- ================= MODAL INTERVENTION ================= -->
+<div class="modal fade" id="cardModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
 
       <div class="modal-header">
-        <h5 class="modal-title text-uppercase">
-          {{ selectedItem?.title }}
-        </h5>
+        <h5 class="modal-title text-uppercase">{{ selectedItem?.title }}</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
 
       <div class="modal-body p-0">
-        <table class="table table-hover align-middle mb-0">
-          <thead class="table-secondary text-uppercase small">
-            <tr>
-              <th class="text-center" style="width: 40px">#</th>
-              <th>Intervention</th>
-              <th>Client</th>
-              <th>Contact</th>
-              <th>Zone d’intervention</th>
-              <th>Date clôture</th>
-              <th class="text-center">Statut</th>
-            </tr>
-          </thead>
+        <div class="card shadow-sm border-0">
+          <div class="card-body p-0">
 
-          <tbody>
-            <tr *ngFor="let i of interventions; let idx = index">
-              <!-- Index -->
-              <td class="text-center fw-bold text-muted">
-                {{ idx + 1 }}
-              </td>
+            <table class="table table-hover align-middle mb-0">
 
-              <!-- Intervention -->
-              <td>
-                <div class="fw-semibold">{{ i.titre }}</div>
-                <small class="text-muted">
-                  {{ i.description }}
-                </small>
-              </td>
+              <thead class="bg-light text-uppercase small text-muted">
+                <tr class="text-center">
+                  <th style="width: 50px">#</th>
+                  <th class="text-start">Intervention</th>
+                  <th class="text-start">Client</th>
+                  <th>Contact</th>
+                  <th class="text-start">Zone</th>
+                  <th>Date</th>
+                  <th>Statut</th>
+                </tr>
+              </thead>
 
-              <!-- Client -->
-              <td>
-                <div class="fw-semibold">{{ i.client?.nom }}</div>
-                <small class="text-muted">
-                  {{ i.client?.numero }}
-                </small>
-              </td>
+              <tbody>
 
-              <!-- Contact -->
-              <td>
-                <i class="bi bi-person-fill text-primary me-1"></i>
-                {{ i.zone_intervention?.contacts?.[0]?.nom_complet || '—' }}
-              </td>
+                <tr *ngFor="let i of interventions; let idx = index" class="border-top">
 
-              <!-- Zone -->
-              <td>
-                <div>
-                  {{ i.zone_intervention?.adresse?.adresse }}
-                </div>
-                <small class="text-muted">
-                  {{ i.zone_intervention?.adresse?.code_postal }}
-                  {{ i.zone_intervention?.adresse?.ville }}
-                  · Bât. {{ i.zone_intervention?.adresse?.batiment }}
-                  · Étage {{ i.zone_intervention?.adresse?.etage }}
-                </small>
-              </td>
+                  <!-- NUMERO -->
+                  <td class="text-center fw-bold text-secondary">
+                    {{ i.numero }}
+                  </td>
 
-              <!-- Date -->
-              <td>
-                <i class="bi bi-calendar-event me-1 text-muted"></i>
-                {{ i.date_cloture_estimee | date:'dd/MM/yyyy' }}
-              </td>
+                  <!-- INTERVENTION -->
+                  <td>
+                    <div class="fw-semibold text-dark">
+                      {{ i.titre }}
+                    </div>
+                  </td>
 
-              <!-- Statut -->
-              <td class="text-center">
-                <span class="badge rounded-pill px-3" [ngClass]="{
-              'bg-warning text-dark': i.etat === 'en_cours',
-              'bg-success': i.etat === 'terminee',
-              'bg-secondary': i.etat !== 'en_cours' && i.etat !== 'terminee'
-            }">
-                  {{ i.etat | titlecase }}
-                </span>
-              </td>
-            </tr>
+                  <!-- CLIENT -->
+                  <td>
+                    <div class="fw-semibold text-primary">
+                      {{ i.client?.nom }}
+                    </div>
+                    <small class="text-muted">
+                      {{ i.client?.numero }}
+                    </small>
+                  </td>
 
-            <tr *ngIf="interventions.length === 0">
-              <td colspan="7" class="text-center text-muted py-4">
-                🛠️ Aucune intervention trouvée pour le moment. Vous pouvez en créer une nouvelle.
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                  <!-- CONTACT -->
+                  <td class="text-center">
+                    <div class="d-flex align-items-center justify-content-center gap-1">
+                      <i class="bi bi-person-circle text-primary"></i>
+                      <span>
+                        {{ i.zone_intervention?.contacts?.[0]?.nom_complet || '—' }}
+                      </span>
+                    </div>
+                  </td>
+
+                  <!-- ADRESSE -->
+                  <td>
+                    <div class="text-dark">
+                      {{ i.zone_intervention?.adresse?.adresse }}
+                    </div>
+                    <small class="text-muted d-block">
+                      {{ i.zone_intervention?.adresse?.code_postal }}
+                      {{ i.zone_intervention?.adresse?.ville }}
+                    </small>
+                    <small class="text-muted">
+                      🏢 {{ i.zone_intervention?.adresse?.batiment || '-' }}
+                      · 🧭 Étage {{ i.zone_intervention?.adresse?.etage || '-' }}
+                    </small>
+                  </td>
+
+                  <!-- DATE -->
+                  <td class="text-center">
+                    <span class="badge bg-light text-dark border">
+                      <i class="bi bi-calendar-event me-1"></i>
+                      {{ i.date_cloture_estimee | date:'dd MMM yyyy' }}
+                    </span>
+                  </td>
+
+                  <!-- STATUT -->
+                  <td class="text-center">
+                    <span class="badge rounded-pill px-3 py-2 fw-semibold" [ngClass]="getEtatClasses(i.etat)">
+                      <i class="bi" [ngClass]="getEtatIcon(i.etat)"></i>
+                      {{ formatEtat(i.etat) }}
+                    </span>
+                  </td>
+
+                </tr>
+
+                <!-- EMPTY -->
+                <tr *ngIf="interventions.length === 0">
+                  <td colspan="7" class="text-center text-muted py-5">
+                    <div class="d-flex flex-column align-items-center">
+                      <i class="bi bi-tools fs-3 mb-2"></i>
+                      <div>Aucune intervention trouvée</div>
+                      <small>Ajoutez une nouvelle intervention pour commencer</small>
+                    </div>
+                  </td>
+                </tr>
+
+              </tbody>
+            </table>
+
+          </div>
+        </div>
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" data-bs-dismiss="modal">
-          Fermer
-        </button>
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
       </div>
-
     </div>
   </div>
 </div>
 
-
-
-<!-- ================= TABLEAU DE BORD VIDE ================= -->
+<!-- ================= ALERT TABLEAU VIDE ================= -->
 <div *ngIf="leftBlocs?.length === 0 && rightBlocs?.length === 0" class="alert alert-secondary text-center mt-4">
   📊 Aucun élément à afficher pour le moment.
-  <br />
+  <br>
   Les interventions apparaîtront ici dès qu’elles seront créées.
 </div>

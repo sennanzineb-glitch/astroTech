@@ -1,24 +1,175 @@
-.card .card-body {
-  padding: 0 !important;
+/* Tailles de police et conteneurs */
+.x-small {
+  font-size: 0.7rem;
 }
 
-.text-uppercase {
-  font-size: 12px !important;
-  margin-top: 5px;
-  line-height: 1.35;
-  font-weight: bold !important;
+.mini-badge {
+  font-size: 0.6rem;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(4px);
 }
 
-/************/
-.card {
-  user-select: none;
+.icon-circle-sm {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* .card button {
+/* Ajustement de la carte */
+.card-mini {
+  border-radius: 12px;
+  min-height: 110px;
+  /* Plus petit qu'avant */
+  transition: all 0.25s ease;
+}
+
+.card-mini:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1) !important;
+}
+
+.btn-xs {
+  padding: 1px 4px;
+  font-size: 0.75rem;
+}
+
+/* Gradients Modernes */
+.bg-primary {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
+}
+
+.bg-success {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%) !important;
+}
+
+.bg-warning {
+  background: linear-gradient(135deg, #f6d365 0%, #fda085 100%) !important;
+}
+
+.bg-danger {
+  background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%) !important;
+}
+
+.min-height-110 {
+  min-height: 110px;
+}
+
+.fw-black {
+  font-weight: 800;
+}
+
+.cursor-grab {
   cursor: grab;
-} */
+}
 
-/* .card button:active {
-  cursor: grabbing;
-} */
 
+
+
+/* Séparation des groupes de 3 cadres */
+@media (min-width: 1200px) {
+  .border-end-xl {
+    border-right: 1px dashed #dee2e6 !important;
+    padding-right: 1.5rem !important;
+    margin-right: 1.5rem !important;
+  }
+}
+
+.group-separator {
+  margin-bottom: 1rem;
+}
+
+/* Optionnel : Une légère ombre au survol du bloc entier */
+.group-separator:hover {
+  background: rgba(0, 0, 0, 0.01);
+  border-radius: 8px;
+}
+
+
+.min-height-140 {
+  min-height: 140px;
+}
+
+.border-dashed {
+  border: 2px dashed #cbd5e0 !important;
+  background-color: #f8fafc;
+}
+
+.cursor-grab {
+  cursor: grab;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.fw-black {
+  font-weight: 900;
+}
+
+.letter-spacing-1 {
+  letter-spacing: 0.5px;
+}
+
+.icon-shape {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-custom {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.backdrop-blur {
+  backdrop-filter: blur(4px);
+}
+
+.btn-action {
+  background: transparent;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.btn-action:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.transition-all {
+  transition: all 0.3s cubic-bezier(.25, .8, .25, 1);
+}
+
+.card-custom:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Couleurs de fond basées sur vos classes existantes */
+.bg-primary {
+  background: linear-gradient(135deg, #4e73df 0%, #224abe 100%) !important;
+}
+
+.bg-success {
+  background: linear-gradient(135deg, #1cc88a 0%, #13855c 100%) !important;
+}
+
+.bg-warning {
+  background: linear-gradient(135deg, #f6c23e 0%, #dda20a 100%) !important;
+}
+
+
+  .min-height-150 { min-height: 150px; }
+  .border-dashed { border: 2px dashed #dee2e6 !important; }
+  .cursor-grab { cursor: grab; }
+  .cursor-grab:active { cursor: grabbing; }
+  .transition-all { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+  .card-hover:hover { transform: translateY(-3px); box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15) !important; }

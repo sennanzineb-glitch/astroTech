@@ -572,138 +572,99 @@ class InterventionService {
     limit = 10
   }) {
     try {
-      /* ===================== VALIDATION ===================== */
-      page = Number(page);
-      limit = Number(limit);
-      if (!Number.isInteger(page) || page < 1) page = 1;
-      if (!Number.isInteger(limit) || limit < 1) limit = 10;
+      page = Number(page) || 1;
+      limit = Number(limit) || 10;
+      if (page < 1) page = 1;
+      if (limit < 1) limit = 10;
       const offset = (page - 1) * limit;
 
-      /* ===================== WHERE + PARAMS ===================== */
-      let whereClause = `
-      WHERE i.type_id = ?
-        AND i.createur_id = ?
-    `;
+      // 🔹 Conditions dynamiques
+      const whereConditions = ["i.type_id = ?", "i.createur_id = ?"];
       const params = [Number(type_id), Number(user_id)];
 
       if (etat) {
-        whereClause += ` AND LOWER(i.etat) = ? `;
-        params.push(etat.toLowerCase());
+        const etatLower = etat.toLowerCase();
+        if (etatLower === "planifie") {
+          whereConditions.push("i.date_debut_intervention IS NOT NULL");
+        } else if (["en_cours", "terminee_avec_succes"].includes(etatLower)) {
+          whereConditions.push("i.date_debut_intervention IS NULL");
+          whereConditions.push("LOWER(i.etat) = ?");
+          params.push(etatLower);
+        } else {
+          whereConditions.push("LOWER(i.etat) = ?");
+          params.push(etatLower);
+        }
       }
 
-      /* ===================== TOTAL ===================== */
-      const countQuery = `
-      SELECT COUNT(DISTINCT i.id) AS total
-      FROM intervention i
-      ${whereClause}
-    `;
+      const whereClause = `WHERE ${whereConditions.join(" AND ")}`;
+
+      // 🔹 Total pagination
+      const countQuery = `SELECT COUNT(*) AS total FROM intervention i ${whereClause}`;
       const [[{ total }]] = await pool.execute(countQuery, params);
 
-      /* ===================== DATA ===================== */
+      // 🔹 Récupération des interventions limitées
       const dataQuery = `
-      SELECT
-        i.id,
-        i.numero,
-        i.titre,
-        i.description,
-        i.etat,
-        i.priorite,
-        i.date_prevue,
-        i.date_cloture_estimee,
-        i.date_butoir_realisation,
-
-        i.client_id,
-        i.zone_intervention_client_id,
-        i.type_client_zone_intervention,
-        i.equipe_id,
-
-        c.numero,
-        c.compte,
-        COALESCE(p.nom_complet, a.nom_agence, o.nom_entreprise) AS nomClient,
-        CASE
-          WHEN p.id IS NOT NULL THEN 'particulier'
-          WHEN a.id IS NOT NULL THEN 'agence'
-          WHEN o.id IS NOT NULL THEN 'organisation'
-          ELSE 'inconnu'
-        END AS typeClient
-
+      SELECT i.*
       FROM (
         SELECT i.id
         FROM intervention i
         ${whereClause}
         ORDER BY i.id DESC
         LIMIT ${limit} OFFSET ${offset}
-      ) AS limited
-
+      ) limited
       JOIN intervention i ON i.id = limited.id
-      LEFT JOIN client c ON c.id = i.client_id
-      LEFT JOIN particulier p ON p.client_id = c.id
-      LEFT JOIN agence a ON a.client_id = c.id
-      LEFT JOIN organisation o ON o.client_id = c.id
-
-      ORDER BY i.id DESC
     `;
-
       const [interventions] = await pool.execute(dataQuery, params);
 
-
-      /* ===================== 🔹 ZONE D’INTERVENTION ===================== */
-      for (const intervention of interventions) {
-        const zoneClientId = intervention.zone_intervention_client_id ?? null;
-        const typeClientZone = intervention.type_client_zone_intervention;
-
-        let zoneDetails = null;
-
-        if (zoneClientId !== null) {
+      // 🔹 Transformation et enrichissement des données
+      const data = [];
+      for (const i of interventions) {
+        // Zone d’intervention
+        let zone = null;
+        if (i.zone_intervention_client_id) {
           try {
-            switch (typeClientZone) {
+            switch (i.type_client_zone_intervention) {
               case 'habitation':
-                zoneDetails = await HabitationService.getRecordDetails(zoneClientId);
+                zone = await HabitationService.getRecordDetails(i.zone_intervention_client_id);
                 break;
               case 'secteur':
-                zoneDetails = await SecteurService.getRecordDetails(zoneClientId);
+                zone = await SecteurService.getRecordDetails(i.zone_intervention_client_id);
                 break;
-              default: {
-                zoneDetails = await ClientsService.getRecordDetails(zoneClientId);
-              }
+              default:
+                zone = await ClientsService.getRecordDetails(i.zone_intervention_client_id);
             }
           } catch (err) {
-            console.warn(
-              `Zone d’intervention introuvable (ID=${zoneClientId}, type=${typeClientZone})`
-            );
-            zoneDetails = null;
+            console.warn(`Zone d’intervention introuvable pour ID ${i.zone_intervention_client_id}:`, err.message);
           }
         }
 
-        // ✅ Affectation correcte pour éviter {data: {data: null}}
-        intervention.zone_intervention = zoneDetails ?? null;
+        // Client
+        let client = null;
+        if (i.client_id) {
+          try {
+            client = await ClientsService.getRecordDetails(i.client_id);
+          } catch (err) {
+            console.error(`Erreur récupération client ${i.client_id}:`, err.message);
+          }
+        }
+
+        data.push({
+          id: i.id,
+          numero: i.numero,
+          titre: i.titre,
+          description: i.description,
+          etat: i.etat,
+          priorite: i.priorite,
+          date_prevue: i.date_prevue,
+          date_cloture_estimee: i.date_cloture_estimee,
+          date_butoir_realisation: i.date_butoir_realisation,
+          date_debut_intervention: i.date_debut_intervention,
+          client,
+          zone_intervention: zone,
+          equipe_id: i.equipe_id
+        });
       }
 
-      /* ===================== FORMAT FINAL ===================== */
-      const data = interventions.map(i => ({
-        id: i.id,
-        titre: i.titre,
-        numero: i.numero,
-        description: i.description,
-        etat: i.etat,
-        priorite: i.priorite,
-        date_prevue: i.date_prevue,
-        date_cloture_estimee: i.date_cloture_estimee,
-        date_butoir_realisation: i.date_butoir_realisation,
-
-        client: i.client_id ? {
-          id: i.client_id,
-          numero: i.numero,
-          compte: i.compte,
-          nom: i.nomClient,
-          type: i.typeClient
-        } : null,
-
-        zone_intervention: i.zone_intervention,
-        equipe_id: i.equipe_id
-      }));
-
-      /* ===================== RETURN ===================== */
       return {
         pagination: {
           page,
@@ -715,10 +676,11 @@ class InterventionService {
       };
 
     } catch (err) {
-      console.error('Erreur apiGetByTypePaginated:', err);
+      console.error("Erreur apiGetByTypePaginated:", err);
       throw err;
     }
   }
+
 
   /**
 * 🔹 Récupérer toutes les interventions
@@ -810,82 +772,6 @@ class InterventionService {
 
     return { interventionId, date_debut: dateDebut, date_fin: dateFin, duree_heures, duree_minutes };
   }
-
-  // static async apiGetDetails(interventionId) {
-  //   try {
-
-  //     // 🔹 Requête principale intervention
-  //     const sql = `
-  //     SELECT *
-  //     FROM intervention
-  //     WHERE id = ?
-  //   `;
-
-  //     const [rows] = await pool.execute(sql, [interventionId]);
-
-  //     if (rows.length === 0) {
-  //       return { message: "Intervention non trouvée" };
-  //     }
-
-  //     const intervention = rows[0];
-
-  //     // 🔹 Workflow
-  //     const [workflow] = await pool.execute(
-  //       `SELECT * FROM intervention_workflow WHERE intervention_id = ?`,
-  //       [interventionId]
-  //     );
-  //     intervention.workflow = workflow[0] || null;
-
-  //     // 🔹 Photos
-  //     const [photos] = await pool.execute(
-  //       `SELECT id, photo_type, filename, url, latitude, longitude, comment, captured_at
-  //      FROM intervention_photos
-  //      WHERE intervention_id = ?
-  //      ORDER BY captured_at ASC`,
-  //       [interventionId]
-  //     );
-
-  //     intervention.photos = {
-  //       before: photos.filter(p => p.photo_type === 'before'),
-  //       after: photos.filter(p => p.photo_type === 'after'),
-  //       additional_work: photos.filter(p => p.photo_type === 'additional_work'),
-  //       delivery_note: photos.filter(p => p.photo_type === 'delivery_note'),
-  //       quote: photos.filter(p => p.photo_type === 'quote')
-  //     };
-
-  //     // 🔹 Signatures
-  //     const [signatures] = await pool.execute(
-  //       `SELECT signature_type, signature_data, signed_at
-  //      FROM intervention_signatures
-  //      WHERE intervention_id = ?`,
-  //       [interventionId]
-  //     );
-
-  //     intervention.signatures = {
-  //       technician: signatures.find(s => s.signature_type === 'technician') || null,
-  //       client: signatures.find(s => s.signature_type === 'client') || null,
-  //       additional_work: signatures.find(s => s.signature_type === 'additional_work') || null,
-  //       quote: signatures.find(s => s.signature_type === 'quote') || null
-  //     };
-
-  //     // 🔹 Interruptions
-  //     const [interruptions] = await pool.execute(
-  //       `SELECT id, reason, custom_reason, started_at, ended_at, duration_minutes
-  //      FROM intervention_interruptions
-  //      WHERE intervention_id = ?
-  //      ORDER BY started_at ASC`,
-  //       [interventionId]
-  //     );
-
-  //     intervention.interruptions = interruptions || [];
-
-  //     return intervention;
-
-  //   } catch (err) {
-  //     console.error("Erreur apiGetDetails:", err);
-  //     throw err;
-  //   }
-  // }
 
   static async apiGetDetails(interventionId) {
     const [rows] = await pool.query(`SELECT *

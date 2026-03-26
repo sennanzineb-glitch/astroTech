@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { FullCalendarModule, FullCalendarComponent } from '@fullcalendar/angular';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -10,6 +10,7 @@ import frLocale from '@fullcalendar/core/locales/fr';
 import { PlanningService } from '../../_services/affaires/planning.service';
 import { InterventionService } from '../../_services/affaires/intervention.service';
 import { DateClickArg } from '@fullcalendar/interaction';
+
 
 declare var bootstrap: any;
 
@@ -69,6 +70,7 @@ export class PlanningComponent implements OnInit {
   miniCalendarOptions: any = {};
 
   constructor(
+    private router: Router,
     private planningService: PlanningService,
     private interventionService: InterventionService
   ) { }
@@ -135,38 +137,38 @@ export class PlanningComponent implements OnInit {
     }
   }
 
-loadEvents() { 
-  this.planningService.getAll().subscribe((res: any) => {
-    const rows = res.data || [];
+  loadEvents() {
+    this.planningService.getAll().subscribe((res: any) => {
+      const rows = res.data || [];
 
-    this.allEvents = rows.map((row: any) => {
-      // Trouver la couleur basée sur l'état
-      const etatConfig = this.etatsConfig.find(e => e.value === row.extendedProps?.etat);
-      const color = etatConfig ? this.getColor(etatConfig.class) : '#79b7f2';
+      this.allEvents = rows.map((row: any) => {
+        // Trouver la couleur basée sur l'état
+        const etatConfig = this.etatsConfig.find(e => e.value === row.extendedProps?.etat);
+        const color = etatConfig ? this.getColor(etatConfig.class) : '#79b7f2';
 
-      // Formater l'heure pour l'afficher dans le titre
-      const startTime = row.start ? new Date(row.start).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
-      const endTime = row.end ? new Date(row.end).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
-      const titleWithTime = startTime && endTime ? `${row.title} (${startTime} - ${endTime})` : row.title;
+        // Formater l'heure pour l'afficher dans le titre
+        const startTime = row.start ? new Date(row.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+        const endTime = row.end ? new Date(row.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+        const titleWithTime = startTime && endTime ? `${row.title} (${startTime} - ${endTime})` : row.title;
 
-      return {
-        id: row.id?.toString(),
-        title: titleWithTime,
-        start: row.start ? new Date(row.start) : new Date(),
-        end: row.end ? new Date(row.end) : new Date(),
-        allDay: true,               // ✅ occupe toute la journée
-        display: 'block',           // ✅ supprime le point
-        backgroundColor: color,
-        borderColor: color,
-        textColor: 'white',
-        etat: row.extendedProps.etat,
-        extendedProps: { ...row.extendedProps }
-      };
+        return {
+          id: row.id?.toString(),
+          title: titleWithTime,
+          start: row.start ? new Date(row.start) : new Date(),
+          end: row.end ? new Date(row.end) : new Date(),
+          allDay: true,               // ✅ occupe toute la journée
+          display: 'block',           // ✅ supprime le point
+          backgroundColor: color,
+          borderColor: color,
+          textColor: 'white',
+          etat: row.extendedProps.etat,
+          extendedProps: { ...row.extendedProps }
+        };
+      });
+
+      this.events = [...this.allEvents];
     });
-
-    this.events = [...this.allEvents];
-  });
-}
+  }
 
 
   // Mini-calendrier sélection de plage
@@ -249,28 +251,28 @@ loadEvents() {
   // --------------------------
   // Appliquer filtre
   // --------------------------
- applyFilters() {
-  this.events = this.allEvents.filter(event => {
-    const eventStart = new Date(event.start);
-    const eventEnd = new Date(event.end);
+  applyFilters() {
+    this.events = this.allEvents.filter(event => {
+      const eventStart = new Date(event.start);
+      const eventEnd = new Date(event.end);
 
-    if (this.search.dateDebut && this.search.dateFin) {
-      // Convertir la plage de filtre en début et fin de journée
-      const startFilter = new Date(this.search.dateDebut);
-      startFilter.setHours(0, 0, 0, 0); // début de journée
-      const endFilter = new Date(this.search.dateFin);
-      endFilter.setHours(23, 59, 59, 999); // fin de journée
+      if (this.search.dateDebut && this.search.dateFin) {
+        // Convertir la plage de filtre en début et fin de journée
+        const startFilter = new Date(this.search.dateDebut);
+        startFilter.setHours(0, 0, 0, 0); // début de journée
+        const endFilter = new Date(this.search.dateFin);
+        endFilter.setHours(23, 59, 59, 999); // fin de journée
 
-      // Vérifie si l'événement est **en dehors** de la plage => exclure
-      if (eventEnd < startFilter || eventStart > endFilter) return false;
-    }
+        // Vérifie si l'événement est **en dehors** de la plage => exclure
+        if (eventEnd < startFilter || eventStart > endFilter) return false;
+      }
 
-    if (this.search.etat && event.extendedProps?.etat !== this.search.etat) return false;
-    if (this.search.type && event.extendedProps?.type !== this.search.type) return false;
+      if (this.search.etat && event.extendedProps?.etat !== this.search.etat) return false;
+      if (this.search.type && event.extendedProps?.type !== this.search.type) return false;
 
-    return true;
-  });
-}
+      return true;
+    });
+  }
 
   resetFilters() {
     this.search = { dateDebut: null, dateFin: null, etat: '', type: '' };
@@ -297,7 +299,7 @@ loadEvents() {
   // --------------------------
   onEventClick(clickInfo: any) {
     this.selectedEvent = clickInfo.event;
-    
+
     const modalEl = document.getElementById('eventDetailModal');
     if (modalEl) {
       const modal = new bootstrap.Modal(modalEl, { backdrop: 'static', keyboard: false });
@@ -356,6 +358,21 @@ loadEvents() {
     this.planning.dateFin = arg.dateStr;
     const modalEl = document.getElementById('addPlanningModal');
     if (modalEl) new bootstrap.Modal(modalEl, { backdrop: 'static', keyboard: false }).show();
+  }
+
+
+  goToDetails(id: number) {
+    // Fermer le modal avant redirection
+    const modalEl = document.getElementById('eventDetailModal');
+    modalEl?.classList.remove('show');
+    document.body.classList.remove('modal-open');
+    const backdrops = document.getElementsByClassName('modal-backdrop');
+    while (backdrops.length > 0) {
+      backdrops[0].parentNode?.removeChild(backdrops[0]);
+    }
+
+    // naviguer vers la page
+    this.router.navigate(['/interventions/details', id]);
   }
 
 }

@@ -2,54 +2,50 @@ const db = require('../db'); // connexion MySQL2/promise
 
 class DashboardService {
 
+
   // static async getDashboardInterventions() {
   //   const sql = `
-  //     SELECT
-  //       ti.id AS type_id,
-  //       ti.categorie,
-  //       ti.libelle AS type,
-  //       CASE
-  //         WHEN LOWER(i.etat) LIKE '%plan%' THEN 'PLANIFIE'
-  //         WHEN LOWER(i.etat) LIKE '%cours%' THEN 'EN_COURS'
-  //         WHEN LOWER(i.etat) LIKE '%term%'
-  //           OR LOWER(i.etat) LIKE '%clos%' THEN 'TERMINE'
-  //         ELSE 'AUTRE'
-  //       END AS etat,
-  //       COUNT(*) AS total
-  //     FROM intervention i
-  //     JOIN intervention_type ti ON ti.id = i.type_id
-  //     WHERE ti.actif = 1
-  //     GROUP BY
-  //       ti.id,
-  //       ti.categorie,
-  //       ti.libelle,
-  //       etat
-  //     ORDER BY
-  //       ti.categorie,
-  //       ti.libelle;
-  //   `;
+  //   SELECT
+  //     ti.id AS type_id,
+  //     ti.categorie,
+  //     ti.libelle AS type,
+  //     i.etat AS etat_original,
+  //     i.date_debut_intervention,
+  //     CASE
+  //       WHEN LOWER(i.etat) LIKE 'terminee_avec_succes%' THEN 'TERMINE'
+  //       WHEN LOWER(i.etat) LIKE '%cours%' THEN 'EN_COURS'
+  //       ELSE 'AUTRE'
+  //     END AS etat,
+  //     COUNT(*) AS total
+  //   FROM intervention i
+  //   JOIN intervention_type ti ON ti.id = i.type_id
+  //   WHERE ti.actif = 1
+  //     AND i.archive = 0
+  //   GROUP BY
+  //     ti.id,
+  //     ti.categorie,
+  //     ti.libelle,
+  //     i.etat,
+  //     i.date_debut_intervention
+  //   ORDER BY
+  //     ti.categorie,
+  //     ti.libelle;
+  // `;
 
   //   const [rows] = await db.query(sql);
 
-  //   /**
-  //    * Structure retournée :
-  //    * {
-  //    *   categorie: {
-  //    *     type: {
-  //    *       type_id,
-  //    *       PLANIFIE,
-  //    *       EN_COURS,
-  //    *       TERMINE
-  //    *     }
-  //    *   }
-  //    * }
-  //    */
   //   const dashboard = {};
 
   //   for (const row of rows) {
-  //     const { categorie, type, type_id, etat, total } = row;
+  //     const { categorie, type, type_id, etat, total, etat_original, date_debut_intervention } = row;
 
-  //     if (etat === 'AUTRE') continue;
+  //     // ignorer les terminees avec interruption
+  //     if (etat_original.toLowerCase().includes('interruption')) continue;
+
+  //     // si date_debut_intervention est définie, considérer PLANIFIE
+  //     const finalEtat = date_debut_intervention ? 'PLANIFIE' : etat;
+
+  //     if (finalEtat === 'AUTRE') continue;
 
   //     if (!dashboard[categorie]) {
   //       dashboard[categorie] = {};
@@ -60,77 +56,67 @@ class DashboardService {
   //         type_id,
   //         PLANIFIE: 0,
   //         EN_COURS: 0,
-  //         TERMINE: 0
+  //         TERMINE: 0,
+  //         etat_original: null
   //       };
   //     }
 
-  //     dashboard[categorie][type][etat] = total;
+  //     dashboard[categorie][type][finalEtat] += total;
+
+  //     // garder seulement la dernière valeur
+  //     dashboard[categorie][type].etat_original = etat_original;
   //   }
 
   //   return dashboard;
   // }
 
   static async getDashboardInterventions() {
-    const sql = `
+
+  const sql = `
     SELECT
       ti.id AS type_id,
       ti.categorie,
       ti.libelle AS type,
-      CASE
-        WHEN LOWER(i.etat) LIKE '%term%'
-          OR LOWER(i.etat) LIKE '%clos%' THEN 'TERMINE'
-        WHEN LOWER(i.etat) LIKE '%cours%' THEN 'EN_COURS'
-        WHEN i.date_debut_intervention IS NOT NULL THEN 'PLANIFIE'
-        ELSE 'AUTRE'
-      END AS etat,
-      COUNT(*) AS total
+
+      SUM(CASE WHEN i.date_debut_intervention IS NOT NULL THEN 1 ELSE 0 END) AS PLANIFIE,
+      SUM(CASE WHEN i.date_debut_intervention IS NULL AND LOWER(i.etat) LIKE '%cours%' THEN 1 ELSE 0 END) AS EN_COURS,
+      SUM(CASE WHEN i.date_debut_intervention IS NULL AND LOWER(i.etat) LIKE 'terminee_avec_succes%' THEN 1 ELSE 0 END) AS TERMINE,
+      COUNT(*) AS TOTAL
+
     FROM intervention i
     JOIN intervention_type ti ON ti.id = i.type_id
+
     WHERE ti.actif = 1
       AND i.archive = 0
-    GROUP BY
-      ti.id,
-      ti.categorie,
-      ti.libelle,
-      CASE
-        WHEN LOWER(i.etat) LIKE '%term%'
-          OR LOWER(i.etat) LIKE '%clos%' THEN 'TERMINE'
-        WHEN LOWER(i.etat) LIKE '%cours%' THEN 'EN_COURS'
-        WHEN i.date_debut_intervention IS NOT NULL THEN 'PLANIFIE'
-        ELSE 'AUTRE'
-      END
-    ORDER BY
-      ti.categorie,
-      ti.libelle;
+      -- ignore "terminee_avec_interruption" seulement si date_debut_intervention IS NULL
+      AND NOT (i.date_debut_intervention IS NULL AND LOWER(i.etat) LIKE 'terminee_avec_interruption%')
+
+    GROUP BY ti.id, ti.categorie, ti.libelle
+    ORDER BY ti.categorie, ti.libelle
   `;
 
-    const [rows] = await db.query(sql);
+  const [rows] = await db.query(sql);
 
-    const dashboard = {};
+  // Transformation pour Angular dashboard
+  const dashboard = {};
 
-    for (const row of rows) {
-      const { categorie, type, type_id, etat, total } = row;
+  for (const row of rows) {
+    const { categorie, type, type_id, PLANIFIE, EN_COURS, TERMINE, TOTAL } = row;
 
-      if (etat === 'AUTRE') continue;
+    if (!dashboard[categorie]) dashboard[categorie] = {};
 
-      if (!dashboard[categorie]) {
-        dashboard[categorie] = {};
-      }
-
-      if (!dashboard[categorie][type]) {
-        dashboard[categorie][type] = {
-          type_id,
-          PLANIFIE: 0,
-          EN_COURS: 0,
-          TERMINE: 0
-        };
-      }
-
-      dashboard[categorie][type][etat] = total;
-    }
-
-    return dashboard;
+    dashboard[categorie][type] = {
+      type_id,
+      PLANIFIE,
+      EN_COURS,
+      TERMINE,
+      TOTAL
+    };
   }
+
+  return dashboard;
+}
+  
 
 }
 

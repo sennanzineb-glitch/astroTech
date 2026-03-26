@@ -2,8 +2,10 @@
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h3 class="mb-0"><strong>Détail de l'intervention</strong> — N° {{ intervention.numero }}</h3>
     <div class="btn-group">
-      <button class="btn btn-outline-warning btn-sm" (click)="editIntervention(intervention.id)"><i class="fa fa-pencil"></i></button>
-      <button class="btn btn-outline-danger btn-sm" (click)="deleteIntervention(intervention.id)"><i class="fa fa-trash"></i></button>
+      <button class="btn btn-outline-warning btn-sm" (click)="editIntervention(intervention.id)"><i
+          class="fa fa-pencil"></i></button>
+      <button class="btn btn-outline-danger btn-sm" (click)="deleteIntervention(intervention.id)"><i
+          class="fa fa-trash"></i></button>
     </div>
   </div>
 
@@ -17,7 +19,8 @@
           <ul class="list-group list-group-flush small">
             <li class="list-group-item"><strong>Titre :</strong> {{ intervention.titre }}</li>
             <li class="list-group-item"><strong>État :</strong> {{ formatEtat(intervention.etat) }}</li>
-            <li class="list-group-item"><strong>Création :</strong> {{ intervention.date_creation | date:'dd/MM/yyyy HH:mm' }}</li>
+            <li class="list-group-item"><strong>Création :</strong> {{ intervention.date_creation | date:'dd/MM/yyyy
+              HH:mm' }}</li>
           </ul>
         </div>
       </div>
@@ -39,86 +42,123 @@
     </div>
 
     <div class="col-md-7">
-      <div class="card shadow-sm border-0 text-center p-4 mb-4" *ngIf="!interventionItems || interventionItems.length === 0">
-  <h6 class="fw-bold text-muted small">PLANIFICATION ACTUELLE</h6>
+      <div class="card shadow-sm border-0 text-center p-4 mb-4"
+        *ngIf="!interventionItems || interventionItems.length === 0">
+        <h6 class="fw-bold text-muted small">PLANIFICATION ACTUELLE</h6>
 
-  <!-- Équipe et techniciens -->
-  <div class="d-flex justify-content-center gap-3 my-3">
-    <div *ngIf="intervention.equipe" class="text-center">
-      <div class="badge-circle bg-primary text-white mx-auto d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; border-radius: 50%;">
-        <i class="fa fa-users"></i>
-      </div>
-      <small class="fw-bold">{{ intervention.equipe.nom }}</small>
-    </div>
+        <!-- Équipe et techniciens -->
+        <div class="d-flex justify-content-center gap-3 my-3">
+          <div *ngIf="intervention.equipe" class="text-center">
+            <div class="badge-circle bg-primary text-white mx-auto d-flex align-items-center justify-content-center"
+              style="width: 40px; height: 40px; border-radius: 50%;">
+              <i class="fa fa-users"></i>
+            </div>
+            <small class="fw-bold">{{ intervention.equipe.nom }}</small>
+          </div>
 
-    <div *ngFor="let tech of intervention.techniciens" class="text-center">
-      <div class="badge-circle bg-info text-white mx-auto d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; border-radius: 50%;">
-        {{ tech.nom?.charAt(0) || '?' }}
-      </div>
-      <small class="fw-bold">{{ tech.nom }} {{ tech.prenom }}</small>
-    </div>
-  </div>
+          <div *ngFor="let tech of intervention.techniciens" class="text-center">
+            <div class="badge-circle bg-info text-white mx-auto d-flex align-items-center justify-content-center"
+              style="width: 40px; height: 40px; border-radius: 50%;">
+              {{ tech.nom?.charAt(0) || '?' }}
+            </div>
+            <small class="fw-bold">{{ tech.nom }} {{ tech.prenom }}</small>
+          </div>
+        </div>
 
-  <!-- Période intervention -->
-  <div class="planning-box p-3 bg-light rounded mb-3" *ngIf="intervention.date_debut_intervention && intervention.date_fin_intervention">
-    <div class="row align-items-center text-center">
-      <div class="col-5">
-        <small class="text-muted">DU</small>
-        <div class="fw-bold text-primary">{{ intervention.date_debut_intervention | date:'dd/MM/yyyy' }}</div>
-        <small>{{ intervention.heure_debut_intervention_h }}h{{ pad(intervention.heure_debut_intervention_min) }}</small>
-      </div>
-      <div class="col-2 text-muted">
-        <i class="fa fa-arrow-right"></i>
-      </div>
-      <div class="col-5">
-        <small class="text-muted">AU</small>
-        <div class="fw-bold text-primary">{{ intervention.date_fin_intervention | date:'dd/MM/yyyy' }}</div>
-        <small>{{ intervention.heure_fin_intervention_h }}h{{ pad(intervention.heure_fin_intervention_min) }}</small>
-      </div>
-    </div>
-  </div>
+        <!-- Période intervention -->
+        <div class="planning-box p-3 bg-light rounded mb-3"
+          *ngIf="intervention.date_debut_intervention && intervention.date_fin_intervention">
+          <div class="row align-items-center text-center">
+            <div class="col-5">
+              <small class="text-muted">DU</small>
+              <div class="fw-bold text-primary">{{ intervention.date_debut_intervention | date:'dd/MM/yyyy' }}</div>
+              <small>{{ intervention.heure_debut_intervention_h }}h{{ pad(intervention.heure_debut_intervention_min)
+                }}</small>
+            </div>
+            <div class="col-2 text-muted">
+              <i class="fa fa-arrow-right"></i>
+            </div>
+            <div class="col-5">
+              <small class="text-muted">AU</small>
+              <div class="fw-bold text-primary">{{ intervention.date_fin_intervention | date:'dd/MM/yyyy' }}</div>
+              <small>{{ intervention.heure_fin_intervention_h }}h{{ pad(intervention.heure_fin_intervention_min)
+                }}</small>
+            </div>
+          </div>
+        </div>
 
-  <!-- Actions -->
-  <div class="d-flex justify-content-center gap-2">
-    <button class="btn btn-outline-primary btn-sm px-3" (click)="editPlanning()">MODIFIER</button>
-    <button class="btn btn-primary btn-sm px-3" (click)="modePlanification(intervention)">CHANGER MODE</button>
-  </div>
-</div>
+        <!-- Actions -->
+        <div class="d-flex justify-content-center gap-2">
+          <button class="btn btn-outline-primary btn-sm px-3" (click)="editPlanning()">MODIFIER</button>
+          <button class="btn btn-primary btn-sm px-3" (click)="modePlanification(intervention)">CHANGER MODE</button>
+        </div>
+      </div>
 
       <div class="card shadow-sm border-0 p-4">
-        <h5 class="text-uppercase fw-bold text-muted border-bottom pb-3 mb-4 small">Flux Terrain</h5>
+        <h5 class="text-uppercase fw-bold text-muted border-bottom pb-3 mb-4 small">
+          Flux Terrain
+        </h5>
+
+        <!-- Dates début / fin du flux -->
+        <div *ngIf="interventionItems.length > 0" class="mb-3 text-center small">
+          <span class="text-muted">Du&nbsp;</span>
+          <strong>{{ interventionItems[0]?.date | date:'dd/MM/yyyy HH:mm' }}</strong>
+          <span class="mx-2 text-muted">au</span>
+          <strong>{{ interventionItems[interventionItems.length - 1]?.date | date:'dd/MM/yyyy HH:mm' }}</strong>
+        </div>
+
+        <!-- Timeline -->
         <div class="timeline" *ngIf="interventionItems.length > 0; else noHistory">
           <div *ngFor="let item of interventionItems" class="timeline-row">
+
+            <!-- Indicateur de timeline -->
             <div class="timeline-indicator">
               <div class="dot" [class.dot-status]="item.type === 'status'"></div>
               <div class="line"></div>
             </div>
+
+            <!-- Contenu de l'événement -->
             <div class="timeline-content pb-4 w-100">
               <div class="d-flex justify-content-between small">
                 <span class="fw-bold text-uppercase">{{ item.title }}</span>
                 <span class="text-muted">{{ item.date | date:'dd/MM HH:mm' }}</span>
               </div>
+
               <div class="event-body mt-2">
-                 <div *ngIf="item.type === 'photo'" class="d-flex gap-2">
-                    <img *ngFor="let img of item.content" [src]="img" class="img-report border shadow-sm" style="width: 80px; height: 80px; object-fit: cover;">
-                 </div>
-                 <div *ngIf="item.type === 'signature'" class="border p-2 rounded bg-light" style="max-width: 200px;">
-                    <img [src]="item.content[0]" class="img-fluid">
-                 </div>
-                 <div *ngIf="item.type === 'table'" class="table-responsive mt-2">
-                   <table class="table table-sm table-bordered bg-white small">
-                     <tr *ngFor="let task of item.content">
-                       <td>{{ task }}</td>
-                       <td>{{ task === 'Intervention' ? getRealInterventionDuration() : '-' }}</td>
-                       <td class="text-center text-success"><i class="fa fa-check-square"></i></td>
-                     </tr>
-                   </table>
-                 </div>
-                 <p *ngIf="item.type === 'text'" class="text-muted mb-0 small">{{ item.content }}</p>
+
+                <!-- Photos -->
+                <div *ngIf="item.type === 'photo'" class="d-flex flex-wrap gap-2">
+                  <img *ngFor="let img of item.content" [src]="img" class="img-report border shadow-sm"
+                    style="width: 80px; height: 80px; object-fit: cover;">
+                </div>
+
+                <!-- Signatures -->
+                <div *ngIf="item.type === 'signature'" class="border p-2 rounded bg-light d-inline-block mb-2"
+                  style="max-width: 200px;">
+                  <img [src]="item.content[0]" class="img-fluid">
+                </div>
+
+                <!-- Tables -->
+                <div *ngIf="item.type === 'table'" class="table-responsive mt-2">
+                  <table class="table table-sm table-bordered bg-white small mb-0">
+                    <tr *ngFor="let task of item.content">
+                      <td>{{ task }}</td>
+                      <td>{{ task === 'Intervention' ? getRealInterventionDuration() : '-' }}</td>
+                      <td class="text-center text-success"><i class="fa fa-check-square"></i></td>
+                    </tr>
+                  </table>
+                </div>
+
+                <!-- Texte -->
+                <p *ngIf="item.type === 'text'" class="text-muted mb-0 small">{{ item.content }}</p>
+
               </div>
             </div>
           </div>
+
         </div>
+
+        <!-- Aucun événement -->
         <ng-template #noHistory>
           <p class="text-center text-muted py-4">Aucun événement enregistré.</p>
         </ng-template>

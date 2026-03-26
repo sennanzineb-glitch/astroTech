@@ -6,13 +6,16 @@ import { Router } from '@angular/router';
 
 declare var bootstrap: any;
 
+// ... (imports identiques)
+
 interface CardItem {
   type_id: number;
   title: string;
   count: number;
   bg: string;
-  // … autres propriétés existantes
-  position?: { x: number; y: number }; // <-- ajouter cette ligne
+  id?: string;
+  etat?: string;
+  position?: { x: number; y: number };
 }
 
 @Component({
@@ -23,20 +26,17 @@ interface CardItem {
   styleUrl: './dashboard.component.css'
 })
 export class DashboardComponent implements OnInit {
-
   dashboard: any = {};
   selectedItem: CardItem | null = null;
-
-  /** Colonnes */
   leftBlocs: CardItem[][] = [];
   rightBlocs: CardItem[][] = [];
-
-  /** Modal & pagination */
   interventions: any[] = [];
-  loadingModal = false;
-  page = 1;
-  limit = 5;
-  pagination: any = { totalPages: 0 };
+
+  showLeft = true;
+  showRight = true;
+  draggedItem: CardItem | null = null;
+  offset = { x: 0, y: 0 };
+  dragging = false;
 
   constructor(
     private dashboardService: DashboardService,
@@ -45,155 +45,78 @@ export class DashboardComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.dashboardService.getInterventionsDashboard()
-      .subscribe(response => {
-        // si ton API renvoie { success, data }
-        this.dashboard = response.data ?? response;
-        this.buildDashboard();
-      });
+    this.dashboardService.getInterventionsDashboard().subscribe(response => {
+      this.dashboard = response.data ?? response;
+      this.buildDashboard();
+    });
   }
 
-  /** ================= CONSTRUCTION DU DASHBOARD ================= */
   buildDashboard(): void {
+    this.leftBlocs = this.buildBlocs(this.dashboard['Auto-contrôle']);
     const travaux = this.buildBlocs(this.dashboard['Travaux principaux']);
-    const autoControle = this.buildBlocs(this.dashboard['Auto-contrôle']);
     const quitus = this.buildBlocs(this.dashboard['Quitus']);
-
-    /** Gauche = Auto-contrôle */
-    this.leftBlocs = autoControle;
-
-    /** Droite = Quitus + Travaux */
     this.rightBlocs = [...quitus, ...travaux];
   }
 
-  /** ================= 3 CARTES PAR TYPE ================= */
   buildBlocs(groupData: any): CardItem[][] {
     if (!groupData) return [];
-
-    const blocs: CardItem[][] = [];
-
-    Object.keys(groupData).forEach(type => {
+    return Object.keys(groupData).map(type => {
       const etats = groupData[type];
-
-      blocs.push([
-        {
-          type_id: etats.type_id,
-          title: type,
-          count: etats.PLANIFIE ?? 0,
-          bg: 'bg-primary'
-        },
-        {
-          type_id: etats.type_id,
-          title: type,
-          count: etats.EN_COURS ?? 0,
-          bg: 'bg-warning'
-        },
-        {
-          type_id: etats.type_id,
-          title: type,
-          count: etats.TERMINE ?? 0,
-          bg: 'bg-success'
-        }
-      ]);
+      return [
+        { type_id: etats.type_id, title: type, count: etats.PLANIFIE || 0, etat: 'planifie', bg: 'bg-primary' },
+        { type_id: etats.type_id, title: type, count: etats.EN_COURS || 0, etat: 'en_cours', bg: 'bg-warning' },
+        { type_id: etats.type_id, title: type, count: etats.TERMINE || 0, etat: 'terminee_avec_succes', bg: 'bg-success' }
+      ];
     });
-
-    return blocs;
   }
 
-  /** ================= ÉTAT ================= */
-  getEtatFromBg(bg: string): string {
-    switch (bg) {
-      case 'bg-primary': return 'PLANIFIÉ';
-      case 'bg-warning': return 'EN COURS';
-      case 'bg-success': return 'TERMINÉ';
-      default: return '';
-    }
-  }
-
-  /** ================= MODAL ================= */
   openModal(item: CardItem) {
-
     this.selectedItem = item;
-    this.page = 1;
-
+    this.interventions = []; // Reset avant chargement
     this.loadInterventions();
 
-    this.selectedItem = item;
-
-    const modal = new bootstrap.Modal(
-      document.getElementById('cardModal')
-    );
-    modal.show();
-
-  }
-
-  //
-
-  normalizeEtat(etat: string): string {
-    if (!etat) return '';
-
-    switch (etat.toUpperCase()) {
-      case 'PLANIFIÉ':
-        return 'planifie';       // ou 'planifie' selon ce que ton backend attend
-      case 'EN COURS':
-        return 'en_cours';
-      case 'TERMINÉ':
-        return 'terminee';
-      default:
-        return etat.toLowerCase(); // passe tout le reste en minuscule
+    const modalElement = document.getElementById('cardModal');
+    if (modalElement) {
+      const modal = new bootstrap.Modal(modalElement);
+      modal.show();
     }
   }
 
   loadInterventions() {
     if (!this.selectedItem) return;
+    console.log(this.selectedItem);
 
-    this.loadingModal = true;
-    const etatBackend = this.normalizeEtat(this.getEtatFromBg(this.selectedItem.bg));
+    //const etatBackend = this.normalizeEtat(this.getEtatFromBg(this.selectedItem.bg));
 
-    this.interventionService
-      .getByTypePaginated(
-        this.selectedItem.type_id,
-        this.page, this.limit,
-        etatBackend
-      )
+    this.interventionService.getByTypePaginated(this.selectedItem.type_id, 1, 10, this.selectedItem.etat)
       .subscribe(res => {
         this.interventions = res.data;
-        this.pagination = res.pagination;
       });
   }
 
-  changePage(page: number) {
-    if (page < 1 || page > this.pagination.totalPages) return;
-    this.page = page;
-    this.loadInterventions();
+  getEtatFromBg(bg: string): string {
+    const mapping: any = { 'bg-primary': 'PLANIFIÉ', 'bg-warning': 'EN COURS', 'bg-success': 'TERMINÉ' };
+    return mapping[bg] || '';
   }
 
-  /************************************** */
+  normalizeEtat(etat: string): string {
+    const mapping: any = { 'PLANIFIÉ': 'planifie', 'EN COURS': 'en_cours', 'TERMINÉ': 'terminee' };
+    return mapping[etat] || etat.toLowerCase();
+  }
 
-  cardWidth = 127;  // largeur fixe des cartes
-  cardHeight = 200; // hauteur fixe des cartes
-
-  draggedItem: any = null;
-  offset = { x: 0, y: 0 };
-  dragging = false;
-
-  startDrag(event: MouseEvent, item: any) {
+  // --- Drag & Drop ---
+  startDrag(event: MouseEvent, item: CardItem) {
     event.stopPropagation();
-    event.preventDefault();
     this.draggedItem = item;
     this.dragging = true;
-
-    // initialise la position si pas déjà
     item.position = item.position || { x: 0, y: 0 };
-
-    // calcul de l’offset pour un drag fluide
     this.offset.x = event.clientX - item.position.x;
     this.offset.y = event.clientY - item.position.y;
   }
 
   @HostListener('document:mousemove', ['$event'])
   onMouseMove(event: MouseEvent) {
-    if (this.dragging && this.draggedItem) {
+    if (this.dragging && this.draggedItem && this.draggedItem.position) {
       this.draggedItem.position.x = event.clientX - this.offset.x;
       this.draggedItem.position.y = event.clientY - this.offset.y;
     }
@@ -205,35 +128,77 @@ export class DashboardComponent implements OnInit {
     this.draggedItem = null;
   }
 
-  goToInterventions() {
-    this.router.navigate(['/interventions/list']);
-  }
-
   deleteItem(item: any, bloc: any[]) {
     const index = bloc.indexOf(item);
-    if (index > -1) {
-      // Remplacer l'élément par null pour garder la place vide
-      bloc[index] = null;
-    }
+    if (index > -1) bloc[index] = null;
   }
 
   duplicateItem(item: any, bloc: any[]) {
     const index = bloc.indexOf(item);
     if (index > -1) {
-      // Créer une copie de l'objet (shallow copy suffisant ici)
-      const newItem = { ...item };
-
-      // Si tu veux éviter d'avoir le même id, tu peux générer un id unique
-      newItem.id = this.generateUniqueId();
-
-      // Insérer la copie juste après l'original
+      const newItem = { ...item, id: Math.random().toString(36).substr(2, 9) };
       bloc.splice(index + 1, 0, newItem);
     }
   }
 
-  // Fonction pour générer un id unique (exemple simple)
-  generateUniqueId(): string {
-    return Math.random().toString(36).substring(2, 10);
+  goToInterventions() {
+    // 1. Génère l'URL complète
+    const url = this.router.serializeUrl(
+      this.router.createUrlTree(['/interventions/list'])
+    );
+
+    // 2. Ouvre cette URL dans un nouvel onglet
+    window.open(url, '_blank');
+  }
+
+  // Couleur Bootstrap en fonction du statut
+  getEtatClasses(etat: string): string {
+    switch (etat) {
+      case 'en_cours':
+      case 'trajet_en_cours':       // ajouté
+        return 'bg-warning text-dark';
+      case 'terminee':
+      case 'terminee_avec_succes':
+        return 'bg-success';
+      case 'terminee_avec_interruption':
+        return 'bg-danger';
+      default:
+        return 'bg-secondary';
+    }
+  }
+
+  // Icône Bootstrap selon le statut
+  getEtatIcon(etat: string): string {
+    switch (etat) {
+      case 'en_cours':
+      case 'trajet_en_cours':       // ajouté
+        return 'bi-hourglass-split';
+      case 'terminee':
+      case 'terminee_avec_succes':
+        return 'bi-check-circle';
+      case 'terminee_avec_interruption':
+        return 'bi-x-circle';
+      default:
+        return '';
+    }
+  }
+
+  // Texte lisible pour chaque statut
+  formatEtat(etat: string): string {
+    switch (etat) {
+      case 'en_cours':
+        return 'En cours';
+      case 'trajet_en_cours':       // ajouté
+        return 'Trajet en cours';
+      case 'terminee':
+        return 'Terminée';
+      case 'terminee_avec_succes':
+        return 'Terminée avec succès';
+      case 'terminee_avec_interruption':
+        return 'Interrompue';
+      default:
+        return etat.charAt(0).toUpperCase() + etat.slice(1);
+    }
   }
 
 }

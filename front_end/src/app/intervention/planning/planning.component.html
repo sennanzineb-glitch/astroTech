@@ -209,7 +209,9 @@
 
       <div class="modal-footer border-0 py-1">
         <button class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Fermer</button>
-        <!-- <button class="btn btn-primary btn-sm">Modifier</button> -->
+        <button class="btn btn-primary btn-sm" (click)="goToDetails(selectedEvent.id)">
+          Voir plus
+        </button>
       </div>
 
     </div>

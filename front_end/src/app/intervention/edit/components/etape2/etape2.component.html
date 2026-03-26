@@ -36,23 +36,31 @@
             <div class="mb-3">
               <label for="etat">État <strong class="text-danger">*</strong></label>
               <select id="etat" class="form-select form-select-sm" formControlName="etat">
-                <option value="" disabled>Sélectionner l'état</option>
-                <option value="en_cours">En cours</option>
-                <option value="terminee">Terminée</option>
+                <option value="null" disabled>Choisir...</option>
                 <option value="annulee">Annulée</option>
+                <option value="en_cours">En cours</option>
+                <option value="prevue">Prévue</option>
+                <option value="terminee_avec_interruption">Terminée avec interruption</option>
+                <option value="terminee_avec_succes">Terminée avec succès</option>
+                <option value="trajet_en_cours">Trajet en cours</option>
+                <option value="pause">Pause</option>
+                <option value="refusee">Refusée</option>
               </select>
             </div>
 
             <!-- Date butoir de réalisation -->
             <div class="mb-3">
-              <label for="date_butoir_realisation">Date butoir de réalisation <strong class="text-danger">*</strong></label>
-              <input type="date" id="date_butoir_realisation" class="form-control form-control-sm" formControlName="date_butoir_realisation">
+              <label for="date_butoir_realisation">Date butoir de réalisation <strong
+                  class="text-danger">*</strong></label>
+              <input type="date" id="date_butoir_realisation" class="form-control form-control-sm"
+                formControlName="date_butoir_realisation">
             </div>
 
             <!-- Date de clôture estimée de l'affaire -->
             <div class="mb-3">
               <label for="date_cloture_estimee">Date de clôture estimée de l'affaire</label>
-              <input type="date" id="date_cloture_estimee" class="form-control form-control-sm" formControlName="date_cloture_estimee">
+              <input type="date" id="date_cloture_estimee" class="form-control form-control-sm"
+                formControlName="date_cloture_estimee">
             </div>
           </div>
 
@@ -99,7 +107,7 @@
           </div>
         </div>
       </form>
-      
+
     </div>
   </div>
 </div>

@@ -153,17 +153,13 @@ onZoneChange(type: 'meme_zone' | 'autre_zone') {
 
   if (type === 'autre_zone' && this.modalSave) {
     this.zoneSelected = null;
-    this.modalSave.addZoneIntervention(this.clientSelected.type_client, this.clientSelected.id);
+    this.modalSave.addZoneIntervention(this.clientSelected.type_client, this.clientSelected.client_id);
     this.modalSave.openModal();
   }
 }
 
 /** Ajouter un client depuis le modal */
 onClientAdded(client: any) {
-  /** ** ** */
-  console.log(client);
-
-  /** ** ** */
   if (!client) return;
   this.zoneSelected = client;
   this.typeZone = 'autre_zone';

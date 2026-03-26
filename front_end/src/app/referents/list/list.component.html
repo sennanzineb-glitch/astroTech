@@ -52,47 +52,57 @@
           <strong>Téléphone:</strong> {{ ref.telephone }}
         </p>
 
-        <!-- AJOUT FICHIERS -->
-        <div class="mb-2">
-          <label class="form-label" style="font-size: 0.85rem;">Fichiers à ajouter</label>
-          <div class="border rounded p-2 d-flex align-items-center justify-content-between gap-2">
+        <!-- LIEN ULTRA DISCRET AVEC ICÔNES POUR VOIR / MASQUER LES FICHIERS -->
+        <a href="javascript:void(0)" class="small text-secondary mb-2 d-inline-block"
+          (click)="ref.showFiles = !ref.showFiles">
+          <i class="fa" [ngClass]="ref.showFiles ? 'fa-eye-slash' : 'fa-eye'"></i>
+          {{ ref.showFiles ? ' Masquer les fichiers' : ' Voir les fichiers' }}
+        </a>
 
-            <button class="btn btn-outline-primary btn-sm" type="button" (click)="fileInput.click()">
-              📂 Choisir des fichiers
-            </button>
+        <!-- FICHIERS UPLOADÉS -->
+        <div *ngIf="ref.showFiles">
+          <!-- AJOUT FICHIERS -->
+          <div class="mb-2">
+            <label class="form-label" style="font-size: 0.85rem;">Fichiers à ajouter</label>
+            <div class="border rounded p-2 d-flex align-items-center justify-content-between gap-2">
 
-            <div class="flex-grow-1 ms-2 text-truncate" style="max-width: 50%; font-size: 0.75rem;">
-              {{ newFilesNames }}
+              <button class="btn btn-outline-primary btn-sm" type="button" (click)="fileInput.click()">
+                📂 Choisir des fichiers
+              </button>
+
+              <div class="flex-grow-1 ms-2 text-truncate" style="max-width: 50%; font-size: 0.75rem;">
+                {{ newFilesNames }}
+              </div>
+
+              <button class="btn btn-success btn-sm ms-2" type="button" [disabled]="newFiles.length === 0"
+                (click)="uploadFiles(ref)">
+                📤 Upload
+              </button>
+
+              <input type="file" #fileInput class="d-none" multiple (change)="onFileSelected($event)" />
             </div>
 
-            <button class="btn btn-success btn-sm ms-2" type="button" [disabled]="newFiles.length === 0"
-              (click)="uploadFiles(ref)">
-              📤 Upload
-            </button>
-
-            <input type="file" #fileInput class="d-none" multiple (change)="onFileSelected($event)" />
+            <!-- Fichiers sélectionnés avant upload -->
+            <ul class="list-group mt-2" *ngIf="newFiles.length > 0">
+              <li class="list-group-item d-flex justify-content-between align-items-center py-1"
+                *ngFor="let file of newFiles; let i = index">
+                {{ file.name }}
+                <button class="btn btn-sm btn-outline-danger" (click)="removeNewFile(i)">✕</button>
+              </li>
+            </ul>
           </div>
 
-          <!-- Fichiers sélectionnés avant upload -->
-          <ul class="list-group mt-2" *ngIf="newFiles.length > 0">
-            <li class="list-group-item d-flex justify-content-between align-items-center py-1"
-              *ngFor="let file of newFiles; let i = index">
-              {{ file.name }}
-              <button class="btn btn-sm btn-outline-danger" (click)="removeNewFile(i)">✕</button>
+          <h6 style="font-size: 0.85rem;">Fichiers associés</h6>
+          <ul class="list-group" *ngIf="ref.fichiers?.length > 0">
+            <li class="list-group-item d-flex justify-content-between align-items-center"
+              *ngFor="let f of ref.fichiers">
+              <a [href]="url_upload + '/' + f.chemin" target="_blank">{{ f.nom }}</a>
+              <button class="btn btn-sm btn-outline-danger" (click)="removeUploadedFile(f.id, ref)">🗑</button>
             </li>
           </ul>
-        </div>
-
-        <!-- FICHIERS UPLOADES -->
-        <h6 style="font-size: 0.85rem;">Fichiers associés</h6>
-        <ul class="list-group" *ngIf="ref.fichiers?.length > 0">
-          <li class="list-group-item d-flex justify-content-between align-items-center" *ngFor="let f of ref.fichiers">
-            <a [href]="url_upload + '/' + f.chemin" target="_blank">{{ f.nom }}</a>
-            <button class="btn btn-sm btn-outline-danger" (click)="removeUploadedFile(f.id, ref)">🗑</button>
-          </li>
-        </ul>
-        <div class="text-muted mt-2" *ngIf="!ref.fichiers?.length">
-          Aucun fichier associé
+          <div class="text-muted mt-2" *ngIf="!ref.fichiers?.length">
+            Aucun fichier associé
+          </div>
         </div>
 
       </div>

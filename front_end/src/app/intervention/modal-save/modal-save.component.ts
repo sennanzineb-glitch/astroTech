@@ -20,7 +20,7 @@ export class ModalSaveComponent {
 
   quickActions = [
     { action: 'date', title: 'Planifier une date', description: 'Choisir une date prévisionnelle', icon: 'fa fa-calendar' },
-    { action: 'tech', title: 'Affecter technicien', description: 'Ajouter un technicien ou une équipe', icon: 'fa fa-users' },
+    { action: 'tech', title: 'Affecter technicien', description: 'Ajouter un intervenant', icon: 'fa fa-users' },
     { action: 'planning', title: 'Ajouter au planning', description: 'Programmer l’intervention', icon: 'fa fa-map' },
     { action: 'etat', title: 'Modifier l’état', description: 'Mettre à jour l’état', icon: 'fa fa-edit' },
   ];

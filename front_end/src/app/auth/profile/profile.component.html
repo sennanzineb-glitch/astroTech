@@ -1,0 +1,98 @@
+<div class="container-fluid bg-light py-5" *ngIf="user$ | async as user; else loading">
+    <div class="row justify-content-center g-4">
+
+        <div class="col-12 col-lg-4">
+            <div class="card border-0 shadow-sm" style="border-radius: 2rem; overflow: hidden;">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-4">
+                        <div>
+                            <h5 class="fw-bold m-0">Mon profil</h5>
+                            <span class="badge rounded-pill bg-light text-dark border mt-1">Rôle : {{ user.role
+                                }}</span>
+                        </div>
+                        <div class="text-end text-muted">
+                            <p class="m-0 fw-bold" style="font-size: 0.9rem; opacity: 0.9;">
+                                Modifié le : {{ (user.date_modification | date:'dd MMM yyyy, HH:mm') || '-' }}
+                            </p>
+
+                            <p class="m-0" style="font-size: 0.8rem; opacity: 0.7;">
+                                Créé le : {{ (user.date_creation | date:'dd MMM yyyy') || 'Date inconnue' }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 border-bottom pb-2">
+                        <label class="small text-muted d-block" style="font-size: 0.75rem;">Nom complet</label>
+                        <input type="text" class="form-control border-0 p-0 shadow-none fw-normal"
+                            [value]="user.full_name || 'Non renseigné'">
+                    </div>
+
+                    <div class="mb-4 border-bottom pb-2">
+                        <label class="small text-muted d-block" style="font-size: 0.75rem;">Adresse e-mail</label>
+                        <input type="email" class="form-control border-0 p-0 shadow-none fw-normal"
+                            [value]="user.email">
+                    </div>
+
+                    <div class="mb-4" *ngIf="user.createur_id">
+                        <small class="text-muted">ID Créateur : #{{ user.createur_id }}</small>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <span class="fw-bold" style="color: #4facfe;">Activation alertes SMS</span>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input bg-info border-info" type="checkbox" role="switch" checked
+                                style="cursor: pointer;">
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary w-100 fw-bold py-2 shadow-sm"
+                        style="border-radius: 1rem; background: linear-gradient(90deg, #4facfe, #0072ff); border: none;">
+                        Enregistrer les modifications
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <div class="card border-0 shadow-sm p-4" style="border-radius: 2rem;">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="fw-bold m-0">Sécurité du compte</h5>
+                </div>
+
+                <div class="vstack gap-3">
+                    <form #passwordForm="ngForm" (ngSubmit)="changePassword(passwordForm)">
+
+                        <div class="mb-3 border-bottom pb-1">
+                            <label class="small text-muted d-block" style="font-size: 0.7rem;">Mot de passe
+                                actuel</label>
+                            <input type="password" name="currentPassword" ngModel required
+                                class="form-control border-0 p-0 shadow-none fw-normal" placeholder="••••••••">
+                        </div>
+
+                        <div class="mb-3 border-bottom pb-1">
+                            <label class="small text-muted d-block" style="font-size: 0.7rem;">Nouveau mot de
+                                passe</label>
+                            <input type="password" name="newPassword" ngModel required minlength="6"
+                                class="form-control border-0 p-0 shadow-none fw-normal" placeholder="Min. 6 caractères">
+                        </div>
+
+                        <div class="mb-4 border-bottom pb-1">
+                            <label class="small text-muted d-block" style="font-size: 0.7rem;">Confirmer le nouveau mot
+                                de passe</label>
+                            <input type="password" name="confirmPassword" ngModel required
+                                class="form-control border-0 p-0 shadow-none fw-normal" placeholder="••••••••">
+                        </div>
+
+                        <div class="text-end">
+                            <button type="submit" [disabled]="passwordForm.invalid"
+                                class="btn btn-sm text-white rounded-pill px-4 shadow-sm"
+                                style="background: linear-gradient(90deg, #00c6ff, #0072ff); border: none;">
+                                Mettre à jour le mot de passe
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

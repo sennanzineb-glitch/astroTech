@@ -22,7 +22,7 @@ export class ListComponent {
 
    // Pagination
   currentPage: number = 1;
-  pageSize: number = 4;
+  pageSize: number = 6;
   totalItems: number = 0;
   totalPages: number = 1;
 

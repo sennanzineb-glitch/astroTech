@@ -1,21 +1,18 @@
 <nav class="sidebar sidebar-offcanvas" id="sidebar">
   <ul class="nav">
     <li class="nav-item nav-profile">
-      <a href="#" class="nav-link">
+      <a [routerLink]="['/profile']" class="nav-link">
         <div class="avatar-container">
           <div class="avatar-circle">{{ initials }}</div>
         </div>
-
-        <div class="nav-profile-text d-flex flex-column">
+        <div [routerLink]="['/profile']" class="nav-profile-text d-flex flex-column">
           <span class="font-weight-bold mb-2">{{currentUser?.full_name}}</span>
           <span class="font-weight-bold text-small mb-2">{{currentUser?.email}}</span>
           <span class="text-secondary text-small">{{currentUser?.role}}</span>
         </div>
-
       </a>
     </li>
 
-    
     <li class="nav-item">
       <a class="nav-link" routerLink="dashboard" routerLinkActive="active"
         [routerLinkActiveOptions]="{ exact: true }">
@@ -23,6 +20,13 @@
         <i class="mdi mdi-view-dashboard menu-icon"></i>
       </a>
     </li>
+    <!-- <li class="nav-item">
+      <a class="nav-link" routerLink="profile" routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }">
+        <span class="menu-title">Profile</span>
+        <i class="mdi mdi-account menu-icon"></i>
+      </a>
+    </li> -->
 
     <li class="nav-item">
       <span class="sidebar-label custom-label">LISTING</span>

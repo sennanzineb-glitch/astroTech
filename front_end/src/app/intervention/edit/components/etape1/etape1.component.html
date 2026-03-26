@@ -35,7 +35,7 @@
               <label for="typeIntervention">Type d'intervention</label>
               <strong class="text-danger">*</strong>
               <select id="types" class="form-select form-select-sm" formControlName="type_id">
-                <option value="" selected disabled>-- Sélectionner un type --</option>
+                <option value="0" selected disabled>-- Sélectionner un type --</option>
                 <option *ngFor="let type of interventionTypes" [value]="type.id">
                   {{ type.libelle }}
                   <span>({{ type.categorie }})</span>
@@ -48,7 +48,7 @@
               <label for="client_id">Adresse de facturation (Client)</label>
               <strong class="text-danger">*</strong>
               <select class="form-select form-select-sm" formControlName="client_id" (change)="onClientSelect($event)">
-                <option value="" disabled>Sélectionner client</option>
+                <option value="0" disabled>Sélectionner client</option>
                 <option *ngFor="let client of clients" [value]="client.id">{{ client.nom_client }}</option>
               </select>
               <ng-container *ngTemplateOutlet="clientInfoTemplate; context:{ client: clientSelected }"></ng-container>

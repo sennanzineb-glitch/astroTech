@@ -48,6 +48,8 @@ export const routes: Routes = [
             { path: 'interventions', loadComponent: () => import('./intervention/choix-intervention/choix-intervention.component').then(c => c.ChoixInterventionComponent) },
             //
             { path: 'dashboard', loadComponent: () => import('./dashboard/dashboard.component').then(c => c.DashboardComponent) },
+            //profile
+            { path: 'profile', loadComponent: () => import('./auth/profile/profile.component').then(c => c.ProfileComponent) }
         ]
     },
 

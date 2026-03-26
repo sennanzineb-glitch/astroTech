@@ -26,7 +26,7 @@
                             <strong class="text-danger">*</strong>
                             <div class="input-group mb-3">
                                 <select class="form-select form-select-sm" formControlName="client_id" (change)="onClientSelect($event)">
-                                    <option value="" disabled selected>Sélectionner client</option>
+                                    <option value="" disabled selected value="null">Sélectionner client</option>
                                     <option *ngFor="let client of clients" [value]="client.id">
                                         {{ client.nom_client }}
                                     </option>
