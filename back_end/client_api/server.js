@@ -17,7 +17,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 // === Auth ===
-const { register, login, me } = require('./controllers/_auth.controller');
+const { register, login, me, updateProfile, updatePassword } = require('./controllers/_auth.controller');
 const { authenticateToken } = require('./middlewares/auth.js');
 
 // Routes publiques (Auth)
@@ -26,6 +26,11 @@ app.post(`${API_URI}/auth/login`, login);
 
 // Routes sécurisées (Auth)
 app.get(`${API_URI}/auth/me`, authenticateToken, me);
+
+// Les nouvelles routes basées sur le même pattern
+// Note : 'authenticateToken' est ton middleware qui vérifie le JWT
+app.put(`${API_URI}/auth/profile`, authenticateToken, updateProfile);
+app.put(`${API_URI}/auth/password`, authenticateToken, updatePassword);
 
 // === Controllers ===
 const controllerClient = require('./controllers/clients.controller');

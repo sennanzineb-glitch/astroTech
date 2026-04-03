@@ -170,62 +170,168 @@ class AffaireService {
     }
   }
 
-static async apiGetAllPaginated({ page = 1, limit = 10, search = '', userId }) {
+  // static async apiGetAllPaginated({ page = 1, limit = 10, search = '', userId }) {
+  //   try {
+  //     if (!userId) throw new Error('userId manquant');
+
+  //     page = Number(page);
+  //     limit = Number(limit);
+
+  //     if (!Number.isInteger(page) || page < 1) page = 1;
+  //     if (!Number.isInteger(limit) || limit < 1) limit = 10;
+
+  //     const offset = (page - 1) * limit;
+
+  //     /* ===================== WHERE ===================== */
+  //     let whereClause = `WHERE a.createur_id = ?`;
+  //     const params = [userId];
+
+  //     if (search && search.trim() !== '') {
+  //       whereClause += `
+  //         AND (
+  //           a.reference LIKE ?
+  //           OR a.titre LIKE ?
+  //           OR p.nom_complet LIKE ?
+  //           OR ag.nom_agence LIKE ?
+  //           OR o.nom_entreprise LIKE ?
+  //         )
+  //       `;
+  //       const like = `%${search}%`;
+  //       params.push(like, like, like, like, like);
+  //     }
+
+  //     /* ===================== QUERY PRINCIPALE ===================== */
+  //     const sql = `
+  //       SELECT SQL_CALC_FOUND_ROWS DISTINCT
+  //         a.id AS affaireId,
+  //         a.reference,
+  //         a.titre,
+  //         a.dateDebut,
+  //         a.dateFin,
+  //         a.etatLogement,
+  //         a.dureePrevueHeures,
+  //         a.dureePrevueMinutes,
+  //         a.memo,
+
+  //         COALESCE(
+  //           p.nom_complet,
+  //           ag.nom_agence,
+  //           o.nom_entreprise,
+  //           'Client inconnu'
+  //         ) AS nomClient,
+
+  //         e.id AS equipeId,
+  //         e.nom AS equipeNom,
+  //         e.description AS equipeDescription,
+  //         tc.id AS chefEquipeId,
+  //         tc.nom AS chefEquipeNom,
+  //         tc.prenom AS chefEquipePrenom
+
+  //       FROM affaire a
+  //       LEFT JOIN client c ON a.client_id = c.id
+  //       LEFT JOIN particulier p ON p.client_id = c.id
+  //       LEFT JOIN agence ag ON ag.client_id = c.id
+  //       LEFT JOIN organisation o ON o.client_id = c.id
+  //       LEFT JOIN equipe_technicien e ON a.equipeTechnicienId = e.id
+  //       LEFT JOIN technicien tc ON e.chefId = tc.id
+
+  //       ${whereClause}
+  //       ORDER BY a.id DESC
+  //       LIMIT ? OFFSET ?
+  //     `;
+
+  //     params.push(limit, offset);
+
+  //     const [rows] = await pool.query(sql, params);
+
+  //     /* ===================== TOTAL ===================== */
+  //     const [[{ total }]] = await pool.query(
+  //       `SELECT FOUND_ROWS() AS total`
+  //     );
+
+  //     /* ===================== FICHIERS ===================== */
+  //     const affaireIds = rows.map(r => r.affaireId);
+
+  //     let fichiersMap = {};
+  //     if (affaireIds.length) {
+  //       const [fichiers] = await pool.query(
+  //         `SELECT id, nom, chemin, idAffaire
+  //          FROM fichier
+  //          WHERE idAffaire IN (?)`,
+  //         [affaireIds]
+  //       );
+
+  //       fichiers.forEach(f => {
+  //         fichiersMap[f.idAffaire] = fichiersMap[f.idAffaire] || [];
+  //         fichiersMap[f.idAffaire].push({
+  //           id: f.id,
+  //           nom: f.nom,
+  //           chemin: f.chemin
+  //         });
+  //       });
+  //     }
+
+  //     /* ===================== ATTACHER LES FICHIERS ===================== */
+  //     rows.forEach(affaire => {
+  //       affaire.fichiers = fichiersMap[affaire.affaireId] || [];
+  //     });
+
+  //     return {
+  //       total,
+  //       page,
+  //       limit,
+  //       data: rows
+  //     };
+
+  //   } catch (err) {
+  //     console.error('Erreur apiGetAllPaginated:', err);
+  //     throw err;
+  //   }
+  // }
+
+  static async apiGetAllPaginated({ page = 1, limit = 10, search = '', userId }) {
   try {
     if (!userId) throw new Error('userId manquant');
 
     page = Number(page);
     limit = Number(limit);
-
-    if (!Number.isInteger(page) || page < 1) page = 1;
-    if (!Number.isInteger(limit) || limit < 1) limit = 10;
-
     const offset = (page - 1) * limit;
 
-    /* ===================== WHERE ===================== */
     let whereClause = `WHERE a.createur_id = ?`;
     const params = [userId];
 
     if (search && search.trim() !== '') {
-      whereClause += `
-        AND (
-          a.reference LIKE ?
-          OR a.titre LIKE ?
-          OR p.nom_complet LIKE ?
-          OR ag.nom_agence LIKE ?
-          OR o.nom_entreprise LIKE ?
-        )
-      `;
+      whereClause += ` AND (a.reference LIKE ? OR a.titre LIKE ? OR p.nom_complet LIKE ? OR ag.nom_agence LIKE ? OR o.nom_entreprise LIKE ?)`;
       const like = `%${search}%`;
       params.push(like, like, like, like, like);
     }
 
-    /* ===================== QUERY PRINCIPALE ===================== */
     const sql = `
-      SELECT SQL_CALC_FOUND_ROWS DISTINCT
+      SELECT SQL_CALC_FOUND_ROWS 
         a.id AS affaireId,
         a.reference,
         a.titre,
         a.dateDebut,
         a.dateFin,
-        a.etatLogement,
-        a.dureePrevueHeures,
-        a.dureePrevueMinutes,
-        a.memo,
-
-        COALESCE(
-          p.nom_complet,
-          ag.nom_agence,
-          o.nom_entreprise,
-          'Client inconnu'
-        ) AS nomClient,
-
+        COALESCE(p.nom_complet, ag.nom_agence, o.nom_entreprise, 'Client inconnu') AS nomClient,
         e.id AS equipeId,
         e.nom AS equipeNom,
-        e.description AS equipeDescription,
-        tc.id AS chefEquipeId,
-        tc.nom AS chefEquipeNom,
-        tc.prenom AS chefEquipePrenom
+        
+        -- Sous-requête pour garantir une seule chaîne de techniciens par affaire
+        (
+          SELECT GROUP_CONCAT(DISTINCT 
+            CASE 
+              WHEN t_direct.id IS NOT NULL THEN CONCAT(t_direct.prenom, ' ', t_direct.nom)
+              ELSE CONCAT(tm.prenom, ' ', tm.nom)
+            END 
+            SEPARATOR ', '
+          )
+          FROM affaire a2
+          LEFT JOIN technicien t_direct ON a2.technicienId = t_direct.id
+          LEFT JOIN technicien_equipe te ON a2.equipeTechnicienId = te.equipeId
+          LEFT JOIN technicien tm ON te.technicienId = tm.id
+          WHERE a2.id = a.id
+        ) AS techniciensNoms
 
       FROM affaire a
       LEFT JOIN client c ON a.client_id = c.id
@@ -233,63 +339,29 @@ static async apiGetAllPaginated({ page = 1, limit = 10, search = '', userId }) {
       LEFT JOIN agence ag ON ag.client_id = c.id
       LEFT JOIN organisation o ON o.client_id = c.id
       LEFT JOIN equipe_technicien e ON a.equipeTechnicienId = e.id
-      LEFT JOIN technicien tc ON e.chefId = tc.id
 
       ${whereClause}
+      GROUP BY a.id, p.nom_complet, ag.nom_agence, o.nom_entreprise, e.id, e.nom
       ORDER BY a.id DESC
       LIMIT ? OFFSET ?
     `;
 
     params.push(limit, offset);
-
     const [rows] = await pool.query(sql, params);
+    
+    const [[{ total }]] = await pool.query(`SELECT FOUND_ROWS() AS total`);
 
-    /* ===================== TOTAL ===================== */
-    const [[{ total }]] = await pool.query(
-      `SELECT FOUND_ROWS() AS total`
-    );
+    const data = rows.map(affaire => ({
+      ...affaire,
+      listeTechniciens: affaire.techniciensNoms ? [...new Set(affaire.techniciensNoms.split(', '))] : []
+    }));
 
-    /* ===================== FICHIERS ===================== */
-    const affaireIds = rows.map(r => r.affaireId);
-
-    let fichiersMap = {};
-    if (affaireIds.length) {
-      const [fichiers] = await pool.query(
-        `SELECT id, nom, chemin, idAffaire
-         FROM fichier
-         WHERE idAffaire IN (?)`,
-        [affaireIds]
-      );
-
-      fichiers.forEach(f => {
-        fichiersMap[f.idAffaire] = fichiersMap[f.idAffaire] || [];
-        fichiersMap[f.idAffaire].push({
-          id: f.id,
-          nom: f.nom,
-          chemin: f.chemin
-        });
-      });
-    }
-
-    /* ===================== ATTACHER LES FICHIERS ===================== */
-    rows.forEach(affaire => {
-      affaire.fichiers = fichiersMap[affaire.affaireId] || [];
-    });
-
-    return {
-      total,
-      page,
-      limit,
-      data: rows
-    };
-
+    return { total, page, limit, data };
   } catch (err) {
     console.error('Erreur apiGetAllPaginated:', err);
     throw err;
   }
 }
-
-
 
   /**
    * 🔹 Modifier une affaire

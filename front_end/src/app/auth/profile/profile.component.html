@@ -7,14 +7,14 @@
                     <div class="d-flex justify-content-between align-items-start mb-4">
                         <div>
                             <h5 class="fw-bold m-0">Mon profil</h5>
-                            <span class="badge rounded-pill bg-light text-dark border mt-1">Rôle : {{ user.role
-                                }}</span>
+                            <span class="badge rounded-pill bg-light text-dark border mt-1">
+                                Rôle : {{ user.role || 'Utilisateur' }}
+                            </span>
                         </div>
                         <div class="text-end text-muted">
                             <p class="m-0 fw-bold" style="font-size: 0.9rem; opacity: 0.9;">
                                 Modifié le : {{ (user.date_modification | date:'dd MMM yyyy, HH:mm') || '-' }}
                             </p>
-
                             <p class="m-0" style="font-size: 0.8rem; opacity: 0.7;">
                                 Créé le : {{ (user.date_creation | date:'dd MMM yyyy') || 'Date inconnue' }}
                             </p>
@@ -24,13 +24,13 @@
                     <div class="mb-3 border-bottom pb-2">
                         <label class="small text-muted d-block" style="font-size: 0.75rem;">Nom complet</label>
                         <input type="text" class="form-control border-0 p-0 shadow-none fw-normal"
-                            [value]="user.full_name || 'Non renseigné'">
+                            [(ngModel)]="user.full_name">
                     </div>
 
                     <div class="mb-4 border-bottom pb-2">
                         <label class="small text-muted d-block" style="font-size: 0.75rem;">Adresse e-mail</label>
                         <input type="email" class="form-control border-0 p-0 shadow-none fw-normal"
-                            [value]="user.email">
+                            [(ngModel)]="user.email">
                     </div>
 
                     <div class="mb-4" *ngIf="user.createur_id">
@@ -45,7 +45,7 @@
                         </div>
                     </div>
 
-                    <button class="btn btn-primary w-100 fw-bold py-2 shadow-sm"
+                    <button (click)="updateProfile(user)" class="btn btn-primary w-100 fw-bold py-2 shadow-sm"
                         style="border-radius: 1rem; background: linear-gradient(90deg, #4facfe, #0072ff); border: none;">
                         Enregistrer les modifications
                     </button>
@@ -65,26 +65,61 @@
                         <div class="mb-3 border-bottom pb-1">
                             <label class="small text-muted d-block" style="font-size: 0.7rem;">Mot de passe
                                 actuel</label>
-                            <input type="password" name="currentPassword" ngModel required
-                                class="form-control border-0 p-0 shadow-none fw-normal" placeholder="••••••••">
+                            <div class="d-flex align-items-center">
+                                <input [type]="showPassword ? 'text' : 'password'" name="currentPassword" ngModel
+                                    required class="form-control border-0 p-0 shadow-none fw-normal"
+                                    placeholder="••••••••">
+
+                                <span class="mdi" [ngClass]="showPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
+                                    (click)="showPassword = !showPassword"
+                                    style="cursor: pointer; opacity: 0.6; font-size: 1.2rem;">
+                                </span>
+                            </div>
                         </div>
 
                         <div class="mb-3 border-bottom pb-1">
                             <label class="small text-muted d-block" style="font-size: 0.7rem;">Nouveau mot de
                                 passe</label>
-                            <input type="password" name="newPassword" ngModel required minlength="6"
-                                class="form-control border-0 p-0 shadow-none fw-normal" placeholder="Min. 6 caractères">
+                            <div class="d-flex align-items-center">
+                                <input [type]="showPassword ? 'text' : 'password'" name="newPassword" #newPwd="ngModel"
+                                    ngModel required minlength="6"
+                                    class="form-control border-0 p-0 shadow-none fw-normal"
+                                    placeholder="Min. 6 caractères">
+
+                                <span class="mdi" [ngClass]="showPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
+                                    (click)="showPassword = !showPassword"
+                                    style="cursor: pointer; opacity: 0.6; font-size: 1.2rem;">
+                                </span>
+                            </div>
                         </div>
 
                         <div class="mb-4 border-bottom pb-1">
                             <label class="small text-muted d-block" style="font-size: 0.7rem;">Confirmer le nouveau mot
                                 de passe</label>
-                            <input type="password" name="confirmPassword" ngModel required
-                                class="form-control border-0 p-0 shadow-none fw-normal" placeholder="••••••••">
+                            <div class="d-flex align-items-center">
+                                <input [type]="showPassword ? 'text' : 'password'" name="confirmPassword"
+                                    #confirmPwd="ngModel" ngModel required
+                                    class="form-control border-0 p-0 shadow-none fw-normal" placeholder="••••••••">
+
+                                <span class="mdi" [ngClass]="showPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
+                                    (click)="showPassword = !showPassword"
+                                    style="cursor: pointer; opacity: 0.6; font-size: 1.2rem;">
+                                </span>
+                            </div>
+
+                            <div *ngIf="confirmPwd.value && newPwd.value !== confirmPwd.value" class="text-danger mt-1"
+                                style="font-size: 0.65rem;">
+                                <span class="mdi mdi-alert-circle-outline"></span> Les mots de passe ne correspondent
+                                pas.
+                            </div>
+                            <div *ngIf="confirmPwd.value && newPwd.value === confirmPwd.value" class="text-success mt-1"
+                                style="font-size: 0.65rem;">
+                                <span class="mdi mdi-check-circle-outline"></span> Les mots de passe correspondent.
+                            </div>
                         </div>
 
                         <div class="text-end">
-                            <button type="submit" [disabled]="passwordForm.invalid"
+                            <button type="submit" [disabled]="passwordForm.invalid || newPwd.value !== confirmPwd.value"
                                 class="btn btn-sm text-white rounded-pill px-4 shadow-sm"
                                 style="background: linear-gradient(90deg, #00c6ff, #0072ff); border: none;">
                                 Mettre à jour le mot de passe
@@ -92,7 +127,15 @@
                         </div>
                     </form>
                 </div>
+                
             </div>
         </div>
     </div>
 </div>
+
+<ng-template #loading>
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2">Chargement de votre profil...</p>
+    </div>
+</ng-template>

@@ -1,107 +1,100 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
-import { SharedModule } from '../../_globale/shared/shared.module';
+import { CommonModule } from '@angular/common'; // Requis pour ngStyle et ngIf
+import { FormsModule } from '@angular/forms'; // Requis pour ngModel
 import { AffairesService } from '../../_services/affaires/affaires.service';
 
 declare var bootstrap: any;
 
 @Component({
   selector: 'app-choix-intervention',
-  standalone: true,
-  imports: [SharedModule, RouterModule],
-  templateUrl: './choix-intervention.component.html',
-  styleUrls: ['./choix-intervention.component.css']
+  standalone: true, // Vérifiez que vous êtes bien en mode standalone
+  imports: [CommonModule, FormsModule, RouterModule], // AJOUTEZ CES MODULES ICI
+  templateUrl: './choix-intervention.component.html'
 })
-export class ChoixInterventionComponent {
-
-  modal: any;
-  typeCreation: 'rapide' | 'affaire' | null = null;
-
+export class ChoixInterventionComponent implements OnInit {
+  modalInstance: any;
   affaires: any[] = [];
-  loading = false;
-
+  searchTerm = '';
   page = 1;
   limit = 10;
-  total = 0;
-  searchTerm = '';
+  typeCreation: string | null = null; // Pour gérer l'UI du choix
 
-  constructor(
-    private router: Router,
-    private affaireService: AffairesService
-  ) {}
+  constructor(private router: Router, private affaireService: AffairesService) {}
 
-  continuer() {
-
-    if (this.typeCreation === 'rapide') {
-      this.router.navigate(['/interventions/edit']);
-      return;
-    }
-
-    if (this.typeCreation === 'affaire') {
-      this.loadAffaires();
-
-      this.modal = new bootstrap.Modal(
-        document.getElementById('affaireModal')
-      );
-
-      this.modal.show();
-    }
+  ngOnInit(): void {
+    // Initialisation si nécessaire
   }
 
-  goToIntervention(affaire: any) {
+  // CORRECTION : Ajout de la méthode manquante pour le bouton Annuler
+  annuler() {
+    this.router.navigate(['/interventions/list']);
+  }
 
-    if (this.modal) {
-      this.modal.hide();
+  // Pour la sélection des options dans le HTML
+  selectOption(type: string) {
+    this.typeCreation = type;
+    if (type === 'rapide') {
+      this.router.navigate(['/interventions/edit']);
+    } else {
+      this.openModal();
     }
-
-    this.router.navigate(
-      ['/interventions/edit'],
-      { queryParams: { affaireId: affaire.affaireId } }
-    );
   }
 
   loadAffaires() {
-
-    this.loading = true;
-
-    this.affaireService
-      .getAllPaginated(this.page, this.limit, this.searchTerm)
-      .subscribe({
-        next: (res: any) => {
-
-          this.affaires = res.data;
-          this.page = res.page;
-          this.limit = res.limit;
-          this.total = res.total;
-
-          this.loading = false;
-        },
-        error: err => {
-          console.error(err);
-          this.loading = false;
-        }
-      });
+    this.affaireService.getAllPaginated(this.page, this.limit, this.searchTerm).subscribe({
+      next: (res: any) => {
+        this.affaires = res.data;
+      },
+      error: (err) => console.error('Erreur chargement:', err)
+    });
   }
 
-  searchAffaires() {
-    this.page = 1;
+  openModal() {
     this.loadAffaires();
+    const modalElement = document.getElementById('affaireModal');
+    if (modalElement) {
+      this.modalInstance = new bootstrap.Modal(modalElement);
+      this.modalInstance.show();
+    }
   }
 
-  // pagination
-  get totalPages(): number[] {
-
-    const pages = Math.ceil(this.total / this.limit);
-
-    return Array.from({ length: pages }, (_, i) => i + 1);
+  getInitials(name: string): string {
+    if (!name) return '??';
+    const parts = name.split(' ');
+    return parts.length >= 2 
+      ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase() 
+      : name.substring(0, 2).toUpperCase();
   }
 
-  changePage(p: number) {
-
-    if (p < 1 || p > this.totalPages.length) return;
-
-    this.page = p;
-    this.loadAffaires();
+  getAvatarStyle(text: string): any {
+    if (!text) return { 'background-color': '#ccc' };
+    let hash = 0;
+    for (let i = 0; i < text.length; i++) {
+      hash = text.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const h = Math.abs(hash % 360);
+    return { 
+      'background-color': `hsl(${h}, 60%, 50%)`, 
+      'color': 'white', 
+      'width': '35px', 
+      'height': '35px', 
+      'border-radius': '50%',
+      'display': 'inline-flex', 
+      'align-items': 'center', 
+      'justify-content': 'center',
+      'font-size': '12px', 
+      'font-weight': 'bold', 
+      'border': '2px solid white',
+      'box-shadow': '0 2px 4px rgba(0,0,0,0.1)', 
+      'margin-left': '-10px'
+    };
   }
 
+  goToIntervention(affaire: any) {
+    if (this.modalInstance) {
+      this.modalInstance.hide();
+    }
+    this.router.navigate(['/interventions/edit'], { queryParams: { affaireId: affaire.affaireId } });
+  }
 }

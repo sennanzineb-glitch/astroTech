@@ -22618,7 +22618,7 @@ code {
 
 .btn-gradient-success {
   background: linear-gradient(to right, #84d9d2, #07cdae);
-  border: 0;
+  border: 0 !important;
   -webkit-transition: opacity 0.3s ease;
   -moz-transition: opacity 0.3s ease;
   -ms-transition: opacity 0.3s ease;
@@ -22640,7 +22640,7 @@ code {
 
 .btn-gradient-info {
   background: linear-gradient(to right, #90caf9, #047edf 99%);
-  border: 0;
+  border: 0 !important;
   -webkit-transition: opacity 0.3s ease;
   -moz-transition: opacity 0.3s ease;
   -ms-transition: opacity 0.3s ease;
@@ -26351,4 +26351,32 @@ dl li {
 /* Marges entre les boutons */
 .action-save .btn {
     margin-bottom: 8px !important;
+}
+
+
+select.form-select {
+    /* 1. Dimensions et espacement */
+    padding: 0.4375rem 0.75rem;
+    
+    /* 2. Bordure : Utilisez 'border' au lieu de 'outline' pour un meilleur rendu */
+    border: 1px solid #ebedf2 !important;
+    outline: none;
+    border-radius: 2px;
+
+    /* 3. Fond : C'est ici que l'on règle votre problème */
+    background-color: #ffffff !important; /* Force le fond en blanc */
+    
+    /* 4. Texte : On utilise une couleur plus lisible que le gris clair */
+    color: #495057 !important;
+
+    /* 5. Réinitialisation de l'apparence pour Bootstrap */
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    
+    /* 6. Icône de la flèche (essentiel si vous forcez le background) */
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 0.75rem center !important;
+    background-size: 16px 12px !important;
 }

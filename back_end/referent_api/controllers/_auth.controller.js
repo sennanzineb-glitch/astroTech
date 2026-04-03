@@ -62,4 +62,62 @@ async function me(req, res) {
   }
 }
 
-module.exports = { register, login, me };
+// ... (tes imports et fonctions existantes)
+
+async function updateProfile(req, res) {
+  try {
+    const userId = req.user.id; // Récupéré via ton middleware d'authentification
+    const { full_name, email } = req.body;
+
+    if (!full_name && !email) {
+      return res.status(400).json({ message: 'Aucune donnée à mettre à jour' });
+    }
+
+    // Mise à jour dynamique selon ce qui est envoyé
+    await pool.query(
+      'UPDATE users SET full_name = COALESCE(?, full_name), email = COALESCE(?, email) WHERE id = ?',
+      [full_name, email, userId]
+    );
+
+    res.json({ message: 'Profil mis à jour avec succès' });
+  } catch (err) {
+    console.error(err);
+    // Gestion de l'erreur si l'email est déjà pris par un autre utilisateur
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ message: 'Cet email est déjà utilisé' });
+    }
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+}
+
+async function updatePassword(req, res) {
+  try {
+    const userId = req.user.id;
+    const { oldPassword, newPassword } = req.body;
+
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ message: 'Ancien et nouveau mot de passe requis' });
+    }
+
+    // 1. Vérifier l'ancien mot de passe
+    const [rows] = await pool.query('SELECT password_hash FROM users WHERE id = ?', [userId]);
+    const user = rows[0];
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password_hash);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Ancien mot de passe incorrect' });
+    }
+
+    // 2. Hasher le nouveau mot de passe et sauvegarder
+    const newHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    await pool.query('UPDATE users SET password_hash = ? WHERE id = ?', [newHash, userId]);
+
+    res.json({ message: 'Mot de passe modifié avec succès' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+}
+
+// N'oublie pas de mettre à jour les exports à la fin du fichier
+module.exports = { register, login, me, updateProfile, updatePassword };

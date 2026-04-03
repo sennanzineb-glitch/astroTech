@@ -1,7 +1,6 @@
 <div class="row">
     <div class="col-md-10 mx-auto">
 
-        <!-- Nav Tabs -->
         <ul class="nav nav-tabs" id="myTab" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link active" id="infos-generale-tab" data-bs-toggle="tab"
@@ -18,7 +17,6 @@
             </li>
         </ul>
 
-        <!-- Tab Content -->
         <div class="tab-content" id="myTabContent">
 
             <div class="tab-pane fade show active p-3 bg-white" id="infos-generale" role="tabpanel"
@@ -26,37 +24,27 @@
                 <form [formGroup]="referentForm">
                     <div class="row">
                         <div class="col-md-6">
-                            <label class="form-label">
-                                Nom <strong class="text-danger">*</strong>
-                            </label>
+                            <label class="form-label">Nom <strong class="text-danger">*</strong></label>
                             <input type="text" class="form-control form-control-sm" formControlName="nom">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">
-                                Prénom <strong class="text-danger">*</strong>
-                            </label>
+                            <label class="form-label">Prénom <strong class="text-danger">*</strong></label>
                             <input type="text" class="form-control form-control-sm" formControlName="prenom">
                         </div>
                     </div>
 
-                    <div class="row">
+                    <div class="row mt-2">
                         <div class="col-md-6">
-                            <label class="form-label">
-                                Téléphone
-                                <strong class="text-danger">*</strong>
-                            </label>
+                            <label class="form-label">Téléphone <strong class="text-danger">*</strong></label>
                             <input type="text" class="form-control form-control-sm" formControlName="telephone">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">
-                                Email
-                                <strong class="text-danger">*</strong>
-                            </label>
+                            <label class="form-label">Email <strong class="text-danger">*</strong></label>
                             <input type="email" class="form-control form-control-sm" formControlName="email">
                         </div>
                     </div>
 
-                    <div class="row">
+                    <div class="row mt-2">
                         <div class="col-md-6">
                             <label class="form-label">Date naissance</label>
                             <input type="date" class="form-control form-control-sm" formControlName="dateNaissance">
@@ -67,10 +55,10 @@
                         </div>
                     </div>
 
-                    <div class="row">
+                    <div class="row mt-2">
                         <div class="mb-3">
-                            <label for="message" class="form-label">Adresse</label>
-                            <textarea class="form-control" id="message" rows="3" formControlName="adresse"
+                            <label class="form-label">Adresse</label>
+                            <textarea class="form-control" rows="3" formControlName="adresse"
                                 placeholder="Écrivez adresse ici..."></textarea>
                         </div>
                     </div>
@@ -110,14 +98,14 @@
 
         </div>
 
-        <div class="card card-nav shadow-sm" style="width: 250px;">
+        <div class="card card-nav shadow-sm mt-3" style="width: 250px;">
             <div class="card-body text-center">
                 <button (click)="annuler()" type="button" class="btn btn-light w-100 mb-2 btn-sm">
                     Annuler
                 </button>
-                <button (click)="save()" class="btn btn-success w-100 mb-2 btn-sm"
+                <button (click)="save()" [disabled]="isSubmitting" class="btn btn-success w-100 mb-2 btn-sm"
                     style="background-color: #5cc6b4; border:none;">
-                    Sauvegarder
+                    {{ isSubmitting ? 'Enregistrement...' : 'Sauvegarder' }}
                 </button>
             </div>
         </div>

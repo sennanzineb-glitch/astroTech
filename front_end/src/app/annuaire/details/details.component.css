@@ -1,0 +1,16 @@
+/* Boutons d'action ultra-compacts */
+.btn-icon-mini {
+  width: 24px !important;
+  height: 24px !important;
+  padding: 0 !important;      /* Supprime le padding */
+  display: inline-flex;       /* Active le flexbox */
+  align-items: center;        /* Centre verticalement l'icône */
+  justify-content: center;   /* Centre horizontalement l'icône */
+  min-width: 24px !important;
+  line-height: 1;
+}
+
+.btn-icon-mini i {
+  font-size: 13px;            /* Ajuste la taille de l'icône si besoin */
+  margin: 0;
+}

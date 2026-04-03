@@ -1,4 +1,3 @@
-// src/app/services/auth.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
@@ -18,6 +17,8 @@ export class AuthService {
 
   constructor(private http: HttpClient) {}
 
+  // --- Méthodes existantes ---
+
   register(payload: { email: string; password: string; full_name?: string }) {
     return this.http.post<AuthResponse>(`${this.api}/register`, payload).pipe(
       tap(res => this.setSession(res))
@@ -36,6 +37,34 @@ export class AuthService {
     this.currentUserSubject.next(null);
   }
 
+  // --- Nouvelles méthodes de mise à jour ---
+
+  /**
+   * Met à jour les infos de profil (nom, email)
+   */
+  updateProfile(payload: { full_name?: string; email?: string }): Observable<any> {
+    return this.http.put(`${this.api}/profile`, payload).pipe(
+      tap(() => {
+        // On récupère les infos actuelles et on fusionne avec les nouvelles
+        const currentUser = this.currentUserSubject.value;
+        const updatedUser = { ...currentUser, ...payload };
+        
+        // Mise à jour du stockage local et du flux de données
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        this.currentUserSubject.next(updatedUser);
+      })
+    );
+  }
+
+  /**
+   * Modifie le mot de passe
+   */
+  updatePassword(payload: { oldPassword: string; newPassword: string }): Observable<any> {
+    return this.http.put(`${this.api}/password`, payload);
+  }
+
+  // --- Utilitaires ---
+
   isLoggedIn(): boolean {
     return !!localStorage.getItem('token');
   }
@@ -52,7 +81,11 @@ export class AuthService {
 
   private getUserFromStorage() {
     const u = localStorage.getItem('user');
-    return u ? JSON.parse(u) : null;
+    try {
+      return u ? JSON.parse(u) : null;
+    } catch (e) {
+      return null;
+    }
   }
 
   fetchMe() {

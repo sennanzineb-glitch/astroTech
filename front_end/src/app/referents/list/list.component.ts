@@ -36,7 +36,7 @@ export class ListComponent {
   ) {}
 
   ngOnInit(): void {
-    this.loadReferents();
+    this.loadReferents(1,'');
   }
 
   // 📄 Getter pour noms fichiers sélectionnés

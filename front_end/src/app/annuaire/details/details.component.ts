@@ -1,19 +1,26 @@
-import { Component, ViewChild, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, ViewChild, OnInit } from '@angular/core';
+import { ActivatedRoute, Router, RouterModule, ParamMap } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { combineLatest } from 'rxjs';
+
+// Services
 import { SharedModule } from '../../_globale/shared/shared.module';
 import { ModalSaveComponent } from '../modal-save/modal-save.component';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ClientsService } from '../../_services/clients/clients.service';
 import { SecteurService } from '../../_services/clients/secteur.service';
 import { HabitationService } from '../../_services/clients/habitation.service';
 import { OrganisationsService } from '../../_services/clients/organisations.service';
 import { ParticuliersService } from '../../_services/clients/particuliers.service';
 import { AgencesService } from '../../_services/clients/agences.service';
-import { AffairesService } from '../../_services/affaires/affaires.service';
-declare var bootstrap: any; // pour Bootstrap 5 JS
+import { NavigationService, NavStep } from '../../_services/navigation.service';
+
+declare var bootstrap: any;
 
 @Component({
   selector: 'app-details',
-  imports: [SharedModule, ModalSaveComponent, RouterModule],
+  standalone: true,
+  imports: [CommonModule, SharedModule, ModalSaveComponent, RouterModule, FormsModule],
   templateUrl: './details.component.html',
   styleUrls: ['./details.component.css']
 })
@@ -21,23 +28,29 @@ export class DetailsComponent implements OnInit {
 
   @ViewChild('modalSave') modalSave!: ModalSaveComponent;
 
+  // Données principales
   id!: number;
   client: any;
   clients: any[] = [];
-  activeTab: string = 'details'; // Onglet par défaut
   iHistory: any[] = [];
+  affaires: any[] = [];
   selectedIntervention: any;
 
-  // ===== Pagination clients enfants =====
+  // Pagination Enfants
   clientsPage = 1;
   clientsLimit = 4;
   clientsTotal = 0;
 
-  // ===== Pagination historique interventions =====
+  // Pagination Interventions
   historyPage = 1;
   historyLimit = 10;
   historyTotal = 0;
 
+  // Pagination Affaires
+  affairesPage = 1;
+  affairesLimit = 10;
+  affairesTotal = 0;
+  affairesSearch = '';
 
   constructor(
     private router: Router,
@@ -47,305 +60,208 @@ export class DetailsComponent implements OnInit {
     private habitationService: HabitationService,
     private organisationsService: OrganisationsService,
     private particuliersService: ParticuliersService,
-    private agencesService: AgencesService
+    private agencesService: AgencesService,
+    public navService: NavigationService
   ) { }
 
   ngOnInit(): void {
-    // Écouter les changements d'ID dans l'URL
-    this.route.paramMap.subscribe(params => {
-      // Récupérer l'ID depuis l'URL
-      this.id = +this.route.snapshot.params['id'];
-      // Récupérer le type depuis les query params
-      const type = this.route.snapshot.queryParams['type'];
-      this.loadClient(this.id, type); // Appel avec deux paramètres
-      this.loadHistoryInterventions();
+    // Écoute les changements d'ID et de Type simultanément (important pour la navigation imbriquée)
+    combineLatest([
+      this.route.paramMap,
+      this.route.queryParamMap
+    ]).subscribe(([params, queryParams]) => {
+      const newId = Number(params.get('id'));
+      const newType = queryParams.get('type');
 
-      this.searchAffaires();
-
-      this.resetView();
-    });
-  }
-
-  // Charger les données du client selon le type
-  loadClient(id: number, type: string) {
-    if (type === 'secteur') {
-      // Si le client est de type secteur, utiliser secteurService
-      this.secteurService.getRecordDetails(id).subscribe({
-        next: (sectRes: any) => {
-          this.client = sectRes;
-          this.getAllClients();
-        },
-        error: (err: any) => {
-          console.error("Erreur chargement client secteur :", err);
-          alert("Impossible de charger le client secteur.");
-        }
-      });
-    } else {
-      // Organisation, agence, particulier
-      this.clientsService.getRecordDetails(id).subscribe({
-        next: (sectRes: any) => {
-          this.client = sectRes.data;
-          this.getAllClients();
-        },
-        error: (err: any) => {
-          console.error("Erreur chargement client secteur :", err);
-          alert("Impossible de charger le client secteur.");
-        }
-      });
-    }
-  }
-
-  // Charger les clients enfants
-  getAllClients(page: number = this.clientsPage) {
-    this.clientsPage = page;
-
-    //const parentType: 'client' | 'secteur' | 'habitation' = this.client.type_client;
-    //console.log('***',this.client,'***');
-
-    this.clientsService
-      .getClientsByParentWithDetails(
-        this.id,
-        this.client.type_client,
-        this.clientsPage,
-        this.clientsLimit,
-        ''
-      )
-      .subscribe((result: any) => {
-        this.clientsTotal = result.total;
-
-        this.clients = (result.data as any[]).map(client => ({
-          ...client,
-          contacts: client.contacts || [],
-          type_parent: result.parentType
-        }));
-        //console.log('* client *',this.clients);
-      });
-  }
-
-
-  nextClientsPage() {
-    if (this.clientsPage * this.clientsLimit < this.clientsTotal) {
-      this.getAllClients(this.clientsPage + 1);
-    }
-  }
-
-  prevClientsPage() {
-    if (this.clientsPage > 1) {
-      this.getAllClients(this.clientsPage - 1);
-    }
-  }
-
-
-  // Réinitialiser la vue lors du changement de client
-  resetView() {
-    this.activeTab = 'details';          // onglet par défaut
-    window.scrollTo({ top: 0, behavior: 'smooth' }); // scroll en haut
-  }
-
-  // Ouvrir le modal pour ajouter un client enfant
-  addChilderClient() {
-    if (this.modalSave) {
-      if (['organisation', 'particulier', 'agence'].includes(this.client.type_client))
-        this.modalSave.addChilderClient(this.client.type_client, this.client.client_id);
-      else
-        this.modalSave.addChilderClient(this.client.type_client, this.client.id);
-    } else {
-      console.error('ModalSaveComponent non initialisé !');
-    }
-  }
-
-  // Supprimer un client par type
-  deleteClient(id: number) {
-    const client = this.clients.find(c => c.id === id);
-
-    if (!client) {
-      alert("Client introuvable !");
-      return;
-    }
-
-    if (!confirm('Voulez-vous vraiment supprimer ce client ?')) {
-      return;
-    }
-
-    const type = client.type_client?.toLowerCase();
-
-    const deleteMap: Record<string, () => any> = {
-      organisation: () => this.clientsService.delete(id),
-      agence: () => this.clientsService.delete(id),
-      particulier: () => this.clientsService.delete(id),
-      secteur: () => this.secteurService.delete(id),
-      habitation: () => this.habitationService.delete(id)
-    };
-
-    const deleteFn = deleteMap[type];
-
-    if (!deleteFn) {
-      alert("Type de client inconnu, impossible de supprimer.");
-      console.error("Type client inconnu :", client.type_client);
-      return;
-    }
-
-    deleteFn().subscribe({
-      next: () => {
-        this.getAllClients();
-        alert("Client supprimé avec succès !");
-      },
-      error: (err: any) => {
-        console.error("Erreur de suppression :", err);
-        alert("Impossible de supprimer ce client.");
+      if (newId && newType) {
+        this.id = newId;
+        this.resetPagination();
+        this.loadClient(this.id, newType);
       }
     });
   }
 
-  // Naviguer vers les détails d’un client enfant
-  viewDetails(client: any) {
-    this.router.navigate(['/clients/details', client.id], { queryParams: { type: client.type_client } });
-  }
+  // --- CHARGEMENT DES DONNÉES ---
 
+  loadClient(id: number, type: string) {
+    const handleSuccess = (res: any) => {
+      this.client = res.data || res;
+      const label = this.client.nom_client || this.client.nom || 'Détails';
 
-  // Ouvrir le modal pour éditer un client
-  editClient(client: any) {
-    if (this.modalSave) {
-      this.modalSave.editClient(client);
-    } else {
-      console.error('ModalSaveComponent non initialisé !');
-    }
-  }
+      // Mise à jour du Fil d'Ariane
+      this.navService.pushStep(id, label, type);
 
-  // Gérer le changement d’onglet
-  selectTab(tabName: string) {
-    this.activeTab = tabName;
-  }
-
-  saveNote() {
-    if (!this.client.note?.trim()) {
-      alert('La note ne peut pas être vide');
-      return;
-    }
-
-    // Map type_client → service correspondant
-    const serviceMap: { [key: string]: any } = {
-      'agence': this.agencesService,          // ou AgencesService si c’est plus approprié
-      'organisation': this.organisationsService,
-      'particulier': this.particuliersService,
-      'secteur': this.secteurService,
-      // ajouter 'habitation' si nécessaire
+      // Chargement des listes liées
+      this.getAllClients();
+      this.loadHistoryInterventions();
+      this.searchAffaires();
     };
 
-    const service = serviceMap[this.client.type_client];
-
-    if (!service) {
-      console.error('Service non défini pour le type client :', this.client.type_client);
-      return;
+    const typeKey = type.toLowerCase();
+    if (typeKey === 'secteur') {
+      this.secteurService.getRecordDetails(id).subscribe({ next: handleSuccess });
+    } else if (typeKey === 'habitation') {
+      this.habitationService.getRecordDetails(id).subscribe({ next: handleSuccess });
+    } else {
+      this.clientsService.getRecordDetails(id).subscribe({ next: handleSuccess });
     }
+  }
 
-    service.updateNote(this.client.id, this.client.note).subscribe({
-      next: () => alert('Note enregistrée avec succès !'),
-      error: (err: any) => console.error('Erreur lors de l\'enregistrement de la note', err)
+  getAllClients(page: number = this.clientsPage) {
+    this.clientsPage = page;
+    this.clientsService.getClientsByParentWithDetails(
+      this.id,
+      this.client.type_client,
+      this.clientsPage,
+      this.clientsLimit,
+      ''
+    ).subscribe((result: any) => {
+      this.clientsTotal = result.total;
+      this.clients = (result.data || []).map((c: any) => ({
+        ...c,
+        contacts: c.contacts || []
+      }));
     });
   }
 
-  async loadHistoryInterventions(page: number = this.historyPage) {
-    try {
-      this.historyPage = page;
+  loadHistoryInterventions(page: number = this.historyPage) {
+    this.historyPage = page;
+    this.clientsService.getByClient(this.id, this.historyPage, this.historyLimit, '')
+      .then(res => {
+        this.iHistory = res.data;
+        this.historyTotal = res.total;
+      })
+      .catch(err => console.error('Erreur interventions:', err));
+  }
 
-      const res = await this.clientsService.getByClient(
-        this.id,
-        this.historyPage,
-        this.historyLimit,
-        ''
-      );
+  loadHistoriqueAffaire(page: number = this.affairesPage) {
+    this.affairesPage = page;
+    this.clientsService.getAffairesByClient(
+      this.id,
+      this.affairesPage,
+      this.affairesLimit,
+      this.affairesSearch
+    ).subscribe({
+      next: (res: any) => {
+        this.affaires = res.affaires || [];
+        this.affairesTotal = res.total || 0;
+      }
+    });
+  }
 
-      this.iHistory = res.data;
-      this.historyTotal = res.total;
+  // --- ACTIONS ---
 
-    } catch (err) {
-      console.error('Erreur chargement historique', err);
+  saveNote() {
+    if (!this.client?.note?.trim()) return;
+
+    const serviceMap: any = {
+      'agence': this.agencesService,
+      'organisation': this.organisationsService,
+      'particulier': this.particuliersService,
+      'secteur': this.secteurService,
+      'habitation': this.habitationService
+    };
+
+    const service = serviceMap[this.client.type_client];
+    if (service) {
+      service.updateNote(this.id, this.client.note).subscribe({
+        next: () => alert('✅ Note enregistrée'),
+        error: (err: any) => console.error('Erreur note:', err)
+      });
     }
   }
 
-  nextHistoryPage() {
-    if (this.historyPage * this.historyLimit < this.historyTotal) {
-      this.loadHistoryInterventions(this.historyPage + 1);
+  deleteClient(id: number) {
+    const target = this.clients.find(c => c.id === id);
+    if (!target || !confirm('Voulez-vous vraiment supprimer cet élément ?')) return;
+
+    const type = target.type_client?.toLowerCase();
+    const service = (type === 'secteur') ? this.secteurService :
+      (type === 'habitation') ? this.habitationService :
+        this.clientsService;
+
+    service.delete(id).subscribe(() => {
+      this.getAllClients();
+      alert("🗑️ Supprimé avec succès");
+    });
+  }
+
+  // --- MODALS ---
+
+  addChilderClient() {
+    if (this.modalSave) {
+      // Gestion des IDs spécifiques selon le type (client_id vs id)
+      const parentId = ['organisation', 'particulier', 'agence'].includes(this.client.type_client)
+        ? this.client.client_id : this.client.id;
+      this.modalSave.addChilderClient(this.client.type_client, parentId);
     }
   }
 
-  prevHistoryPage() {
-    if (this.historyPage > 1) {
-      this.loadHistoryInterventions(this.historyPage - 1);
-    }
+  // editClient(client: any) {
+  //   console.log("***", client, this.client);
+  //   client= { ..., type_parant: this.client.type};
+  //   this.modalSave?.editClient(client);
+  // }
+
+  editClient(client: any) {
+    // 1. Utilisation correcte du spread operator (...)
+    // 2. Correction de la faute de frappe 'type_parant' -> 'type_parent' (si applicable)
+    const clientToEdit = {
+      ...client,
+      type_parent: this.client.type_client
+    };
+    
+    console.log(clientToEdit.type_parent);
+    
+    // 3. Appel de la méthode sur la modal avec le nouvel objet
+    this.modalSave?.editClient(clientToEdit);
   }
 
   openInterventionModal(item: any) {
     this.selectedIntervention = item;
-
     const modalEl = document.getElementById('interventionDetailModal');
-    const modal = new bootstrap.Modal(modalEl);
-    modal.show();
-  }
-
-
-
-  //***** ***** **** ***** ***** */
-  // ===== Pagination historique affaires =====
-  affaires: any[] = [];
-  affairesPage = 1;
-  affairesLimit = 10;
-  affairesTotal = 0;
-  affairesSearch = '';
-
-  // Getter pour le nombre total de pages
-  get affairesTotalPages(): number {
-    return Math.ceil(this.affairesTotal / this.affairesLimit);
-  }
-
-  // Charger les affaires pour un client
-  loadHistoriqueAffaire(page: number = this.affairesPage) {
-    this.affairesPage = page;
-
-    this.clientsService.getAffairesByClient(
-      this.id,              // ID du client
-      this.affairesPage,    // page courante
-      this.affairesLimit,   // nombre d'éléments par page
-      this.affairesSearch   // texte de recherche
-    ).subscribe({
-      next: (res) => {
-        this.affaires = res.affaires;   // liste des affaires
-        this.affairesTotal = res.total; // total pour pagination
-      },
-      error: (err) => {
-        console.error('Erreur chargement historique des affaires :', err);
-        alert('Impossible de charger l’historique des affaires.');
-      }
-    });
-  }
-
-  nextAffairesPage() {
-    if (this.affairesPage < this.affairesTotalPages) {
-      this.loadHistoriqueAffaire(this.affairesPage + 1);
+    if (modalEl) {
+      const modal = new bootstrap.Modal(modalEl);
+      modal.show();
     }
   }
 
-  prevAffairesPage() {
-    if (this.affairesPage > 1) {
-      this.loadHistoriqueAffaire(this.affairesPage - 1);
-    }
+  // --- NAVIGATION & PAGINATION ---
+
+  goToStep(step: NavStep) {
+    this.router.navigate(['/clients/details', step.id], { queryParams: { type: step.type } });
   }
 
-  searchAffaires() {
+  goToRoot() {
+    this.navService.reset();
+    this.router.navigate(['/clients/list']);
+  }
+
+  viewDetails(client: any) {
+    this.router.navigate(['/clients/details', client.id], { queryParams: { type: client.type_client } });
+  }
+
+  resetPagination() {
+    this.clientsPage = 1;
+    this.historyPage = 1;
     this.affairesPage = 1;
-    this.loadHistoriqueAffaire();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // Retourne le nombre total de pages pour la pagination
-  totalPages(): number {
-    return Math.ceil(this.affairesTotal / this.affairesLimit);
-  }
+  // Getters pagination Affaires
+  get affairesTotalPages(): number { return Math.ceil(this.affairesTotal / this.affairesLimit); }
 
-  // Retourne true si c'est la dernière page
-  isLastPage(): boolean {
-    return this.affairesPage === this.totalPages();
-  }
+  searchAffaires() { this.affairesPage = 1; this.loadHistoriqueAffaire(); }
 
+  nextAffairesPage() { if (this.affairesPage < this.affairesTotalPages) this.loadHistoriqueAffaire(this.affairesPage + 1); }
 
+  prevAffairesPage() { if (this.affairesPage > 1) this.loadHistoriqueAffaire(this.affairesPage - 1); }
+
+  nextHistoryPage() { if (this.historyPage * this.historyLimit < this.historyTotal) this.loadHistoryInterventions(this.historyPage + 1); }
+
+  prevHistoryPage() { if (this.historyPage > 1) this.loadHistoryInterventions(this.historyPage - 1); }
+
+  nextClientsPage() { if (this.clientsPage * this.clientsLimit < this.clientsTotal) this.getAllClients(this.clientsPage + 1); }
+
+  prevClientsPage() { if (this.clientsPage > 1) this.getAllClients(this.clientsPage - 1); }
 }

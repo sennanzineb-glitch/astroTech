@@ -1,0 +1,80 @@
+/* Cache la flèche par défaut de Bootstrap */
+.nav-link.dropdown-toggle::after {
+    display: none !important;
+}
+
+/* Optionnel : ajoute un petit espace à votre icône MDI */
+.mdi-chevron-down {
+    vertical-align: middle;
+    font-size: 1.1rem;
+    margin-left: 4px;
+}
+
+
+/* Style pour l'avatar avec initiales */
+.profile-initials {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(90deg, #4facfe, #0072ff);
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+/* Positionnement du parent */
+.nav-item.dropdown {
+    position: relative;
+}
+
+/* Force l'affichage du menu quand Angular ajoute la classe .show */
+.dropdown-menu.show {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: absolute;
+    right: 0;
+    top: 100%; /* S'affiche juste en dessous de la barre */
+    margin-top: 10px;
+    z-index: 1050;
+    transform: translateY(0);
+    transition: opacity 0.2s ease;
+}
+
+/* Style du menu dropdown */
+.dropdown-menu {
+    display: none; /* Caché par défaut */
+    border-radius: 1rem;
+    min-width: 200px;
+    background-color: #ffffff;
+    box-shadow: 0 5px 25px 0 rgba(0, 0, 0, 0.1) !important;
+    padding: 0;
+    border: none;
+}
+
+/* Alignement à droite */
+.dropdown-menu-end {
+    right: 0;
+    left: auto;
+}
+
+/* Hover sur les éléments du menu */
+.dropdown-item {
+    padding: 0.65rem 1.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.85rem;
+}
+
+.dropdown-item:hover {
+    background-color: #f8f9fa !important;
+    color: #4facfe !important;
+}
+
+/* Empêcher le wrapper de couper le menu */
+.navbar-menu-wrapper {
+    overflow: visible !important;
+}
+
+/* Icônes MDI */
+.dropdown-item i {
+    font-size: 1.1rem;
+}

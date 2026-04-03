@@ -1,11 +1,14 @@
-import { Component } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { HttpEventType } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { forkJoin, of } from 'rxjs';
+import { catchError, finalize } from 'rxjs/operators';
+
 import { SharedModule } from '../../_globale/shared/shared.module';
 import { FichiersService, Fichier as FichierModel } from '../../_services/fichiers/fichiers.service';
 import { ReferentsService } from '../../_services/referents/referents.service';
-import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-edit',
@@ -14,15 +17,16 @@ import { CommonModule } from '@angular/common';
   templateUrl: './edit.component.html',
   styleUrls: ['./edit.component.css']
 })
-export class EditComponent {
+export class EditComponent implements OnInit {
 
   referentForm!: FormGroup;
-  fichiers: FichierModel[] = [];       // fichiers existants dans la BD
-  selectedFiles: File[] = [];          // nouveaux fichiers à uploader
-  deletedFiles: number[] = [];         // fichiers supprimés côté backend
+  fichiers: FichierModel[] = [];       // Fichiers déjà en base
+  selectedFiles: File[] = [];          // Nouveaux fichiers à uploader
+  deletedFilesIds: number[] = [];      // IDs des fichiers à supprimer au submit
   progress = 0;
   idReferent!: number;
   isDragOver = false;
+  isSubmitting = false;
 
   constructor(
     private fb: FormBuilder,
@@ -33,7 +37,7 @@ export class EditComponent {
   ) { }
 
   ngOnInit(): void {
-    this.idReferent = +this.route.snapshot.params['id'];
+    this.idReferent = Number(this.route.snapshot.params['id']);
 
     this.referentForm = this.fb.group({
       nom: ['', Validators.required],
@@ -51,37 +55,27 @@ export class EditComponent {
     }
   }
 
-  // 🔹 Charger infos du référent
   loadReferent() {
     this.referentsService.getItemById(this.idReferent).subscribe(data => {
-      const dateNaissance = data.dateNaissance
-        ? new Date(data.dateNaissance).toISOString().split('T')[0]
-        : null;
-
-      this.referentForm.patchValue({ ...data, dateNaissance });
+      const dateVal = data.dateNaissance ? new Date(data.dateNaissance).toISOString().split('T')[0] : '';
+      this.referentForm.patchValue({ ...data, dateNaissance: dateVal });
     });
   }
 
-  // 🔹 Charger fichiers liés
   loadFichiers() {
     this.fichiersService.getRecordsByReferent(this.idReferent).subscribe({
-      next: (data) => {
-        this.fichiers = data || [];
-        console.log("📂 Fichiers liés au référent :", this.fichiers);
-      },
+      next: (data) => this.fichiers = data || [],
       error: (err) => console.error("Erreur chargement fichiers :", err)
     });
   }
 
-  // 🔹 Sélection de nouveaux fichiers
   onFileSelected(event: any) {
-    if (event.target.files) {
-      const newFiles = Array.from(event.target.files) as File[];
-      this.selectedFiles.push(...newFiles);
+    const files = event.target.files;
+    if (files) {
+      this.selectedFiles.push(...Array.from(files) as File[]);
     }
   }
 
-  // 🔹 Drag & Drop
   onDragOver(event: DragEvent) {
     event.preventDefault();
     this.isDragOver = true;
@@ -93,88 +87,95 @@ export class EditComponent {
     event.preventDefault();
     this.isDragOver = false;
     if (event.dataTransfer?.files) {
-      const droppedFiles = Array.from(event.dataTransfer.files);
-      this.selectedFiles.push(...droppedFiles);
+      this.selectedFiles.push(...Array.from(event.dataTransfer.files));
     }
   }
 
-  // 🔹 Supprimer un fichier existant (backend)
-  deleteExistingFile(file: FichierModel) {
-    if (!confirm('Voulez-vous vraiment supprimer ce fichier ?')) return;
-    if (file.id != null) {
-      this.deletedFiles.push(file.id);
-      this.fichiers = this.fichiers.filter(f => f.id !== file.id);
+  removeExistingFile(file: FichierModel) {
+    if (confirm('Supprimer ce fichier définitivement à l\'enregistrement ?')) {
+      if (file.id) {
+        this.deletedFilesIds.push(file.id);
+        this.fichiers = this.fichiers.filter(f => f.id !== file.id);
+      }
     }
   }
 
-  // 🔹 Supprimer un fichier avant upload
+  // CETTE MÉTHODE A ÉTÉ RENOMMÉE POUR CORRESPONDRE AU HTML
   removeFileByIndex(index: number) {
     this.selectedFiles.splice(index, 1);
   }
 
-  // 🔹 Sauvegarde globale
   save() {
-    if (this.referentForm.invalid){
-      // Show a warning message
-      alert("⚠️ Veuillez remplir tous les champs obligatoires avant de soumettre le formulaire !");
+    if (this.referentForm.invalid) {
+      alert("⚠️ Veuillez remplir tous les champs obligatoires.");
       return;
     }
 
-    if (this.idReferent) this.editReferent();
-    else this.addReferent();
+    this.isSubmitting = true;
+    if (this.idReferent) {
+      this.editReferent();
+    } else {
+      this.addReferent();
+    }
   }
 
-  // 🔹 Ajouter un référent + fichiers
   addReferent() {
-    this.referentsService.create(this.referentForm.value).subscribe(result => {
-      this.idReferent = result.data.id;
-      this.uploadFiles();
-      this.router.navigate(['/referents/list']);
+    this.referentsService.create(this.referentForm.value).subscribe({
+      next: (res) => {
+        this.idReferent = res.id || res.data?.id;
+        if (this.selectedFiles.length > 0) {
+          this.uploadFiles();
+        } else {
+          this.router.navigate(['/referents/list']);
+        }
+      },
+      error: () => this.isSubmitting = false
     });
-
   }
 
-  // 🔹 Modifier le référent + synchro fichiers
   editReferent() {
-    this.referentsService.update(this.referentForm.value, this.idReferent).subscribe(() => {
-      console.log('✅ Référent mis à jour');
+    this.referentsService.update(this.referentForm.value, this.idReferent).subscribe({
+      next: () => {
+        const deleteRequests = this.deletedFilesIds.map(id => 
+          this.fichiersService.deleteById(id).pipe(catchError(err => of(null)))
+        );
 
-      // 🗑️ Supprimer les fichiers supprimés
-      const deletePromises = this.deletedFiles.map(id =>
-        this.fichiersService.deleteById(id).toPromise()
-      );
-
-      // // 📂 Upload des fichiers restants ou nouveaux
-      // Promise.all(deletePromises).then(() => {
-      //   if (this.selectedFiles.length > 0) {
-      //     this.uploadFiles();
-      //   } else {
-      //     alert('✅ Modifications enregistrées');
-      //     this.router.navigate(['/referents/list']);
-      //   }
-      // });
-
-      this.router.navigate(['/referents/list']);
+        if (deleteRequests.length > 0) {
+          forkJoin(deleteRequests).subscribe(() => this.finalizeSave());
+        } else {
+          this.finalizeSave();
+        }
+      },
+      error: () => this.isSubmitting = false
     });
   }
 
-  // 🔹 Upload fichiers
-  uploadFiles() {
-    if (this.selectedFiles.length === 0) return;
+  private finalizeSave() {
+    if (this.selectedFiles.length > 0) {
+      this.uploadFiles();
+    } else {
+      this.router.navigate(['/referents/list']);
+    }
+  }
 
+  uploadFiles() {
     const formData = new FormData();
     formData.append('idReferent', String(this.idReferent));
     this.selectedFiles.forEach(file => formData.append('files', file));
 
-    this.fichiersService.uploadFiles(formData).subscribe(event => {
-      if (event.type === HttpEventType.UploadProgress && event.total) {
-        this.progress = Math.round((100 * event.loaded) / event.total);
-      } else if (event.type === HttpEventType.Response) {
-        alert('📂 Upload terminé !');
-        this.selectedFiles = [];
-        this.progress = 0;
-        this.loadFichiers();
-        //this.router.navigate(['/referents/list']);
+    this.fichiersService.uploadFiles(formData).pipe(
+      finalize(() => this.isSubmitting = false)
+    ).subscribe({
+      next: (event) => {
+        if (event.type === HttpEventType.UploadProgress && event.total) {
+          this.progress = Math.round((100 * event.loaded) / event.total);
+        } else if (event.type === HttpEventType.Response) {
+          this.router.navigate(['/referents/list']);
+        }
+      },
+      error: (err) => {
+        console.error("Erreur upload:", err);
+        alert("Erreur lors de l'upload des fichiers.");
       }
     });
   }
