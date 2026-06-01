@@ -1,10 +1,12 @@
+version: '3.8'
+
 services:
   db:
     image: mysql:latest
     container_name: mysql_container
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: 123456789
+      MYSQL_ROOT_PASSWORD: "123456789"
       MYSQL_DATABASE: astro_tech
     ports:
       - "3306:3306"
@@ -33,9 +35,8 @@ services:
       PORT: 3001
       DB_HOST: db
       DB_USER: root
-      DB_PASSWORD: 123456789
+      DB_PASSWORD: "123456789"
       DB_NAME: astro_tech
-      # Configuration Email injectée directement (évite l'erreur .env not found)
       EMAIL_HOST: smtp.ethereal.email
       EMAIL_PORT: 587
       EMAIL_USER: zena.windler@ethereal.email
@@ -55,7 +56,7 @@ services:
       PORT: 3002
       DB_HOST: db
       DB_USER: root
-      DB_PASSWORD: 123456789
+      DB_PASSWORD: "123456789"
       DB_NAME: astro_tech
 
   referent_api:
@@ -69,7 +70,7 @@ services:
       PORT: 3003
       DB_HOST: db
       DB_USER: root
-      DB_PASSWORD: 123456789
+      DB_PASSWORD: "123456789"
       DB_NAME: astro_tech
 
   technicien_api:
@@ -83,7 +84,7 @@ services:
       PORT: 3004
       DB_HOST: db
       DB_USER: root
-      DB_PASSWORD: 123456789
+      DB_PASSWORD: "123456789"
       DB_NAME: astro_tech
 
   affaires_api:
@@ -97,11 +98,45 @@ services:
       PORT: 3005
       DB_HOST: db
       DB_USER: root
-      DB_PASSWORD: 123456789
+      DB_PASSWORD: "123456789"
       DB_NAME: astro_tech
     volumes:
       - ./affaires_api:/app
       - ./client_api:/app/client_api
 
+  chat_api:
+    build: ./chat_api
+    container_name: chat_api_container
+    ports:
+      - "3006:3006"
+    depends_on:
+      - db
+    environment:
+      PORT: 3006
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: "123456789"
+      DB_NAME: astro_tech
+    # 🔥 CORRECTION : Montage de volumes pour faire apparaître les fichiers audio enregistrés sur ton PC
+    volumes:
+      - ./chat_api:/app
+      - ./chat_api/public:/app/public
+      - /app/node_modules
+
+  user_api:
+    build: ./user_api
+    container_name: user_api_container
+    ports:
+      - "3007:3007"
+    depends_on:
+      - db
+    environment:
+      PORT: 3007
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: "123456789"
+      DB_NAME: astro_tech
+
 volumes:
-  db_data: {}
+  db_data:
+    driver: local

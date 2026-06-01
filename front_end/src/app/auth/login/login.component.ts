@@ -17,7 +17,7 @@ export class LoginComponent {
   showPassword = false;
   loading = false; // spinner pendant la connexion
 
-  constructor(private auth: AuthService, private router: Router) {}
+  constructor(private auth: AuthService, private router: Router) { }
 
   togglePasswordVisibility() {
     this.showPassword = !this.showPassword;
@@ -38,11 +38,18 @@ export class LoginComponent {
 
         // ✅ Stockage des informations utilisateur si disponibles
         if (response.user) {
+          console.log(response.user);
           localStorage.setItem('user', JSON.stringify(response.user));
         }
 
-        // Redirection après connexion
-        this.router.navigate(['/dashboard']);
+        // 🔄 Redirection dynamique selon le type d'utilisateur
+        if (response.user && response.user.role === 'admin') {
+          // Si l'utilisateur est admin
+          this.router.navigate(['/admin/dashboard']);
+        } else {
+          // Si c'est un utilisateur standard (ou par défaut)
+          this.router.navigate(['/dashboard']);
+        }
       },
       error: (err) => {
         this.loading = false;

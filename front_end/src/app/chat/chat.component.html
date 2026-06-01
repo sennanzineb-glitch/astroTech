@@ -1,0 +1,154 @@
+<div class="card chat-card border-0 shadow-sm" [style.width]="isMinimized ? '200px' : '320px'">
+
+  <div class="card-header border-0 text-white py-1 px-3 d-flex justify-content-between align-items-center"
+    style="background: #00b4f1; cursor: pointer; border-radius: 8px 8px 0 0;">
+
+    <div class="d-flex align-items-center" (click)="toggleChat()">
+      <i class="mdi mdi-circle-medium text-success me-1"
+        *ngIf="!isMinimized && selectedContact && isOnline(selectedContact.id)"></i>
+      <span class="fw-bold text-truncate" style="font-size: 0.75rem; letter-spacing: 0.5px; max-width: 150px;">
+        {{ selectedContact ? selectedContact.full_name : (userRole === 'admin' ? 'CLIENTS' : 'SUPPORT ASTROTECH') }}
+      </span>
+    </div>
+
+    <div class="d-flex align-items-center">
+      <i *ngIf="selectedContact" (click)="selectedContact = null"
+        class="mdi mdi-chevron-left me-2 fs-6 text-white-50 cursor-pointer"></i>
+      <i (click)="toggleChat()" class="mdi" [ngClass]="isMinimized ? 'mdi-chevron-up' : 'mdi-chevron-down'"></i>
+    </div>
+  </div>
+
+  <ng-container *ngIf="!isMinimized">
+
+    <div *ngIf="!selectedContact" class="card-body p-0" style="height: 320px; overflow-y: auto; background: #ffffff;">
+      <div class="list-group list-group-flush">
+        <div class="py-1 px-3 bg-light border-bottom">
+          <span class="text-muted fw-bold" style="font-size: 0.6rem; text-transform: uppercase;">
+            {{ userRole === 'admin' ? 'Flux Interventions' : 'Admins Disponibles' }}
+          </span>
+        </div>
+
+        <button *ngFor="let contact of contacts" (click)="selectContact(contact)"
+          class="list-group-item list-group-item-action d-flex align-items-center py-2 px-3 border-0">
+          <div class="position-relative me-2">
+            <div class="avatar-circle-sm bg-light text-primary border fw-bold"
+              style="width: 28px; height: 28px; font-size: 0.7rem; display: grid; place-content: center; border-radius: 50%;">
+              {{ contact.full_name?.charAt(0) }}
+            </div>
+            <span *ngIf="isOnline(contact.id)" class="position-absolute bottom-0 end-0 rounded-circle bg-success"
+              style="width: 8px; height: 8px; border: 1.5px solid white;"></span>
+          </div>
+          <div class="flex-grow-1 text-truncate">
+            <h6 class="mb-0 fw-semibold text-dark" style="font-size: 0.75rem;">{{ contact.full_name }}</h6>
+            <span class="text-muted" style="font-size: 0.65rem;">
+              {{ isOnline(contact.id) ? 'En ligne' : 'Dernière vue récente' }}
+            </span>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="selectedContact" class="card-body chat-body p-2" #scrollContainer
+      style="height: 320px; overflow-y: auto; background-color: #fcfcfc;">
+
+      <div *ngFor="let msg of messages" class="mb-2 d-flex flex-column"
+        [ngClass]="msg.sender_id === myId ? 'align-items-end' : 'align-items-start'">
+
+        <div class="px-3 py-2 mb-1 shadow-none message-bubble-base"
+          [ngClass]="msg.sender_id === myId ? 'bg-primary text-white bubble-right' : 'bg-light text-dark border bubble-left'">
+
+          <div *ngIf="msg.content" class="text-break mb-1">{{ msg.content }}</div>
+
+          <div *ngIf="msg.file_type === 'image'" class="file-message-container">
+            <img [src]="sanitizeUrl(msg.file_url)" class="img-fluid rounded chat-image" 
+              alt="Image partagée" (load)="scrollToBottom()">
+          </div>
+
+          <div *ngIf="msg.file_type === 'audio'" class="file-message-container my-1">
+            <audio controls preload="metadata" controlsList="nodownload" class="audio-player-custom" style="max-width: 100%; height: 32px;">
+              <source [src]="sanitizeUrl(msg.file_url)" type="audio/webm">
+              <source [src]="sanitizeUrl(msg.file_url)" type="audio/ogg">
+              <source [src]="sanitizeUrl(msg.file_url)" type="audio/mpeg">
+            </audio>
+          </div>
+        </div>
+
+        <div class="d-flex align-items-center px-1" style="font-size: 0.55rem; opacity: 0.7;">
+          <span class="text-muted">{{ msg.created_at | date:'HH:mm' }}</span>
+          <ng-container *ngIf="msg.sender_id === myId">
+            <i class="mdi ms-1" [ngClass]="msg.is_read ? 'mdi-check-all text-info' : 'mdi-check text-muted'"></i>
+          </ng-container>
+        </div>
+
+      </div>
+    </div>
+
+    <div *ngIf="selectedContact" class="card-footer bg-white p-2 border-top position-relative">
+
+      <div *ngIf="showEmojiPicker" class="absolute-emoji-wrapper">
+        <emoji-mart 
+          (emojiSelect)="addEmoji($event)" 
+          title="Choisir un émoji..." 
+          emoji="point_up"
+          [showPreview]="false">
+        </emoji-mart>
+      </div>
+
+      <div *ngIf="selectedFile || isRecording" class="file-preview-badge p-2 mb-2 rounded d-flex align-items-center justify-content-between" style="background-color: #f8f9fa; border-left: 3px solid #00b4f1;">
+        <div class="d-flex align-items-center gap-2 text-truncate" style="font-size: 0.7rem;">
+          <i class="mdi fs-6" [ngClass]="isRecording ? 'mdi-microphone text-danger pulse' : (selectedFileType === 'image' ? 'mdi-image text-primary' : 'mdi-music-note text-warning')"></i>
+          <span class="text-truncate fw-medium text-dark">
+            {{ isRecording ? 'Enregistrement vocal : ' + recordingDuration + 's' : selectedFile?.name }}
+          </span>
+        </div>
+        <button class="btn btn-sm p-0 border-0 bg-transparent text-danger" 
+          (click)="isRecording ? stopRecording(false) : clearSelectedFile()">
+          <i class="mdi mdi-close-circle fs-6"></i>
+        </button>
+      </div>
+
+      <div class="d-flex flex-column rounded-3 p-2 bg-white" style="border: 1px solid #00b4f1;">
+
+        <input type="text" [(ngModel)]="newMessage" (keyup.enter)="send()"
+          class="form-control border-0 bg-transparent p-0 mb-1" placeholder="Envoyer un message..."
+          style="font-size: 0.75rem; box-shadow: none;" [disabled]="isRecording">
+
+        <div class="d-flex align-items-center justify-content-between mt-1">
+          <div class="d-flex gap-2 text-muted align-items-center">
+
+            <label class="m-0 cursor-pointer d-flex align-items-center">
+              <input type="file" (change)="onFileSelected($event)" accept="image/*, audio/*" class="d-none" [disabled]="isRecording">
+              <i class="mdi mdi-paperclip fs-5 text-secondary" style="cursor: pointer;"></i>
+            </label>
+
+            <button type="button" class="btn p-0 border-0 bg-transparent d-flex align-items-center"
+              (click)="toggleEmojiPicker()" [disabled]="isRecording">
+              <i class="mdi fs-5"
+                [ngClass]="showEmojiPicker ? 'mdi-emoticon text-info' : 'mdi-emoticon-outline text-secondary'"></i>
+            </button>
+
+            <button type="button" class="btn p-0 border-0 bg-transparent d-flex align-items-center"
+              (click)="insertGif()" [disabled]="isRecording">
+              <i class="mdi mdi-gif fs-4 text-secondary"></i>
+            </button>
+
+            <button type="button" class="btn p-0 border-0 bg-transparent d-flex align-items-center"
+              (click)="toggleVoiceRecording()">
+              <i class="mdi fs-5"
+                [ngClass]="isRecording ? 'mdi-stop-circle text-danger' : 'mdi-microphone text-secondary'"></i>
+            </button>
+          </div>
+
+          <button class="btn p-0 d-flex align-items-center justify-content-center rounded-circle border-0"
+            (click)="send()" [disabled]="(!newMessage.trim() && !selectedFile) || isRecording"
+            [style.background]="((newMessage.trim() || selectedFile) && !isRecording) ? '#00b4f1' : '#e0e0e0'"
+            style="width: 26px; height: 26px; transition: background 0.2s ease;">
+            <i class="mdi mdi-arrow-up text-white fs-6"></i>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </ng-container>
+</div>

@@ -203,6 +203,7 @@ class ClientService {
     userId = null
   }) {
     try {
+
       // 🔹 Validation
       page = Number(page);
       limit = Number(limit);
@@ -679,6 +680,7 @@ class ClientService {
 
   static async getClientsByParentWithDetails({ parentId, parentType, page = 1, limit = 10 }) {
     try {
+      // console.log("*** Bonjour tous le monde ! ***");
       page = Number(page);
       limit = Number(limit);
       const offset = (page - 1) * limit;
@@ -992,6 +994,395 @@ class ClientService {
       return { success: false, error: error.message };
     }
   }
+
+
+  //   static async getClientsByParentWithDetails({
+  //   parentId,
+  //   parentType,
+  //   page = 1,
+  //   limit = 10
+  // }) {
+  //   try {
+
+  //     const pNum = Math.max(1, Number(page) || 1);
+  //     const lNum = Math.max(1, Number(limit) || 10);
+  //     const offset = (pNum - 1) * lNum;
+
+  //     /* =====================================================
+  //      * TYPE NORMALISATION
+  //      * ===================================================== */
+  //     const typeMap = {
+  //       client: 'client',
+  //       clients: 'client',
+  //       secteur: 'secteur',
+  //       secteurs: 'secteur',
+  //       habitation: 'habitation',
+  //       habitations: 'habitation',
+  //       agence: 'client',
+  //       organisation: 'client',
+  //       particulier: 'client'
+  //     };
+
+  //     const normalizedParentType =
+  //       typeMap[String(parentType || '').toLowerCase()];
+
+  //     if (!normalizedParentType) {
+  //       throw new Error(`parentType invalide: ${parentType}`);
+  //     }
+
+  //     /* =====================================================
+  //      * SQL CONDITIONS (SAFE STRING BUILD)
+  //      * ===================================================== */
+
+  //     let clientWhere = '1=0';
+  //     let secteurWhere = '1=0';
+  //     let habitationWhere = '1=0';
+
+  //     if (normalizedParentType === 'client') {
+
+  //       clientWhere = `c.parent_id = ${parentId}`;
+
+  //       secteurWhere = `
+  //         s.parent_id = ${parentId}
+  //         OR s.agence_id = ${parentId}
+  //         OR s.organisation_id = ${parentId}
+  //       `;
+
+  //       habitationWhere = `
+  //         h.secteur_id IN (
+  //           SELECT id FROM secteur
+  //           WHERE agence_id = ${parentId}
+  //              OR organisation_id = ${parentId}
+  //              OR parent_id = ${parentId}
+  //         )
+  //         OR h.agence_id = ${parentId}
+  //         OR h.organisation_id = ${parentId}
+  //         OR h.particulier_id = ${parentId}
+  //       `;
+  //     }
+
+  //     else if (normalizedParentType === 'secteur') {
+  //       clientWhere = '1=0';
+  //       secteurWhere = `s.id = ${parentId}`;
+  //       habitationWhere = `h.secteur_id = ${parentId}`;
+  //     }
+
+  //     else if (normalizedParentType === 'habitation') {
+  //       habitationWhere = `h.id = ${parentId}`;
+  //     }
+
+  //     /* =====================================================
+  //      * COUNT (NO ? => ZERO ERROR)
+  //      * ===================================================== */
+  //     const countQuery = `
+  //       SELECT COUNT(*) AS total FROM (
+  //         SELECT c.id FROM client c WHERE ${clientWhere}
+  //         UNION
+  //         SELECT s.id FROM secteur s WHERE ${secteurWhere}
+  //         UNION
+  //         SELECT h.id FROM habitation h WHERE ${habitationWhere}
+  //       ) t
+  //     `;
+
+  //     const [[{ total }]] = await db.query(countQuery);
+
+  //     /* =====================================================
+  //      * MAIN QUERY (SAFE)
+  //      * ===================================================== */
+  //     const mainQuery = `
+  //       SELECT * FROM (
+
+  //         SELECT
+  //           c.id AS item_id,
+  //           c.numero,
+  //           c.compte,
+  //           COALESCE(p.nom_complet, a.nom_agence, o.nom_entreprise) AS nom_client,
+  //           NULL AS reference,
+  //           CASE
+  //             WHEN a.id IS NOT NULL THEN 'agence'
+  //             WHEN o.id IS NOT NULL THEN 'organisation'
+  //             WHEN p.id IS NOT NULL THEN 'particulier'
+  //             ELSE 'client'
+  //           END AS type_item,
+  //           c.parent_id
+  //         FROM client c
+  //         LEFT JOIN particulier p ON p.client_id = c.id
+  //         LEFT JOIN agence a ON a.client_id = c.id
+  //         LEFT JOIN organisation o ON o.client_id = c.id
+  //         WHERE ${clientWhere}
+
+  //         UNION ALL
+
+  //         SELECT
+  //           s.id,
+  //           NULL, NULL,
+  //           s.nom,
+  //           s.reference,
+  //           'secteur',
+  //           s.parent_id
+  //         FROM secteur s
+  //         WHERE ${secteurWhere}
+
+  //         UNION ALL
+
+  //         SELECT
+  //           h.id,
+  //           NULL, NULL,
+  //           h.reference,
+  //           h.reference,
+  //           'habitation',
+  //           COALESCE(h.secteur_id, h.agence_id, h.organisation_id, h.particulier_id)
+  //         FROM habitation h
+  //         WHERE ${habitationWhere}
+
+  //       ) data
+  //       ORDER BY type_item, nom_client
+  //       LIMIT ${lNum} OFFSET ${offset}
+  //     `;
+
+  //     const [rows] = await db.query(mainQuery);
+
+  //     /* =====================================================
+  //      * FORMATAGE
+  //      * ===================================================== */
+  //     const map = new Map();
+
+  //     for (const r of rows) {
+  //       const key = `${r.type_item}_${r.item_id}`;
+
+  //       if (!map.has(key)) {
+  //         map.set(key, {
+  //           id: r.item_id,
+  //           numero: r.numero,
+  //           compte: r.compte,
+  //           nom_client: r.nom_client,
+  //           reference: r.reference,
+  //           type_client: r.type_item,
+  //           parent_id: r.parent_id,
+  //           contacts: []
+  //         });
+  //       }
+  //     }
+
+  //     return {
+  //       success: true,
+  //       total,
+  //       page: pNum,
+  //       limit: lNum,
+  //       totalPages: Math.ceil(total / lNum),
+  //       data: Array.from(map.values())
+  //     };
+
+  //   } catch (error) {
+  //     console.error('ERROR:', error);
+  //     return {
+  //       success: false,
+  //       error: error.message
+  //     };
+  //   }
+  // }
+
+
+  // static async getClientsByParentWithDetails({
+  //   parentId,
+  //   parentType,
+  //   page = 1,
+  //   limit = 10
+  // }) {
+  //   try {
+
+  //     const pNum = Math.max(1, Number(page) || 1);
+  //     const lNum = Math.max(1, Number(limit) || 10);
+  //     const offset = (pNum - 1) * lNum;
+
+  //     /* =====================================================
+  //      * NORMALISATION TYPE
+  //      * ===================================================== */
+  //     const typeMap = {
+  //       client: 'client',
+  //       clients: 'client',
+
+  //       secteur: 'secteur',
+  //       secteurs: 'secteur',
+
+  //       habitation: 'habitation',
+  //       habitations: 'habitation',
+
+  //       agence: 'client',
+  //       organisation: 'client',
+  //       particulier: 'client'
+  //     };
+
+  //     const normalizedType = typeMap[String(parentType || '').toLowerCase()];
+
+  //     if (!normalizedType) {
+  //       throw new Error(`parentType invalide: ${parentType}`);
+  //     }
+
+  //     /* =====================================================
+  //      * CONDITIONS SQL
+  //      * ===================================================== */
+
+  //     let clientWhere = '1=0';
+  //     let secteurWhere = '1=0';
+  //     let habitationWhere = '1=0';
+
+  //     if (normalizedType === 'client') {
+
+  //       clientWhere = `c.parent_id = ${parentId}`;
+
+  //       secteurWhere = `
+  //       s.agence_id = ${parentId}
+  //       OR s.organisation_id = ${parentId}
+  //       OR s.parent_id = ${parentId}
+  //     `;
+
+  //       habitationWhere = `
+  //       h.agence_id = ${parentId}
+  //       OR h.organisation_id = ${parentId}
+  //       OR h.particulier_id = ${parentId}
+  //       OR h.secteur_id IN (
+  //         SELECT s2.id FROM secteur s2
+  //         WHERE s2.agence_id = ${parentId}
+  //            OR s2.organisation_id = ${parentId}
+  //       )
+  //     `;
+  //     }
+
+  //     else if (normalizedType === 'secteur') {
+
+  //       clientWhere = '1=0';
+
+  //       secteurWhere = `s.id = ${parentId}`;
+
+  //       habitationWhere = `h.secteur_id = ${parentId}`;
+  //     }
+
+  //     else if (normalizedType === 'habitation') {
+
+  //       habitationWhere = `h.id = ${parentId}`;
+  //     }
+
+  //     /* =====================================================
+  //      * COUNT QUERY
+  //      * ===================================================== */
+
+  //     const countQuery = `
+  //     SELECT COUNT(*) AS total FROM (
+
+  //       SELECT c.id FROM client c WHERE ${clientWhere}
+
+  //       UNION ALL
+
+  //       SELECT s.id FROM secteur s WHERE ${secteurWhere}
+
+  //       UNION ALL
+
+  //       SELECT h.id FROM habitation h WHERE ${habitationWhere}
+
+  //     ) t
+  //   `;
+
+  //     const [[{ total }]] = await db.query(countQuery);
+
+  //     /* =====================================================
+  //      * MAIN QUERY
+  //      * ===================================================== */
+
+  //     const mainQuery = `
+  //     SELECT * FROM (
+
+  //       /* CLIENT */
+  //       SELECT
+  //         c.id AS item_id,
+  //         c.numero,
+  //         c.compte,
+  //         COALESCE(p.nom_complet, a.nom_agence, o.nom_entreprise) AS nom_client,
+  //         NULL AS reference,
+  //         'client' AS type_item,
+  //         c.parent_id
+  //       FROM client c
+  //       LEFT JOIN particulier p ON p.client_id = c.id
+  //       LEFT JOIN agence a ON a.client_id = c.id
+  //       LEFT JOIN organisation o ON o.client_id = c.id
+  //       WHERE ${clientWhere}
+
+  //       UNION ALL
+
+  //       /* SECTEUR */
+  //       SELECT
+  //         s.id,
+  //         NULL,
+  //         NULL,
+  //         s.nom,
+  //         s.reference,
+  //         'secteur',
+  //         s.parent_id
+  //       FROM secteur s
+  //       WHERE ${secteurWhere}
+
+  //       UNION ALL
+
+  //       /* HABITATION */
+  //       SELECT
+  //         h.id,
+  //         NULL,
+  //         NULL,
+  //         h.reference,
+  //         h.reference,
+  //         'habitation',
+  //         COALESCE(h.secteur_id, h.agence_id, h.organisation_id, h.particulier_id)
+  //       FROM habitation h
+  //       WHERE ${habitationWhere}
+
+  //     ) data
+  //     ORDER BY type_item ASC, nom_client ASC
+  //     LIMIT ${lNum} OFFSET ${offset}
+  //   `;
+
+  //     const [rows] = await db.query(mainQuery);
+
+  //     /* =====================================================
+  //      * FORMATAGE (ANTI DOUBLON)
+  //      * ===================================================== */
+
+  //     const map = new Map();
+
+  //     for (const r of rows) {
+  //       const key = `${r.type_item}_${r.item_id}`;
+
+  //       if (!map.has(key)) {
+  //         map.set(key, {
+  //           id: r.item_id,
+  //           numero: r.numero,
+  //           compte: r.compte,
+  //           nom_client: r.nom_client,
+  //           reference: r.reference,
+  //           type_client: r.type_item,
+  //           parent_id: r.parent_id,
+  //           contacts: []
+  //         });
+  //       }
+  //     }
+
+  //     return {
+  //       success: true,
+  //       total,
+  //       page: pNum,
+  //       limit: lNum,
+  //       totalPages: Math.ceil(total / lNum),
+  //       data: Array.from(map.values())
+  //     };
+
+  //   } catch (error) {
+  //     console.error('ERROR getClientsByParentWithDetails:', error);
+  //     return {
+  //       success: false,
+  //       error: error.message
+  //     };
+  //   }
+  // }
+
 
   static async getAffairesByClient(clientId, page = 1, limit = 10, search = '') {
     try {

@@ -1,0 +1,35 @@
+/* --- STRUCTURE GLOBALE --- */
+.page-body-wrapper {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  min-height: calc(100vh - 50px);
+  position: relative;
+  overflow-x: hidden; /* Sécurité anti-scroll horizontal global */
+}
+
+/* --- PANNEAU PRINCIPAL (CONTENU) --- */
+.main-panel {
+  flex: 1;                  /* PREND AUTOMATIQUEMENT TOUT L'ESPACE RESTANT */
+  min-width: 0;             /* INDISPENSABLE : Empêche le contenu flex de déborder */
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease-in-out;
+}
+
+/* --- ZONE DE TRAVAIL GRISÉE --- */
+.content-wrapper {
+  background: #f2edf3;
+  padding: 1.5rem 1.5rem;
+  width: 100%;
+  flex-grow: 1;
+  box-sizing: border-box;
+}
+
+/* Gestion responsive sur ordinateur */
+@media (min-width: 992px) {
+  /* Quand la sidebar est masquée, le panneau prend naturellement 100% */
+  .sidebar-hidden .main-panel {
+    width: 100%;
+  }
+}

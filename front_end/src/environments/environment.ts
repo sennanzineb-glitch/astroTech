@@ -11,6 +11,13 @@ export const environment = {
   url_referent: "http://localhost:3003/api/v1",
   url_technicien: "http://localhost:3004/api/v1",
   url_affaire: "http://localhost:3005/api/v1",
+  // URL de base pour les appels API (Historique)
+  apiUrl_chat: 'http://localhost:3006/api/v1/chat',
+  // URL pour la connexion WebSocket (Temps réel)
+  socketUrl_chat: 'http://localhost:3006',
+
+  apiUrl_user: 'http://localhost:3007/api/v1/users',
+  
   url_upload: "http://localhost:3002/uploads"
 };
 

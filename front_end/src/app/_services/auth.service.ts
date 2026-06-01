@@ -127,4 +127,20 @@ export class AuthService {
   }
 
 
+  /**
+ * Récupère l'utilisateur actuel sans s'abonner (valeur instantanée)
+ */
+  getCurrentUserValue() {
+    return this.currentUserSubject.value;
+  }
+
+  /**
+   * Récupère uniquement l'ID (utile pour le chat)
+   */
+  getUserId(): number | null {
+    const user = this.currentUserSubject.value;
+    return user ? user.id : null;
+  }
+
+
 }

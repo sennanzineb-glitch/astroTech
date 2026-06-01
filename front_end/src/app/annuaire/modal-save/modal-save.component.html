@@ -139,8 +139,6 @@
                 </p>
               </div>
 
-
-
               <!-- *** *** *** -->
               <div class="row">
                 <div class="mb-3">
@@ -201,8 +199,8 @@
               <div class="row">
                 <div class="col-md-4">
                   <label for="interphone">Interphone/Digicode</label>
-                  <input type="text" class="form-control form-control-sm" name="interphone"
-                    [(ngModel)]="singleAdresse.interphoneDigicode">
+                  <input type="text" class="form-control form-control-sm" name="interphone_digicode"
+                    [(ngModel)]="singleAdresse.interphone_digicode">
                 </div>
                 <div class="col-md-4">
                   <label for="escaliers">Escaliers</label>
@@ -211,8 +209,8 @@
                 </div>
                 <div class="col-md-4">
                   <label for="porte">Porte / Entrée</label>
-                  <input type="text" class="form-control form-control-sm" name="porte"
-                    [(ngModel)]="singleAdresse.porteEntree">
+                  <input type="text" class="form-control form-control-sm" name="porte_entree"
+                    [(ngModel)]="singleAdresse.porte_entree">
                 </div>
               </div>
             </fieldset>
@@ -390,8 +388,9 @@
           *ngIf="!singleContact.nom_complet">Annuler</button>
         <button type="button" class="btn btn-success btn-sm" (click)="save()"
           *ngIf="!singleContact.nom_complet">Sauvegarder</button>
-        <button type="button" class="btn btn-primary btn-sm" *ngIf="!singleContact.nom_complet">Créer
-          Intervention</button>
+        <button type="button" class="btn btn-primary btn-sm" *ngIf="!singleContact.nom_complet" (click)="goToInterventions()">
+          Créer Intervention
+        </button>
       </div>
 
       <!-- ***** LISTE CLIENTS ***** -->

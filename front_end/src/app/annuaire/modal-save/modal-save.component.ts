@@ -12,7 +12,7 @@ import { ParticuliersService } from '../../_services/clients/particuliers.servic
 import { SecteurService } from '../../_services/clients/secteur.service';
 import { HabitationService } from '../../_services/clients/habitation.service';
 import * as bootstrap from 'bootstrap';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { debounceTime, switchMap, catchError, startWith, map, distinctUntilChanged } from 'rxjs/operators';
@@ -53,7 +53,8 @@ export class ModalSaveComponent {
     private secteurService: SecteurService,
     private habitationService: HabitationService,
     private renderer: Renderer2,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private router: Router
   ) {
     this.addItem('tous');
     this.filteredOptions('');
@@ -174,6 +175,9 @@ export class ModalSaveComponent {
 
   /** Sauvegarde client et contacts */
   async save() {
+
+    console.log(this.singleAdresse.id, this.singleAdresse);
+
     // 🔹 Convertir les dates des contacts
     this.listContacts.forEach(c => {
       if (c.date_duString) c.date_du = c.date_duString;
@@ -293,21 +297,36 @@ export class ModalSaveComponent {
           case 'organisation':
             this.singleOrganisation.client_id = clientId;
             if (hasAdresseInfo(this.singleAdresse)) {
-              const resAdresse: any = await lastValueFrom(this.adressesService.create(this.singleAdresse));
-              this.singleAdresse.id = resAdresse.data.id;
-              this.singleOrganisation.adresse_id = resAdresse.data.id;
+              // 1. Si l'adresse n'a pas d'ID, on la crée
+              if (!this.singleAdresse.id) {
+                const resAdresse: any = await lastValueFrom(this.adressesService.create(this.singleAdresse));
+                this.singleAdresse.id = resAdresse.data.id;
+              }
+              // 2. Si elle a déjà un ID, on peut éventuellement la mettre à jour (optionnel)
+              else {
+                await lastValueFrom(this.adressesService.update(this.singleAdresse));
+              }
+              // 3. On lie l'ID de l'adresse (existant ou nouveau) à l'organisation
+              this.singleOrganisation.adresse_id = this.singleAdresse.id;
             }
+            // Création de l'organisation
             const resOrg: any = await lastValueFrom(this.organisationsService.create(this.singleOrganisation));
             this.singleOrganisation.id = resOrg.data.id;
             parentIdToPass = clientId;
             break;
 
+
           case 'particulier':
             this.singleParticulier.client_id = clientId;
             if (hasAdresseInfo(this.singleAdresse)) {
-              const resAdresse: any = await lastValueFrom(this.adressesService.create(this.singleAdresse));
-              this.singleAdresse.id = resAdresse.data.id;
-              this.singleParticulier.adresse_id = resAdresse.data.id;
+              // Si pas d'ID on crée, sinon on met à jour
+              if (!this.singleAdresse.id) {
+                const res: any = await lastValueFrom(this.adressesService.create(this.singleAdresse));
+                this.singleAdresse.id = res.data.id;
+              } else {
+                await lastValueFrom(this.adressesService.update(this.singleAdresse));
+              }
+              this.singleParticulier.adresse_id = this.singleAdresse.id;
             }
             const resPart: any = await lastValueFrom(this.particuliersService.create(this.singleParticulier));
             this.singleParticulier.id = resPart.data.id;
@@ -317,9 +336,13 @@ export class ModalSaveComponent {
           case 'agence':
             this.singleAgence.client_id = clientId;
             if (hasAdresseInfo(this.singleAdresse)) {
-              const resAdresse: any = await lastValueFrom(this.adressesService.create(this.singleAdresse));
-              this.singleAdresse.id = resAdresse.data.id;
-              this.singleAgence.adresse_id = resAdresse.data.id;
+              if (!this.singleAdresse.id) {
+                const res: any = await lastValueFrom(this.adressesService.create(this.singleAdresse));
+                this.singleAdresse.id = res.data.id;
+              } else {
+                await lastValueFrom(this.adressesService.update(this.singleAdresse));
+              }
+              this.singleAgence.adresse_id = this.singleAdresse.id;
             }
             const resAgence: any = await lastValueFrom(this.agencesService.create(this.singleAgence));
             this.singleAgence.id = resAgence.data.id;
@@ -328,13 +351,20 @@ export class ModalSaveComponent {
 
           case 'secteur':
             if (hasAdresseInfo(this.singleAdresse)) {
-              const resAdresseS: any = await lastValueFrom(this.adressesService.create(this.singleAdresse));
-              this.singleAdresse.id = resAdresseS.data.id;
-              this.singleSecteur.adresse_id = resAdresseS.data.id;
+              if (!this.singleAdresse.id) {
+                const res: any = await lastValueFrom(this.adressesService.create(this.singleAdresse));
+                this.singleAdresse.id = res.data.id;
+              } else {
+                await lastValueFrom(this.adressesService.update(this.singleAdresse));
+              }
+              this.singleSecteur.adresse_id = this.singleAdresse.id;
             }
+
+            // Liaisons parentales
             if (this.parentClient?.type === 'agence') this.singleSecteur.agence_id = this.parentClient.id;
             else if (this.parentClient?.type === 'organisation') this.singleSecteur.organisation_id = this.parentClient.id;
             else if (this.parentClient?.type === 'secteur') this.singleSecteur.parent_id = this.parentClient.id;
+
             const resSecteur: any = await lastValueFrom(this.secteurService.create(this.singleSecteur));
             this.singleSecteur.id = resSecteur.data.id;
             parentIdToPass = this.singleSecteur.id;
@@ -342,18 +372,26 @@ export class ModalSaveComponent {
 
           case 'habitation':
             if (hasAdresseInfo(this.singleAdresse)) {
-              const resAdresseH: any = await lastValueFrom(this.adressesService.create(this.singleAdresse));
-              this.singleAdresse.id = resAdresseH.data.id;
-              this.singleHabitation.adresse_id = resAdresseH.data.id;
+              if (!this.singleAdresse.id) {
+                const res: any = await lastValueFrom(this.adressesService.create(this.singleAdresse));
+                this.singleAdresse.id = res.data.id;
+              } else {
+                await lastValueFrom(this.adressesService.update(this.singleAdresse));
+              }
+              this.singleHabitation.adresse_id = this.singleAdresse.id;
             }
+
+            // Liaisons parentales
             if (this.parentClient?.type === 'agence') this.singleHabitation.agence_id = this.parentClient.id;
             else if (this.parentClient?.type === 'organisation') this.singleHabitation.organisation_id = this.parentClient.id;
             else if (this.parentClient?.type === 'secteur') this.singleHabitation.secteur_id = this.parentClient.id;
             else if (this.parentClient?.type === 'particulier') this.singleHabitation.particulier_id = this.parentClient.id;
+
             const resHab: any = await lastValueFrom(this.habitationService.create(this.singleHabitation));
             this.singleHabitation.id = resHab.data.id;
             parentIdToPass = this.singleHabitation.id;
             break;
+
         }
       }
 
@@ -466,7 +504,8 @@ export class ModalSaveComponent {
 
   /** Réinitialiser le formulaire */
   clear() {
-    this.filteredOptions('');
+    
+    //this.filteredOptions('');
 
     this.singleClient = { id: null, numero: null, compte: null, parent_id: null };
     this.singleParticulier = { id: null, nom_complet: null, email: null, telephone: null, adresse_id: null, client_id: null };
@@ -479,17 +518,27 @@ export class ModalSaveComponent {
     this.listEmails = [];
     this.listTels = [];
     //this.type_client = '';
-    this.parentClient = { type: '', id: -1 };
+    //this.parentClient = { type: '', id: -1 };
     this.isEditMode = false;
 
     this.clearContact();
   }
 
   /** Ouvre le modal */
-  openModal() {
+  openModal(type?: string) {
     const modalEl = document.getElementById('saveModal');
     if (modalEl) this.modalInstance = new bootstrap.Modal(modalEl, { backdrop: 'static', keyboard: false });
     this.modalInstance.show();
+
+    this.activateInitialDataTab();
+
+    // if(type == "add")
+    //   this.clear();
+
+    if (type && type == 'add') {
+      this.clear();
+      console.log("Ouverture pour :", type);
+    }
   }
 
 
@@ -640,7 +689,7 @@ export class ModalSaveComponent {
     this.parentClient = { type: type, id: id };
     this.filteredOptions(type);
     this.singleClient = { id: null, numero: null, compte: null, parent_id: this.singleClient.id };
-    this.openModal();
+    this.openModal("add");
   }
 
   /** Tronquer certaines valeurs si nécessaire */
@@ -653,14 +702,12 @@ export class ModalSaveComponent {
     if (this.singleSecteur.nom) this.singleSecteur.nom = this.singleSecteur.nom.substring(0, 100);
   }
 
-
   addZoneIntervention(type: string, id: number) {
     this.parentClient = { type: type, id: id };
     this.isVisibleListClient = true;
     this.filteredOptions(type);
     this.getAllClientsEnfantsByParent(id, type);
   }
-
 
   // Charger les clients enfants
   getAllClientsEnfantsByParent(id: number, type: string) {
@@ -707,7 +754,6 @@ export class ModalSaveComponent {
     );
   }
 
-
   displayFn(addr: any): string {
     // Debug : vérifiez ce qui arrive quand vous sélectionnez ou cherchez
     // console.log("Donnée reçue par displayFn :", addr);
@@ -726,8 +772,34 @@ export class ModalSaveComponent {
     const selectedAddr = event.option.value;
     // On remplit l'objet singleAdresse avec les données reçues
     this.singleAdresse = { ...selectedAddr };
-    
   }
 
 
+  goToInterventions() {
+    // 1. Fermer toutes les modales ouvertes
+    // Si vous utilisez Bootstrap natif (via jQuery ou attributs) :
+    // (window as any).$('.modal').modal('hide'); 
+
+    // 2. Naviguer vers la nouvelle page
+    this.router.navigate(['/interventions']).then(() => {
+      // Optionnel : Forcer la suppression du backdrop si Bootstrap fait de la résistance
+      document.querySelectorAll('.modal-backdrop')
+        .forEach(el => el.remove());
+      document.body.classList.remove('modal-open');
+    });
+  }
+
+private activateInitialDataTab() {
+  const tabBtnEl = document.getElementById('donnees-initiales-tab');
+  
+  if (tabBtnEl) {
+    // On utilise (bootstrap as any) pour contourner l'erreur de type
+    const tab = new (bootstrap as any).Tab(tabBtnEl);
+    tab.show();
+  }
 }
+
+
+}
+
+

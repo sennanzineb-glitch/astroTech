@@ -3,6 +3,7 @@ import { SharedModule } from '../../_globale/shared/shared.module';
 import { ModalSaveComponent } from '../modal-save/modal-save.component';
 import { ClientsService } from '../../_services/clients/clients.service';
 import { Router, RouterModule } from '@angular/router';
+import { NavigationService } from '../../_services/navigation.service';
 
 // Définition des interfaces pour le typage strict
 interface Email { email: string; }
@@ -38,6 +39,7 @@ export interface Client {
 })
 export class ListComponent {
   @ViewChild('modalSave') modalSave!: ModalSaveComponent;
+  
 
   clients: Client[] = [];
   currentPage: number = 1;
@@ -48,9 +50,11 @@ export class ListComponent {
 
   constructor(
     private clientsService: ClientsService,
+    private navService : NavigationService,
     private router: Router
   ) {
     this.loadClients();
+    this.navService.reset();
   }
 
   loadClients(page: number = 1, search: string = '') {
@@ -94,8 +98,21 @@ export class ListComponent {
   }
 
   viewDetails(client: Client) {
-    this.router.navigate(['/clients/details', client.id], { 
-      queryParams: { type: client.type_client } 
+    this.router.navigate(['/clients/details', client.id], {
+      queryParams: { type: client.type_client }
     });
   }
+
+  openModal() {
+    // 1. On s'assure que le composant est bien chargé
+    if (this.modalSave) {
+      
+      // 2. On appelle la méthode d'ouverture du composant enfant
+      // Cette méthode doit initialiser le formulaire (ex: Capture_3.PNG)
+      this.modalSave.openModal('add'); 
+      
+    }
+  }
+
+
 }

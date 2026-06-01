@@ -58,6 +58,18 @@ export const routes: Routes = [
             { path: 'interventions/edit/:id', loadComponent: () => import('./intervention/edit/edit/edit.component').then(c => c.EditComponent) },
             { path: 'interventions/details/:id', loadComponent: () => import('./intervention/details/details.component').then(c => c.DetailsComponent) },
             { path: 'interventions/planning', loadComponent: () => import('./intervention/planning/planning.component').then(c => c.PlanningComponent) },
+
+
+            //admin
+            /** dashboard **/
+            { path: 'admin/dashboard', loadComponent: () => import('./dashboard/admin/admin.component').then(c => c.AdminComponent) },
+            
+            /** utilisateur **/
+            { path: 'admin/user', loadComponent: () => import('./user/list/list.component').then(c => c.ListComponent) },
+            { path: 'admin/user/edit', loadComponent: () => import('./user/edit/edit.component').then(c => c.EditComponent) },
+            { path: 'admin/user/edit/:id', loadComponent: () => import('./user/edit/edit.component').then(c => c.EditComponent) },
+            { path: 'admin/user/logs', loadComponent: () => import('./user/logs/logs.component').then(c => c.LogsComponent) },
+
         ]
     },
 

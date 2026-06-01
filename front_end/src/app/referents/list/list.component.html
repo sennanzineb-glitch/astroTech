@@ -11,7 +11,7 @@
     </div>
     
     <button class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm border-0" (click)="addReferent()">
-      <i class="mdi mdi-plus me-1"></i>  Nouveau référent
+      <i class="mdi mdi-plus me-1"></i> Nouveau référent
     </button>
   </div>
 
@@ -25,134 +25,136 @@
     </div>
   </div>
 
-  <div class="row g-2">
-    <div class="col-md-6 col-xl-4" *ngFor="let ref of referents">
-      <div class="card h-100 border-0 shadow-sm card-compact">
-        
-        <div class="card-body p-3">
-          <div class="d-flex align-items-center justify-content-between mb-2">
-            <div class="d-flex align-items-center overflow-hidden">
-              <div class="avatar-sm-dense me-2 flex-shrink-0">
-                {{ ref.nom?.charAt(0) | uppercase }}{{ ref.prenom?.charAt(0) | uppercase }}
-              </div>
-              <div class="overflow-hidden">
-                <h6 class="fw-bold mb-0 text-dark text-truncate small">{{ ref.nom }} {{ ref.prenom }}</h6>
-                <span class="text-muted x-small">Contact principal</span>
-              </div>
-            </div>
-            
-            <!-- <div class="dropdown">
-              <button class="btn btn-link text-muted p-0 shadow-none" type="button" data-bs-toggle="dropdown">
-                <i class="fa fa-ellipsis-v"></i>
-              </button>
-              <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 small">
-                <li><a class="dropdown-item text-warning" [routerLink]="['/referents/edit', ref.id]"><i class="fa fa-edit me-2"></i>Modifier</a></li>
-                <li><a class="dropdown-item text-danger" (click)="deleteReferent(ref.id)"><i class="fa fa-trash me-2"></i>Supprimer</a></li>
-              </ul>
-            </div> -->
-            <div class="dropdown">
-  <button type="button" class="btn btn-link text-muted p-0 shadow-none" 
-          (click)="ref.isOpen = !ref.isOpen">
-    <i class="fa fa-ellipsis-v"></i>
-  </button>
-  
-  <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-1" 
-    [class.show]="ref.isOpen"
-    (mouseleave)="ref.isOpen = false"
-    style="min-width: 140px; border-radius: 10px; margin-top: 0px;">
-  
-  <li class="mb-1">
-    <a class="dropdown-item d-flex align-items-center py-0 px-3 pt-2 rounded-2 text-dark transition-all" 
-       [routerLink]="['/referents/edit', ref.id]"
-       (click)="ref.isOpen = false">
-      <div class="icon-box bg-light-warning me-2">
-        <i class="fa fa-edit text-warning"></i>
-      </div>
-      <span class="small fw-medium">Modifier</span>
-    </a>
-  </li>
-
-  <li>
-    <a class="dropdown-item d-flex align-items-center py-2 px-3 pt-0 rounded-2 text-danger transition-all" 
-       (click)="deleteReferent(ref.id); ref.isOpen = false" 
-       style="cursor: pointer;">
-      <div class="icon-box bg-light-danger me-2">
-        <i class="fa fa-trash"></i>
-      </div>
-      <span class="small fw-medium">Supprimer</span>
-    </a>
-  </li>
-</ul>
-</div>
-          </div>
-
-          <div class="bg-light rounded p-2 mb-2">
-            <div class="x-small text-dark mb-1 d-flex align-items-center">
-              <i class="fa fa-envelope-o text-primary me-2" style="width: 15px;"></i>
-              <span class="text-truncate">{{ ref.email }}</span>
-            </div>
-            <div class="x-small text-dark d-flex align-items-center">
-              <i class="fa fa-phone text-success me-2" style="width: 15px;"></i>
-              {{ ref.telephone }}
-            </div>
-          </div>
-
-          <button class="btn btn-light btn-sm w-100 border-0 x-small text-muted mb-2" (click)="ref.showFiles = !ref.showFiles">
-            <i class="fa me-1" [ngClass]="ref.showFiles ? 'fa-chevron-up' : 'fa-folder-open-o'"></i>
-            {{ ref.showFiles ? 'Masquer les fichiers' : 'Gérer les fichiers (' + (ref.fichiers?.length || 0) + ')' }}
-          </button>
-
-          <div *ngIf="ref.showFiles" class="file-section border-top pt-2">
-            <div class="upload-zone mb-2">
-              <div class="d-flex gap-1">
-                <button class="btn btn-outline-primary btn-xs flex-grow-1" (click)="fileInput.click()">
-                  <i class="fa fa-paperclip"></i> Joindre
-                </button>
-                <button class="btn btn-success btn-xs" [disabled]="newFiles.length === 0" (click)="uploadFiles(ref)">
-                  <i class="fa fa-upload"></i>
-                </button>
-              </div>
-              <input type="file" #fileInput class="d-none" multiple (change)="onFileSelected($event)" />
-              
-              <div class="mt-2" *ngIf="newFiles.length > 0">
-                <div *ngFor="let file of newFiles; let i = index" class="pending-file d-flex justify-content-between align-items-center">
-                  <span class="x-small text-truncate" style="max-width: 80%;">{{ file.name }}</span>
-                  <i class="fa fa-times text-danger pointer" (click)="removeNewFile(i)"></i>
+  <ng-container *ngIf="referents && referents.length > 0; else emptyState">
+    <div class="row g-2">
+      <div class="col-md-6 col-xl-4" *ngFor="let ref of referents">
+        <div class="card h-100 border-0 shadow-sm card-compact">
+          <div class="card-body p-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <div class="d-flex align-items-center overflow-hidden">
+                <div class="avatar-sm-dense me-2 flex-shrink-0">
+                  {{ ref.nom?.charAt(0) | uppercase }}{{ ref.prenom?.charAt(0) | uppercase }}
+                </div>
+                <div class="overflow-hidden">
+                  <h6 class="fw-bold mb-0 text-dark text-truncate small">{{ ref.nom }} {{ ref.prenom }}</h6>
+                  <span class="text-muted x-small">Contact principal</span>
                 </div>
               </div>
-            </div>
-
-            <div class="uploaded-list" *ngIf="ref.fichiers && ref.fichiers.length > 0">
-              <div *ngFor="let f of ref.fichiers" class="file-item d-flex justify-content-between align-items-center p-1 rounded">
-                <a [href]="url_upload + '/' + f.chemin" target="_blank" class="x-small text-decoration-none text-truncate flex-grow-1 me-2">
-                  <i class="fa fa-file-pdf-o text-danger me-1"></i> {{ f.nom }}
-                </a>
-                <i class="fa fa-trash-o text-muted pointer hover-danger" (click)="removeUploadedFile(f.id, ref)"></i>
+              
+              <div class="dropdown">
+                <button type="button" class="btn btn-link text-muted p-0 shadow-none" (click)="ref.isOpen = !ref.isOpen">
+                  <i class="fa fa-ellipsis-v"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-1" 
+                    [class.show]="ref.isOpen"
+                    (mouseleave)="ref.isOpen = false"
+                    style="min-width: 140px; border-radius: 10px;">
+                  <li class="mb-1">
+                    <a class="dropdown-item d-flex align-items-center py-0 px-3 pt-2 rounded-2 text-dark transition-all" 
+                       [routerLink]="['/referents/edit', ref.id]" (click)="ref.isOpen = false">
+                      <div class="icon-box bg-light-warning me-2">
+                        <i class="fa fa-edit text-warning"></i>
+                      </div>
+                      <span class="small fw-medium">Modifier</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item d-flex align-items-center py-2 px-3 pt-0 rounded-2 text-danger transition-all" 
+                       (click)="deleteReferent(ref.id); ref.isOpen = false" style="cursor: pointer;">
+                      <div class="icon-box bg-light-danger me-2">
+                        <i class="fa fa-trash"></i>
+                      </div>
+                      <span class="small fw-medium">Supprimer</span>
+                    </a>
+                  </li>
+                </ul>
               </div>
             </div>
-            <div class="text-center p-2" *ngIf="!ref.fichiers?.length && newFiles.length === 0">
-              <span class="x-small text-muted italic">Aucun document</span>
+
+            <div class="bg-light rounded p-2 mb-2">
+              <div class="x-small text-dark mb-1 d-flex align-items-center">
+                <i class="fa fa-envelope-o text-primary me-2" style="width: 15px;"></i>
+                <span class="text-truncate">{{ ref.email }}</span>
+              </div>
+              <div class="x-small text-dark d-flex align-items-center">
+                <i class="fa fa-phone text-success me-2" style="width: 15px;"></i>
+                {{ ref.telephone }}
+              </div>
+            </div>
+
+            <button class="btn btn-light btn-sm w-100 border-0 x-small text-muted mb-2" (click)="ref.showFiles = !ref.showFiles">
+              <i class="fa me-1" [ngClass]="ref.showFiles ? 'fa-chevron-up' : 'fa-folder-open-o'"></i>
+              {{ ref.showFiles ? 'Masquer les fichiers' : 'Gérer les fichiers (' + (ref.fichiers?.length || 0) + ')' }}
+            </button>
+
+            <div *ngIf="ref.showFiles" class="file-section border-top pt-2">
+              <div class="upload-zone mb-2">
+                <div class="d-flex gap-1">
+                  <button class="btn btn-outline-primary btn-xs flex-grow-1" (click)="fileInput.click()">
+                    <i class="fa fa-paperclip"></i> Joindre
+                  </button>
+                  <button class="btn btn-success btn-xs" [disabled]="newFiles.length === 0" (click)="uploadFiles(ref)">
+                    <i class="fa fa-upload"></i>
+                  </button>
+                </div>
+                <input type="file" #fileInput class="d-none" multiple (change)="onFileSelected($event)" />
+                
+                <div class="mt-2" *ngIf="newFiles.length > 0">
+                  <div *ngFor="let file of newFiles; let i = index" class="pending-file d-flex justify-content-between align-items-center">
+                    <span class="x-small text-truncate" style="max-width: 80%;">{{ file.name }}</span>
+                    <i class="fa fa-times text-danger pointer" (click)="removeNewFile(i)"></i>
+                  </div>
+                </div>
+              </div>
+
+              <div class="uploaded-list" *ngIf="ref.fichiers && ref.fichiers.length > 0">
+                <div *ngFor="let f of ref.fichiers" class="file-item d-flex justify-content-between align-items-center p-1 rounded">
+                  <a [href]="url_upload + '/' + f.chemin" target="_blank" class="x-small text-decoration-none text-truncate flex-grow-1 me-2">
+                    <i class="fa fa-file-pdf-o text-danger me-1"></i> {{ f.nom }}
+                  </a>
+                  <i class="fa fa-trash-o text-muted pointer hover-danger" (click)="removeUploadedFile(f.id, ref)"></i>
+                </div>
+              </div>
+              <div class="text-center p-2" *ngIf="!ref.fichiers?.length && newFiles.length === 0">
+                <span class="x-small text-muted italic">Aucun document</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <div *ngIf="!referents || referents.length === 0" class="text-center py-5">
-    <i class="fa fa-users fa-3x text-light mb-3"></i>
-    <p class="text-muted">Aucun référent trouvé.</p>
-  </div>
+    <nav *ngIf="totalPages > 1" class="mt-4">
+      <ul class="pagination pagination-sm justify-content-center">
+        <li class="page-item" [class.disabled]="currentPage === 1">
+          <button class="page-link shadow-none" (click)="changePage(currentPage - 1)">‹</button>
+        </li>
+        <li class="page-item active"><span class="page-link shadow-none">{{ currentPage }}</span></li>
+        <li class="page-item" [class.disabled]="currentPage === totalPages">
+          <button class="page-link shadow-none" (click)="changePage(currentPage + 1)">›</button>
+        </li>
+      </ul>
+    </nav>
+  </ng-container>
 
-  <nav *ngIf="totalPages > 1" class="mt-4">
-    <ul class="pagination pagination-sm justify-content-center">
-      <li class="page-item" [class.disabled]="currentPage === 1">
-        <button class="page-link" (click)="changePage(currentPage - 1)">‹</button>
-      </li>
-      <li class="page-item active"><span class="page-link">{{ currentPage }}</span></li>
-      <li class="page-item" [class.disabled]="currentPage === totalPages">
-        <button class="page-link" (click)="changePage(currentPage + 1)">›</button>
-      </li>
-    </ul>
-  </nav>
+  <ng-template #emptyState>
+    <div class="card border-0 shadow-sm py-5 mt-3">
+      <div class="card-body text-center">
+        <div class="mb-3">
+          <i class="fa fa-user-circle-o text-light-emphasis opacity-25" style="font-size: 4.5rem;"></i>
+        </div>
+        <h5 class="text-dark fw-bold">Aucun référent trouvé</h5>
+        <p class="text-muted small mx-auto" style="max-width: 350px;">
+          <span *ngIf="searchTerm">Nous n'avons rien trouvé pour "<strong>{{searchTerm}}</strong>". Vérifiez l'orthographe ou essayez un autre terme.</span>
+          <span *ngIf="!searchTerm">La liste des référents est actuellement vide. Ajoutez-en un pour commencer la gestion.</span>
+        </p>
+        <button *ngIf="searchTerm" class="btn btn-outline-primary btn-sm rounded-pill px-4 mt-2" (click)="searchTerm = ''; searchReferents()">
+          Voir toute la liste
+        </button>
+        <button *ngIf="!searchTerm" class="btn btn-primary btn-sm rounded-pill px-4 mt-2" (click)="addReferent()">
+          Créer un référent
+        </button>
+      </div>
+    </div>
+  </ng-template>
 </div>

@@ -6,10 +6,12 @@ import { RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-main-layout',
-  imports: [NavbarComponent, SidebarComponent,CopyrightComponent, RouterOutlet],
+  standalone: true,
+  imports: [NavbarComponent, SidebarComponent, CopyrightComponent, RouterOutlet],
   templateUrl: './main-layout.component.html',
   styleUrl: './main-layout.component.css'
 })
 export class MainLayoutComponent {
-
+  // On l'initialise à true si on veut qu'elle soit ouverte par défaut sur PC
+  isSidebarOpen: boolean = true; 
 }

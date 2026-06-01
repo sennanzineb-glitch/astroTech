@@ -42,7 +42,22 @@ class SecteurService {
   }
 
   static async getAllRecords() {
-    const query = `SELECT * FROM secteur`;
+    const query = `
+    SELECT 
+      s.nom AS secteur_nom,
+      c.nom_complet,
+      c.poste,
+      a.adresse,
+      a.ville,
+      a.code_postal,
+      a.pays,
+      (SELECT GROUP_CONCAT(tel) FROM num_tel WHERE contact_id = c.id) AS telephones,
+      (SELECT GROUP_CONCAT(email) FROM adresse_email WHERE contact_id = c.id) AS emails
+    FROM secteur s
+    LEFT JOIN contact c ON s.id = c.secteur_id
+    LEFT JOIN adresse a ON c.habitation_id = a.id
+  `;
+
     const [rows] = await db.execute(query);
     return rows;
   }

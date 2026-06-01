@@ -1,80 +1,152 @@
-/* Cache la flèche par défaut de Bootstrap */
-.nav-link.dropdown-toggle::after {
-    display: none !important;
+/* --- CONFIGURATION GLOBALE NAVBAR (50px) --- */
+:host ::ng-deep .navbar.default-layout-navbar {
+    height: 50px !important;
 }
 
-/* Optionnel : ajoute un petit espace à votre icône MDI */
-.mdi-chevron-down {
-    vertical-align: middle;
-    font-size: 1.1rem;
-    margin-left: 4px;
+:host ::ng-deep .navbar.default-layout-navbar .navbar-brand-wrapper {
+    height: 50px !important;
+    width: 200px !important;
 }
 
-
-/* Style pour l'avatar avec initiales */
-.profile-initials {
-    width: 32px;
-    height: 32px;
-    background: linear-gradient(90deg, #4facfe, #0072ff);
-    font-size: 0.8rem;
-    font-weight: bold;
+:host ::ng-deep .navbar.default-layout-navbar .navbar-menu-wrapper {
+    height: 50px !important;
+    width: calc(100% - 200px) !important;
 }
 
-/* Positionnement du parent */
-.nav-item.dropdown {
+.navbar-nav .nav-item {
+    height: 50px !important;
+    display: flex;
+    align-items: center;
+}
+
+.navbar-brand img {
+    max-height: 30px !important;
+    width: auto;
+}
+
+/* --- DROPDOWN NOTIFICATIONS --- */
+.custom-notification-dropdown {
+    width: 260px; 
+    padding: 0; 
+    position: absolute !important;
+    top: 52px !important; 
+    right: 0 !important;
+    left: auto !important;
+    margin-top: 0 !important;
+    transform: none !important;
+    z-index: 9999;
+    border-radius: 10px !important;
+    overflow: visible !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+}
+
+.notification-header {
+    background: #00b4eb; 
+    font-size: 0.75rem; 
+    padding: 12px !important;
+    text-transform: uppercase; 
+    border-radius: 10px 10px 0 0;
     position: relative;
+    color: white;
 }
 
-/* Force l'affichage du menu quand Angular ajoute la classe .show */
-.dropdown-menu.show {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
+.custom-notification-dropdown.show::before {
+    content: "";
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 8px solid #00b4eb;
     position: absolute;
-    right: 0;
-    top: 100%; /* S'affiche juste en dessous de la barre */
-    margin-top: 10px;
-    z-index: 1050;
-    transform: translateY(0);
-    transition: opacity 0.2s ease;
+    top: -8px;
+    right: 15px;
 }
 
-/* Style du menu dropdown */
-.dropdown-menu {
-    display: none; /* Caché par défaut */
-    border-radius: 1rem;
-    min-width: 200px;
+/* --- DROPDOWN PROFIL REVISITÉ --- */
+.nav-item.nav-profile .custom-profile-dropdown {
+    position: absolute !important;
+    top: 52px !important; 
+    right: 0 !important;
+    left: auto !important;
+    transform: none !important;
+    margin-top: 0 !important;
+    min-width: 180px;
+    padding: 6px 0;
     background-color: #ffffff;
-    box-shadow: 0 5px 25px 0 rgba(0, 0, 0, 0.1) !important;
-    padding: 0;
-    border: none;
-}
-
-/* Alignement à droite */
-.dropdown-menu-end {
-    right: 0;
-    left: auto;
-}
-
-/* Hover sur les éléments du menu */
-.dropdown-item {
-    padding: 0.65rem 1.5rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-size: 0.85rem;
-}
-
-.dropdown-item:hover {
-    background-color: #f8f9fa !important;
-    color: #4facfe !important;
-}
-
-/* Empêcher le wrapper de couper le menu */
-.navbar-menu-wrapper {
+    border-radius: 12px !important; 
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important; 
+    border: none !important;
     overflow: visible !important;
 }
 
-/* Icônes MDI */
-.dropdown-item i {
-    font-size: 1.1rem;
+.nav-item.nav-profile .custom-profile-dropdown.show::before {
+    content: "";
+    position: absolute;
+    top: -6px;
+    right: 20px;
+    width: 12px;
+    height: 12px;
+    background: #ffffff;
+    transform: rotate(45deg);
+    border-top: 1px solid rgba(0,0,0,0.03);
+    border-left: 1px solid rgba(0,0,0,0.03);
+    z-index: -1;
+}
+
+.custom-profile-dropdown .dropdown-item {
+    color: #4a5568 !important;
+    font-size: 0.875rem !important;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+    background: transparent;
+}
+
+.custom-profile-dropdown .dropdown-item i {
+    font-size: 1.1rem !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.custom-profile-dropdown .dropdown-item:hover {
+    background-color: #f8fafc !important;
+    color: #00b4f1 !important;
+}
+
+.custom-profile-dropdown .dropdown-item.logout-item:hover {
+    background-color: #fff5f5 !important;
+    color: #e53e3e !important;
+}
+
+/* --- ÉLÉMENTS DE DÉTAIL --- */
+.count-indicator .count-symbol {
+    position: absolute;
+    top: 25px; 
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 1.5px solid #ffffff;
+    box-shadow: 0 0 3px rgba(0,0,0,0.2);
+}
+
+.profile-initials {
+    width: 28px !important;
+    height: 28px !important;
+    background: #00b4f1;
+    font-size: 0.7rem !important;
+    font-weight: bold;
+    border-radius: 50%;
+}
+
+.nav-profile-text p {
+    font-size: 0.8rem !important;
+    margin-bottom: 0;
+}
+
+.fs-4 { font-size: 1.2rem !important; }
+.fs-5 { font-size: 1rem !important; }
+
+.navbar .navbar-menu-wrapper .navbar-nav .nav-item.nav-profile .nav-link .nav-profile-text {
+    margin-left: 6px !important;
 }

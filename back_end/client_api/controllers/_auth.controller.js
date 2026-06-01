@@ -51,8 +51,9 @@ async function login(req, res) {
   try {
     const { email, password } = req.body;
 
+    // 1. Ajout de 'role' dans la requête SQL
     const [rows] = await pool.query(
-      'SELECT id, password_hash, full_name FROM users WHERE email = ?',
+      'SELECT id, password_hash, full_name, role FROM users WHERE email = ?',
       [email]
     );
 
@@ -67,15 +68,22 @@ async function login(req, res) {
       return res.status(401).json({ message: 'Identifiants incorrects' });
     }
 
+    // 2. Ajout de 'role' dans le JWT (très utile pour les hard-guards de permissions)
     const token = jwt.sign(
-      { id: user.id, email },
+      { id: user.id, email, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN }
     );
 
+    // 3. Ajout de 'role' dans la réponse renvoyée au client (pour l'affichage UI)
     res.json({
       token,
-      user: { id: user.id, email, full_name: user.full_name }
+      user: { 
+        id: user.id, 
+        email, 
+        full_name: user.full_name,
+        role: user.role 
+      }
     });
 
   } catch (err) {
@@ -159,17 +167,6 @@ async function updatePassword(req, res) {
 }
 
 // ================= FORGOT PASSWORD =================
-
-// const transporter = nodemailer.createTransport({
-//   host: process.env.EMAIL_HOST,
-//   port: parseInt(process.env.EMAIL_PORT),
-//   secure: false,
-//   auth: {
-//     user: process.env.EMAIL_USER,
-//     pass: process.env.EMAIL_PASS,
-//   },
-// });
-
 
 const transporter = nodemailer.createTransport({
   host: 'smtp.ethereal.email',

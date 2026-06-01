@@ -1,12 +1,71 @@
+/* ==========================================================================
+   1. CONTENEUR GLOBAL & STRUCTURE DE LA SIDEBAR (RESPONSIVE + TOGGLE)
+   ========================================================================== */
+.sidebar {
+  position: fixed;
+  top: 50px;
+  bottom: 0;
+  left: -260px;              /* Cachée par défaut sur écrans mobiles/tablettes */
+  width: 260px;
+  height: calc(100% - 50px) !important;
+  background-color: #ffffff;
+  /* Transitions fluides gérant à la fois les glissements (mobile) et la largeur (PC) */
+  transition: left 0.3s ease-in-out, width 0.3s ease-in-out, opacity 0.3s ease-in-out, visibility 0.3s;
+  z-index: 99;
+}
+
+/* Affichée sur mobile/tablette lorsque isOpen passe à true (.active) */
+.sidebar.active {
+  left: 0 !important;
+}
+
+/* Comportement spécifique pour ordinateurs (PC) */
+@media (min-width: 992px) {
+  .sidebar {
+    position: relative;
+    top: 0;
+    left: 0 !important;      /* Reste ancrée à l'écran lorsqu'elle est active */
+    visibility: visible;
+    opacity: 1;
+    flex-shrink: 0;          /* Empêche Flexbox d'écraser la sidebar */
+  }
+  
+  /* Fermeture propre sur PC : on passe la largeur à 0 pour laisser le flex s'ajuster */
+  .sidebar:not(.active) {
+    width: 0 !important;
+    max-width: 0 !important;
+    overflow: hidden;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;    /* Évite de pouvoir cliquer sur les liens invisibles */
+  }
+}
+
+.sidebar .nav {
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important; 
+  align-items: stretch !important;
+  height: auto !important;
+}
+
+/* ==========================================================================
+   2. BLOC AVATAR & PROFIL (Alignement vertical & dimensions)
+   ========================================================================== */
 .avatar-container {
-  text-align: center;
-  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;          
+  margin-right: 6px;      
 }
 
 .avatar-circle {
   width: 50px;
   height: 50px;
-  background-color: #00b4f1;
+  background-color: #00b4f1; 
   color: white;
   font-weight: bold;
   font-size: 20px;
@@ -14,7 +73,7 @@
   justify-content: center;
   align-items: center;
   border-radius: 50%;
-  margin: 0 auto 10px;
+  margin: 0 !important;    
 }
 
 .avatar-name {
@@ -23,29 +82,70 @@
   font-size: 16px;
 }
 
-/*** *** ***  */
-/* Style de base des liens */
-.sidebar .nav-link {
-  color: #555;             /* couleur normale */
-  padding: 10px 15px;
-  display: flex;
-  align-items: center;
-  transition: all 0.3s ease;
-  text-decoration: none;
+.sidebar .nav-profile .nav-link {
+  display: flex !important;
+  align-items: center !important;       
+  justify-content: flex-start !important;
+  padding: 12px 15px !important;
+  margin-bottom: 6px !important;
+  width: 100%;
 }
 
-/* Lien actif */
-.sidebar .nav-link.active {
-  color: #007BFF;          /* bleu pour le texte actif */
-  background-color: #E3F2FD; /* léger fond bleu */
-  border-left: 4px solid #007BFF; /* accent sur le côté */
-  font-weight: bold;
+.nav-profile-text {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;   
+  align-items: flex-start !important;   
+  flex-grow: 1;                         
+  min-width: 0;                         
+  line-height: 1.2 !important;          
 }
 
+.nav-profile-text span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
 
-/*** *** *** **** ***/
-/* Titres personnalisés */
-.custom-title {
+/* ==========================================================================
+   3. INJECTION DIRECTE POUR LES MENUS ENFANTS (<app-user> & <app-admin>)
+   ========================================================================== */
+:host ::ng-deep app-user, 
+:host ::ng-deep app-admin {
+  display: contents !important;
+}
+
+:host ::ng-deep .nav-item {
+  list-style: none !important;
+  margin: 2px 12px !important;  
+  padding: 0 !important;         
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+:host ::ng-deep .nav-link {
+  color: #555 !important;        
+  padding: 6px 15px !important;  
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important; 
+  text-decoration: none !important;
+  height: auto !important;       
+  min-height: 0 !important;
+}
+
+:host ::ng-deep .nav-link.active {
+  color: #007BFF !important;
+  background-color: #E3F2FD !important;
+  border-left: 4px solid #007BFF !important;
+  font-weight: bold !important;
+}
+
+/* ==========================================================================
+   4. TITRES, LABELS ET MANAGEMENT DES ICÔNES A DROITE
+   ========================================================================== */
+:host ::ng-deep .custom-title {
   font-weight: 600;
   text-transform: uppercase;
   font-size: 0.95rem;
@@ -53,33 +153,33 @@
   letter-spacing: 0.5px;
 }
 
-/* Icônes personnalisées */
-.custom-icon {
-  font-size: 1.3rem;
-  color: #1f2937;
-  margin-right: 0.8rem;
+:host ::ng-deep .menu-icon,
+:host ::ng-deep .custom-icon {
+  font-size: 1.3rem !important;
+  color: #1f2937 !important;
+  margin-left: auto !important;  
+  margin-right: 0 !important;
+  display: inline-block !important;
   transition: transform 0.2s, color 0.2s;
 }
 
-/* Effet hover */
-.nav-link:hover .custom-icon {
-  color: #4f46e5;
-  transform: scale(1.1);
+:host ::ng-deep .nav-link:hover .menu-icon,
+:host ::ng-deep .nav-link:hover .custom-icon {
+  color: #4f46e5 !important;
+  transform: scale(1.1) !important;
 }
 
-/* Item actif */
-.nav-link.active .custom-title {
-  color: #1f2937;
+:host ::ng-deep .nav-link.active .menu-icon {
+  color: #007BFF !important;
 }
 
-
-
-/**********************************************************/
-.custom-label {
-  font-weight: 700;           /* Texte en gras */
-  text-transform: uppercase;  /* Tout en majuscules */
-  font-size: 0.85rem;         /* Taille du texte */
-  color: #7B88FA;             /* Couleur personnalisée */
-  letter-spacing: 1px;        /* Espacement entre lettres */
-  padding-left: 1rem;         /* Décalage par rapport au bord */
+:host ::ng-deep .custom-label {
+  display: block !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  font-size: 0.85rem !important;
+  color: #7B88FA !important;      
+  letter-spacing: 1px !important;
+  padding: 10px 15px 2px 15px !important; 
+  margin: 0 !important;
 }

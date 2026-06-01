@@ -1,52 +1,59 @@
-import { Component, OnInit } from '@angular/core';
-import { RouterLink, RouterModule } from '@angular/router';
+import { Component, OnInit, OnDestroy, Input } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { AuthService } from '../../../_services/auth.service';
-import { CommonModule } from '@angular/common'; // Import indispensable pour le HTML
+import { UserComponent } from './user/user.component';
+import { AdminComponent } from './admin/admin.component';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterModule],
+  imports: [CommonModule, RouterModule, UserComponent, AdminComponent],
   templateUrl: './sidebar.component.html',
-  styleUrl: './sidebar.component.css'
+  styleUrls: ['./sidebar.component.css']
 })
-export class SidebarComponent implements OnInit {
-  currentUser: any;
-  initials: string = '';
+export class SidebarComponent implements OnInit, OnDestroy {
+  @Input() isOpen: boolean = false; // Stocke la valeur envoyée par le parent
 
-  constructor(public auth: AuthService) { }
+  userRole: string = '';
+  currentUser: any = null;
+  initials: string = '';
+  private authSubscription!: Subscription;
+
+  constructor(private authService: AuthService) { }
 
   ngOnInit(): void {
-    this.getCurrentUser();
-  }
-
-  /**
-   * Récupère les données de l'utilisateur et génère les initiales
-   */
-  getCurrentUser() {
-    this.auth.fetchMe().subscribe({
-      next: (result) => {
-        this.currentUser = result.user;
-        
-        if (this.currentUser && this.currentUser.full_name) {
-          this.initials = this.generateInitials(this.currentUser.full_name);
+    this.authSubscription = this.authService.currentUser$.subscribe({
+      next: (user) => {
+        if (user) {
+          this.currentUser = user;
+          this.userRole = user.role ? user.role.toLowerCase() : '';
+          
+          if (user.full_name) {
+            this.initials = this.generateInitials(user.full_name);
+          }
+        } else {
+          this.currentUser = null;
+          this.userRole = '';
+          this.initials = '';
         }
       },
-      error: (err) => {
-        console.error('Erreur lors de la récupération de l\'utilisateur', err);
-      }
+      error: (err) => console.error("Erreur de récupération de l'utilisateur dans la sidebar :", err)
     });
   }
 
-  /**
-   * Logique de génération des initiales
-   */
   private generateInitials(name: string): string {
     const parts = name.trim().split(' ');
     if (parts.length > 1) {
-      // Retourne la première lettre du premier et du dernier mot (ex: "John Doe" -> "JD")
       return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     }
     return name.charAt(0).toUpperCase();
+  }
+
+  ngOnDestroy(): void {
+    if (this.authSubscription) {
+      this.authSubscription.unsubscribe();
+    }
   }
 }

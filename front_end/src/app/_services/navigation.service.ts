@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 
 export interface NavStep {
   id: number | string;
@@ -12,83 +12,210 @@ export interface NavStep {
 })
 export class NavigationService {
   private readonly STORAGE_KEY = 'navigation_path';
+
   private path: NavStep[] = [];
-  
-  // On initialise le Subject avec une valeur vide par défaut
-  private pathSubject = new BehaviorSubject<NavStep[]>([]);
-  path$ = this.pathSubject.asObservable();
+
+  private readonly pathSubject = new BehaviorSubject<NavStep[]>([]);
+  public readonly path$: Observable<NavStep[]> =
+    this.pathSubject.asObservable();
 
   constructor() {
-    // AU CHARGEMENT : On tente de récupérer l'historique sauvegardé
     this.loadFromStorage();
   }
 
-  private loadFromStorage() {
-    const savedPath = sessionStorage.getItem(this.STORAGE_KEY);
-    if (savedPath) {
-      try {
-        this.path = JSON.parse(savedPath);
-        this.pathSubject.next([...this.path]);
-      } catch (e) {
-        console.error("Erreur lors de la lecture du fil d'Ariane", e);
-        this.path = [];
-      }
+  /**
+   * Pour le type "secteur", l'unicité est basée sur le label.
+   * Pour les autres types, l'unicité est basée sur l'id.
+   */
+  private getStepKey(step: NavStep): string {
+    if (step.type === 'secteur') {
+      return `${step.type}_${step.label.trim().toLowerCase()}`;
     }
+
+    return `${step.type}_${step.id}`;
   }
 
-  private saveToStorage() {
-    sessionStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.path));
-  }
+  /**
+   * Charger depuis le sessionStorage
+   */
+  private loadFromStorage(): void {
+    const savedPath = sessionStorage.getItem(this.STORAGE_KEY);
 
-  pushStep(id: number | string, label: string, type: string) {
-    // Sécurité : évite d'ajouter des étapes vides
-    if (!id || !label) return;
-
-    const stepKey = `${type}_${id}`;
-    const lastStep = this.path[this.path.length - 1];
-
-    // 1. Vérification : Étape strictement identique à la dernière
-    if (lastStep && `${lastStep.type}_${lastStep.id}` === stepKey) {
+    if (!savedPath) {
       return;
     }
 
-    // 2. Recherche d'un éventuel retour en arrière (élément déjà présent dans la pile)
-    const index = this.path.findIndex(step => step.id === id && step.type === type);
+    try {
+      const parsedPath: NavStep[] = JSON.parse(savedPath);
 
-    if (index !== -1) {
-      // CAS : RETOUR ARRIÈRE
-      // On conserve l'élément et on coupe tout ce qu'il y avait après
-      this.path = this.path.slice(0, index + 1);
-      this.path[index].label = label; // Mise à jour du label au cas où
-    } else {
-      // CAS : NOUVELLE ÉTAPE
-      // Si le dernier élément est du même TYPE (ex: passage d'une Agence A à une Agence B)
-      // On remplace le dernier par le nouveau au lieu d'empiler.
-      if (lastStep && lastStep.type === type) {
-        this.path[this.path.length - 1] = { id, label, type };
-      } else {
-        // Sinon, c'est une plongée dans la hiérarchie, on ajoute.
-        this.path.push({ id, label, type });
+      if (Array.isArray(parsedPath)) {
+        this.path = this.removeDuplicates(parsedPath);
+        this.updateState();
+      }
+    } catch (error) {
+      console.error(
+        'Erreur lors du chargement du breadcrumb :',
+        error
+      );
+      this.reset();
+    }
+  }
+
+  /**
+   * Supprimer les doublons
+   */
+  private removeDuplicates(steps: NavStep[]): NavStep[] {
+    const uniqueSteps: NavStep[] = [];
+    const seen = new Set<string>();
+
+    for (const step of steps) {
+      const key = this.getStepKey(step);
+
+      if (!seen.has(key)) {
+        seen.add(key);
+        uniqueSteps.push({
+          id: step.id,
+          label: step.label,
+          type: step.type
+        });
       }
     }
 
-    // 3. Persistance et Diffusion
+    return uniqueSteps;
+  }
+
+  /**
+   * Sauvegarder
+   */
+  private saveToStorage(): void {
+    sessionStorage.setItem(
+      this.STORAGE_KEY,
+      JSON.stringify(this.path)
+    );
+  }
+
+  /**
+   * Mettre à jour l'état
+   */
+  private updateState(): void {
+    this.path = this.removeDuplicates(this.path);
     this.saveToStorage();
     this.pathSubject.next([...this.path]);
   }
 
-  reset() {
+  /**
+   * Ajouter une étape
+   */
+  pushStep(
+    id: number | string,
+    label: string,
+    type: string
+  ): void {
+    if (
+      id === null ||
+      id === undefined ||
+      !label?.trim() ||
+      !type?.trim()
+    ) {
+      return;
+    }
+
+    const newStep: NavStep = {
+      id,
+      label: label.trim(),
+      type: type.trim()
+    };
+
+    const stepKey = this.getStepKey(newStep);
+
+    const existingIndex = this.path.findIndex(
+      step => this.getStepKey(step) === stepKey
+    );
+
+    if (existingIndex !== -1) {
+      this.path[existingIndex] = newStep;
+
+      if (existingIndex < this.path.length - 1) {
+        this.path = this.path.slice(0, existingIndex + 1);
+      }
+
+      this.updateState();
+      return;
+    }
+
+    this.path.push(newStep);
+    this.updateState();
+  }
+
+  /**
+   * Supprimer la dernière étape
+   */
+  popStep(): void {
+    if (this.path.length === 0) {
+      return;
+    }
+
+    this.path.pop();
+    this.updateState();
+  }
+
+  /**
+   * Réinitialiser
+   */
+  reset(): void {
     this.path = [];
     sessionStorage.removeItem(this.STORAGE_KEY);
     this.pathSubject.next([]);
   }
 
-  // Optionnel : supprimer uniquement la dernière étape
-  popStep() {
-    if (this.path.length > 0) {
-      this.path.pop();
-      this.saveToStorage();
-      this.pathSubject.next([...this.path]);
+  /**
+   * Naviguer vers une étape
+   */
+  navigateTo(step: NavStep): void {
+    const stepKey = this.getStepKey(step);
+
+    const index = this.path.findIndex(
+      item => this.getStepKey(item) === stepKey
+    );
+
+    if (index !== -1) {
+      this.path = this.path.slice(0, index + 1);
+      this.updateState();
     }
+  }
+
+  /**
+   * Retourner le chemin
+   */
+  getCurrentPath(): NavStep[] {
+    return [...this.path];
+  }
+
+  /**
+   * Dernière étape
+   */
+  getLastStep(): NavStep | null {
+    return this.path.length > 0
+      ? this.path[this.path.length - 1]
+      : null;
+  }
+
+  /**
+   * Vérifier l'existence
+   */
+  hasStep(
+    id: number | string,
+    type: string,
+    label?: string
+  ): boolean {
+    const key = this.getStepKey({
+      id,
+      type,
+      label: label ?? ''
+    });
+
+    return this.path.some(
+      step => this.getStepKey(step) === key
+    );
   }
 }
