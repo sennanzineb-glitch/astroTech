@@ -1,1 +1,52 @@
-<p>edit works!</p>
+<div class="card border-0 shadow-sm" style="border-radius: 16px;">
+  <div class="card-header bg-white border-bottom border-light py-3 px-4">
+    <h5 class="fw-bold text-dark mb-0" style="font-size: 0.95rem;">
+      <i class="mdi" [class.mdi-pencil-outline]="user" [class.mdi-account-plus-outline]="!user" class="text-primary me-2"></i>
+      {{ user ? 'Modifier le Profil' : 'Nouvel Utilisateur' }}
+    </h5>
+  </div>
+  
+  <div class="card-body p-4">
+    <form (ngSubmit)="onSubmit()">
+      
+      <div class="mb-3">
+        <label class="form-label small fw-semibold text-secondary">Nom Complet</label>
+        <input type="text" class="form-control form-control-sm shadow-none rounded-2" 
+               [(ngModel)]="userForm.full_name" name="full_name" required>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label small fw-semibold text-secondary">Adresse Email</label>
+        <input type="email" class="form-control form-control-sm shadow-none rounded-2" 
+               [(ngModel)]="userForm.email" name="email" required>
+      </div>
+
+      @if (!user) {
+        <div class="mb-3">
+          <label class="form-label small fw-semibold text-secondary">Mot de passe</label>
+          <input type="password" class="form-control form-control-sm shadow-none rounded-2" 
+                 [(ngModel)]="userForm.password" name="password" required>
+        </div>
+      }
+
+      <div class="mb-4">
+        <label class="form-label small fw-semibold text-secondary">Rôle Système</label>
+        <select class="form-select form-select-sm shadow-none rounded-2" 
+                [(ngModel)]="userForm.role" name="role">
+          <option value="user">User</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+
+      <div class="d-flex justify-content-end gap-2 border-top pt-3">
+        <button type="button" class="btn btn-sm btn-light px-3 rounded-2 fw-medium" (click)="cancel()">
+          Annuler
+        </button>
+        <button type="submit" class="btn btn-sm btn-primary px-3 rounded-2 border-0 fw-medium shadow-sm">
+          {{ user ? 'Enregistrer' : 'Créer' }}
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>

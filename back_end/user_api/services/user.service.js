@@ -1,4 +1,6 @@
 const db = require('../db');
+const bcrypt = require('bcrypt');
+const SALT_ROUNDS = 10;
 
 class UserService {
 
@@ -19,26 +21,47 @@ class UserService {
   }
 
   /**
- * Récupère UNIQUEMENT les lignes où le rôle est 'user'
- */
+   * Récupère UNIQUEMENT les lignes où le rôle est 'user'
+   */
   static async getOnlyUsers() {
     try {
       const query = `
-      SELECT 
-        id, 
-        full_name, 
-        email, 
-        role, 
-        is_active, 
-        is_online, 
-        DATE_FORMAT(derniere_connexion, '%d-%m-%Y %H:%i') AS derniere_connexion 
-      FROM users 
-      WHERE role = 'user'
-    `;
+        SELECT 
+          id, 
+          full_name, 
+          email, 
+          role, 
+          is_active, 
+          is_online, 
+          DATE_FORMAT(derniere_connexion, '%d-%m-%Y %H:%i') AS derniere_connexion 
+        FROM users 
+        WHERE role = 'user'
+      `;
       const [rows] = await db.execute(query);
       return rows;
     } catch (error) {
       console.error('Erreur SQL getOnlyUsers:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * AJOUTÉ : Récupérer un utilisateur unique par son ID
+   */
+  static async getUserById(id) {
+    try {
+      const query = `
+        SELECT id, full_name, email, role, is_active, is_online,
+               DATE_FORMAT(derniere_connexion, '%d-%m-%Y %H:%i') AS derniere_connexion
+        FROM users
+        WHERE id = ?
+      `;
+      const [rows] = await db.execute(query, [id]);
+      
+      // Si on trouve l'utilisateur, on retourne la première ligne, sinon null
+      return rows.length > 0 ? rows[0] : null;
+    } catch (error) {
+      console.error('Erreur SQL getUserById:', error);
       throw error;
     }
   }
@@ -79,7 +102,6 @@ class UserService {
   // Bouton "Bloquer" / "Activer" (Le switch de statut)
   static async toggleStatus(id, isActive) {
     try {
-      // isActive doit être un booléen ou 0/1 envoyé par le front-end
       const query = `UPDATE users SET is_active = ? WHERE id = ?`;
       const [result] = await db.execute(query, [isActive ? 1 : 0, id]);
       return result.affectedRows > 0;
@@ -90,23 +112,23 @@ class UserService {
   }
 
   /**
-   * Réinitialise directement le mot de passe d'un utilisateur par un administrateur
-   * @param {number|string} id - L'identifiant de l'utilisateur cible
-   * @param {string} newPassword - Le nouveau mot de passe en clair à hacher
+   * Modifie directement le mot de passe en base de données après hachage (Mode Admin)
    */
   static async updatePassword(id, newPassword) {
-    try {
-      console.log("*** Bonjour nous sommes dans service ***");
-      
+    try { // <-- CORRIGÉ : Ajout du bloc try manquant ici
       // 1. Hacher directement le nouveau mot de passe de manière sécurisée
-      const newPasswordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+      const newHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
 
       // 2. Mettre à jour la base de données avec le nouveau hash
       const query = `UPDATE users SET password_hash = ? WHERE id = ?`;
-      const [result] = await db.execute(query, [newPasswordHash, id]);
+      const [result] = await db.execute(query, [newHash, id]);
 
-      // Retourne true si une ligne a bien été modifiée, false sinon
-      return result.affectedRows > 0;
+      // Si aucune ligne n'a été modifiée, c'est que l'ID n'existe pas
+      if (result.affectedRows === 0) {
+        return { success: false, reason: 'USER_NOT_FOUND' };
+      }
+
+      return { success: true };
 
     } catch (error) {
       console.error('Erreur SQL dans UserService.updatePassword:', error);

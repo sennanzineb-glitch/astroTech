@@ -22,11 +22,20 @@ export class UserService {
   }
 
   /**
- * Récupérer uniquement les utilisateurs ayant le rôle 'user' (les clients)
- * GET `${URI}/clients`
- */
+   * Récupérer uniquement les utilisateurs ayant le rôle 'user' (les clients)
+   * GET `${URI}/clients`
+   */
   getOnlyUsers(): Observable<any> {
     return this.http.get<any>(`${this.baseUrl}/clients`);
+  }
+
+  /**
+   * AJOUTÉ : Récupérer un utilisateur unique par son ID via l'API
+   * GET `${URI}/:id`
+   * @param id Identifiant de l'utilisateur à récupérer
+   */
+  getUserById(id: number | string): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/${id}`);
   }
 
   /**
@@ -38,7 +47,7 @@ export class UserService {
   }
 
   /**
-   * 3. Ajouter un nouvel utilisateur
+   * Ajouter un nouvel utilisateur
    * POST `${URI}/add`
    * @param userData Objet contenant { full_name, email, role, password_hash }
    */
@@ -70,7 +79,7 @@ export class UserService {
    * Modifier le mot de passe d'un utilisateur
    * PATCH `${URI}/:id/password`
    * @param id Identifiant de l'utilisateur
-   * @param newPassword Nouveau mot de passe (hashé de préférence)
+   * @param newPassword Nouveau mot de passe
    */
   updatePassword(id: number | string, newPassword: string): Observable<any> {
     return this.http.patch<any>(`${this.baseUrl}/${id}/password`, { newPassword: newPassword });

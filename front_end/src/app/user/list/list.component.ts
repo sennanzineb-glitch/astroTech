@@ -1,9 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { SharedModule } from '../../_globale/shared/shared.module';
 import { UserService } from '../../_services/users/user.service';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-list',
+  standalone: true,
   imports: [SharedModule],
   templateUrl: './list.component.html',
   styleUrl: './list.component.css'
@@ -19,10 +21,27 @@ export class ListComponent implements OnInit {
   // Garde en mémoire l'utilisateur cliqué dans le tableau
   selectedUser: any = null;
 
-  constructor(private userService: UserService) {}
+  // Stocke l'ID de l'admin actuellement connecté pour la sécurité
+  currentAdminId: number = 0; 
+
+  constructor(
+    private userService: UserService,
+    private route: ActivatedRoute,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
+    this.currentAdminId = this.getConnectedUserId();
     this.loadAllUsers();
+  }
+
+  /**
+   * Récupère l'ID de l'utilisateur connecté depuis la session ou le localStorage
+   */
+  getConnectedUserId(): number {
+    // S'adapte à votre système d'authentification (ex: localStorage, service auth, etc.)
+    const storedId = localStorage.getItem('user_id');
+    return storedId ? parseInt(storedId, 10) : 1; 
   }
 
   /**
@@ -36,7 +55,7 @@ export class ListComponent implements OnInit {
             id: u.id,
             name: u.full_name,
             email: u.email,
-            role: u.role,
+            role: u.role, 
             lastLogin: u.derniere_connexion || 'Aucune connexion', 
             status: !!u.is_active 
           }));
@@ -76,6 +95,13 @@ export class ListComponent implements OnInit {
    * ACTION 4 : Interrupteur Switch (Activer/Bloquer en direct sur la ligne)
    */
   onStatusToggle(user: any): void {
+    // SÉCURITÉ : Empêcher de désactiver son propre compte admin connecté
+    if (user.id === this.currentAdminId) {
+      alert("Action impossible : vous ne pouvez pas désactiver votre propre compte session.");
+      user.status = true; // Force le switch à rester actif graphiquement
+      return;
+    }
+
     this.userService.toggleStatus(user.id, user.status).subscribe({
       next: (res) => {
         if (res.success) {
@@ -91,27 +117,14 @@ export class ListComponent implements OnInit {
   }
 
   /**
-   * ACTION 5 : Bouton "Modifier" (Sauvegarde le rôle actuel ou ouvre votre logique de modification)
+   * ACTION 5 : Bouton "Modifier" (Sauvegarde le rôle actuel sélectionné dans le tableau)
    */
-  onModify() { 
-    if (!this.selectedUser) return;
+onModify() { 
+    if (!this.selectedUser || !this.selectedUser.id) return;
 
-    // Exemple : Envoi du rôle modifié depuis la liste déroulante <select> du tableau
-    const updateData = {
-      full_name: this.selectedUser.name,
-      email: this.selectedUser.email,
-      role: this.selectedUser.role
-    };
-
-    this.userService.updateUser(this.selectedUser.id, updateData).subscribe({
-      next: (res) => {
-        if (res.success) {
-          alert(`Utilisateur ${this.selectedUser.name} mis à jour avec succès.`);
-          this.loadAllUsers();
-        }
-      },
-      error: (err) => console.error('Erreur lors de la modification:', err)
-    });
+    // Redirige vers la page de modification avec l'ID de l'utilisateur
+    // Exemple d'URL générée : /users/edit/5
+    this.router.navigate(['/admin/user/edit/', this.selectedUser.id]);
   }
 
   /**
@@ -119,6 +132,11 @@ export class ListComponent implements OnInit {
    */
   onBlock() { 
     if (!this.selectedUser) return;
+
+    if (this.selectedUser.id === this.currentAdminId) {
+      alert("Action impossible : Vous ne pouvez pas bloquer votre propre compte admin.");
+      return;
+    }
 
     // Inverse le statut actuel
     const nextStatus = !this.selectedUser.status;
@@ -143,6 +161,7 @@ export class ListComponent implements OnInit {
     const newPassword = prompt(`Saisir le nouveau mot de passe pour ${this.selectedUser.name} :`);
     if (!newPassword || newPassword.trim() === '') return;
 
+    // CORRECTION : Passage direct de la string 'newPassword' pour éliminer l'erreur TS2345
     this.userService.updatePassword(this.selectedUser.id, newPassword).subscribe({
       next: (res) => {
         if (res.success) {
@@ -158,6 +177,11 @@ export class ListComponent implements OnInit {
    */
   onDelete() { 
     if (!this.selectedUser) return;
+
+    if (this.selectedUser.id === this.currentAdminId) {
+      alert("Action impossible : Vous ne pouvez pas supprimer le compte avec lequel vous êtes connecté.");
+      return;
+    }
 
     if (confirm(`Êtes-vous sûr de vouloir supprimer définitivement ${this.selectedUser.name} ?`)) {
       this.userService.deleteUser(this.selectedUser.id).subscribe({

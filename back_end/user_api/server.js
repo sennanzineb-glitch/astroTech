@@ -43,6 +43,8 @@ app.get(`${URI}/stats`, authenticateToken, controllerUser.apiGetStats);
 app.get(`${URI}/clients`, authenticateToken, controllerUser.apiGetOnlyUsers);
 
 // --- ACTIONS SUR UN UTILISATEUR UNIQUE ---
+// Récupérer un utilisateur par son ID (Requis pour la page de modification)
+app.get(`${URI}/:id`, authenticateToken, controllerUser.apiGetUserById);
 // Bouton "Modifier" (Nom, Email, Rôle)
 app.put(`${URI}/:id`, authenticateToken, controllerUser.apiUpdateUser); 
 // Le Switch bleu (Activation / Blocage)
