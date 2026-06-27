@@ -28,7 +28,7 @@ export const routes: Routes = [
         canActivate: [AuthGuard],
         children: [
             /** Dashboard & Profile **/
-            { path: 'dashboard', loadComponent: () => import('./dashboard/dashboard.component').then(c => c.DashboardComponent) },
+            { path: 'dashboard', loadComponent: () => import('./dashboard/user/dashboard/dashboard.component').then(c => c.DashboardComponent) },
             { path: 'profile', loadComponent: () => import('./auth/profile/profile.component').then(c => c.ProfileComponent) },
 
             /** Affaires **/

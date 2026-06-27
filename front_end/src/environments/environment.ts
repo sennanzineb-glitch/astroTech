@@ -15,8 +15,8 @@ export const environment = {
   apiUrl_chat: 'http://localhost:3006/api/v1/chat',
   // URL pour la connexion WebSocket (Temps réel)
   socketUrl_chat: 'http://localhost:3006',
-
   apiUrl_user: 'http://localhost:3007/api/v1/users',
+  apiUrl_dashboard: 'http://localhost:3008/api/v1/dashboard',
   
   url_upload: "http://localhost:3002/uploads"
 };

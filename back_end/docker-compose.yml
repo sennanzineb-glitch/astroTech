@@ -137,6 +137,20 @@ services:
       DB_PASSWORD: "123456789"
       DB_NAME: astro_tech
 
+  dashboard_api:
+    build: ./dashboard_api
+    container_name: dashboard_api_container
+    ports:
+      - "3008:3008"
+    depends_on:
+      - db
+    environment:
+      PORT: 3008
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: "123456789"
+      DB_NAME: astro_tech
+
 volumes:
   db_data:
     driver: local

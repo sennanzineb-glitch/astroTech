@@ -1,0 +1,234 @@
+/* ==========================================================================
+   Conteneur Thème Général - FINI LE NOIR (Gris clair moderne)
+   ========================================================================== */
+:host {
+  display: block;
+  background-color: #f8f9fa !important; /* Fond gris très clair / blanc cassé */
+  min-height: 100vh;
+  color: #333333; /* Texte foncé pour le contraste */
+}
+
+.dashboard-theme-container {
+  background-color: #f8f9fa !important;
+  min-height: 100vh;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: #333333;
+}
+
+/* ==========================================================================
+   Formulaire supérieur (Style épuré sur fond clair)
+   ========================================================================== */
+.glass-form-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+.card-body-custom {
+  padding: 12px 16px;
+}
+
+.form-main-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a202c;
+}
+
+.form-subtitle {
+  font-size: 9px;
+  color: #718096;
+  letter-spacing: 1px;
+}
+
+.custom-glass-input, .custom-glass-select {
+  width: 100%;
+  background: #ffffff !important;
+  border: 1px solid #cbd5e0 !important;
+  border-radius: 6px;
+  color: #2d3748 !important;
+  font-size: 12px;
+  padding: 5px 10px;
+  height: 32px;
+}
+
+.color-picker-wrapper {
+  width: 35px;
+  height: 32px;
+  background: #ffffff;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.custom-color-input {
+  border: none;
+  background: transparent;
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+}
+
+.btn-neon-submit {
+  background: linear-gradient(135deg, #28a745, #1e7e34);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: 11px;
+  height: 32px;
+  transition: all 0.2s ease;
+}
+
+/* ==========================================================================
+   GRILLE MASONRY (Toujours active pour éviter les espaces vides)
+   ========================================================================== */
+.dashboard-grid {
+  display: block;
+  column-count: 4;
+  column-gap: 8px;
+  width: 100%;
+}
+
+.grid-item {
+  display: inline-block;
+  width: 100%;
+  margin-bottom: 8px;
+  break-inside: avoid;
+}
+
+@media (max-width: 1200px) { .dashboard-grid { column-count: 3; } }
+@media (max-width: 768px) { .dashboard-grid { column-count: 2; } }
+@media (max-width: 480px) { .dashboard-grid { column-count: 1; } }
+
+/* ==========================================================================
+   Cartes de Widgets (Garde la couleur choisie par widget.color)
+   ========================================================================== */
+.modern-widget-card {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease;
+  color: #ffffff; /* Texte blanc à l'intérieur des widgets colorés */
+}
+
+.modern-widget-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.size-small .modern-widget-card { height: auto; }
+.size-large .modern-widget-card { height: auto; }
+
+/* Éléments internes */
+.widget-color-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.widget-badge-ribbon {
+  position: absolute;
+  top: 0;
+  right: 30px;
+  width: 14px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  border-bottom-left-radius: 3px;
+  border-bottom-right-radius: 3px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.ribbon-circle {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #ffffff;
+}
+
+.widget-close-btn {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  cursor: pointer;
+  z-index: 5;
+}
+
+.widget-close-btn:hover {
+  color: #ffffff;
+}
+
+.widget-inner-body {
+  padding: 10px;
+}
+
+.main-w-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-right: 10px;
+}
+
+.sub-w-category {
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.8);
+  text-transform: uppercase;
+}
+
+.widget-content-area {
+  margin: 8px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.digital-number-display {
+  font-size: 38px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1;
+  padding: 10px 0;
+}
+
+.chart-container-wrapper {
+  position: relative;
+  width: 100%;
+  height: 140px;
+}
+
+.widget-footer-row {
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.8);
+  text-align: right;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.live-status-dot {
+  width: 4px;
+  height: 4px;
+  background-color: #28a745;
+  border-radius: 50%;
+  box-shadow: 0 0 4px #28a745;
+}
+
+.chart-container-wrapper {
+  width: 100%;
+  height: 120px;
+  min-height: 120px; /* Force l'espace même pendant le chargement */
+  display: block;
+  position: relative;
+}
