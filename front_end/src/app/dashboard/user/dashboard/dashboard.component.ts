@@ -4,8 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { WidgetConfig, WidgetService } from '../../../_services/dashboard/widget.service';
 import { DashboardChartComponent } from '../pie-chart/pie-chart.component';
 import { InterventionService } from '../../../_services/affaires/intervention.service';
-import { DashboardService, Dashboard } from '../../../_services/dashboard/dashboard.service'; // Import de Dashboard
-import { of, switchMap, catchError } from 'rxjs';
+import { DashboardService, Dashboard } from '../../../_services/dashboard/dashboard.service';
+import { TechnicienService } from '../../../_services/techniciens/technicien.service';
+import { of, catchError } from 'rxjs';
 
 @Component({
   selector: 'app-dashboard',
@@ -22,8 +23,9 @@ export class DashboardComponent implements OnInit {
   dashboards: Dashboard[] = [];
   selectedDashboardId: number = 0; 
   nouveauDashboardName: string = '';
-
+  
   interventionTypes: any[] = [];
+  techniciens: any[] = [];
 
   nouveauWidget: Partial<WidgetConfig> = {
     title: '',
@@ -36,28 +38,27 @@ export class DashboardComponent implements OnInit {
   constructor(
     private widgetService: WidgetService,
     private interventionService: InterventionService,
-    private dashboardService: DashboardService
+    private dashboardService: DashboardService,
+    private technicienService: TechnicienService
   ) { }
 
   ngOnInit(): void {
-    this.loadAllDashboards(true); // Charge les dashboards au démarrage
+    this.loadAllDashboards(true);
     this.loadTypes();
+    this.loadTechniciens();
   }
 
-  // Récupère tous les dashboards de l'utilisateur
   loadAllDashboards(isInitialLoad: boolean = false): void {
     this.dashboardService.getDashboards().subscribe({
       next: (list: Dashboard[]) => {
         this.dashboards = list;
         
         if (list.length > 0) {
-          // Si chargement initial, on sélectionne le premier par défaut
           if (isInitialLoad) {
             this.selectedDashboardId = list[0].id;
             this.loadDashboard(this.selectedDashboardId);
           }
         } else {
-          // Si aucun dashboard n'existe du tout, on en crée un par défaut
           this.creerNouveauDashboardEtCharger("Tableau principal");
         }
       },
@@ -65,7 +66,6 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  // Déclenché quand l'utilisateur change de Dashboard dans le <select>
   onDashboardChange(id: number): void {
     this.selectedDashboardId = id;
     this.widgets = [];
@@ -75,17 +75,14 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  // Ajouter un nouveau Tableau de Bord
   ajouterDashboard(): void {
     if (!this.nouveauDashboardName.trim()) return;
 
     this.dashboardService.createDashboard(this.nouveauDashboardName.trim()).subscribe({
       next: (res: any) => {
         this.nouveauDashboardName = '';
-        // Recharge la liste globale et sélectionne le nouveau
         this.dashboardService.getDashboards().subscribe((list: Dashboard[]) => {
           this.dashboards = list;
-          // On cherche l'ID du dashboard qu'on vient de créer (généralement le dernier ou via la réponse de l'API)
           const créé = list.find(d => d.name === res.name) || res;
           if (créé && créé.id) {
             this.selectedDashboardId = créé.id;
@@ -185,7 +182,7 @@ export class DashboardComponent implements OnInit {
       category: this.nouveauWidget.category,
       display_type: this.nouveauWidget.display_type,
       color: this.nouveauWidget.color || '#3f51b5',
-      dashboard_id: this.selectedDashboardId, // Lié au dashboard sélectionné
+      dashboard_id: this.selectedDashboardId,
       data_type: this.nouveauWidget.data_type
     };
 
@@ -240,6 +237,15 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  loadTechniciens(): void {
+    this.technicienService.getAll().subscribe({
+      next: (res: any) => {
+        this.techniciens = res.data || res;
+      },
+      error: (err) => console.error('Erreur chargement techniciens:', err)
+    });
+  }
+
   onConditionChange(): void {
     if (this.nouveauWidget.category === 'intervention') {
       if (this.nouveauWidget.display_type === 'number') {
@@ -249,8 +255,12 @@ export class DashboardComponent implements OnInit {
       } else {
         this.nouveauWidget.data_type = 'etat';
       }
-    } else {
-      this.nouveauWidget.data_type = this.nouveauWidget.category;
+    } else if (this.nouveauWidget.category === 'affaire') {
+      if (this.nouveauWidget.display_type === 'number') {
+        this.nouveauWidget.data_type = 'technicien';
+      } else {
+        this.nouveauWidget.data_type = 'client';
+      }
     }
   }
 }

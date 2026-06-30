@@ -24,6 +24,7 @@
       </div>
     </div>
   </div>
+
   <div class="glass-form-card mb-5 animate-fade-in">
     <div class="card-body-custom">
       <div class="form-header d-flex justify-content-between align-items-center mb-2">
@@ -42,11 +43,11 @@
         <div class="col-md-2">
           <select [(ngModel)]="nouveauWidget.category" class="custom-glass-select" (change)="onConditionChange()">
             <option value="intervention">Intervention</option>
-            <option value="affaire" disabled>Affaire</option>
+            <option value="affaire">Affaire</option>
           </select>
         </div>
 
-        <div [ngClass]="nouveauWidget.category === 'intervention' ? 'col-md-2' : 'col-md-4'">
+        <div class="col-md-2">
           <select [(ngModel)]="nouveauWidget.display_type" class="custom-glass-select" (change)="onConditionChange()">
             <option value="number">Nombre</option>
             <option value="pie">Diagramme circulaire</option>
@@ -55,8 +56,7 @@
           </select>
         </div>
 
-        <div class="col-md-4"
-          *ngIf="nouveauWidget.category === 'intervention' && nouveauWidget.display_type === 'number'">
+        <div class="col-md-4" *ngIf="nouveauWidget.category === 'intervention' && nouveauWidget.display_type === 'number'">
           <select [(ngModel)]="nouveauWidget.data_type" class="custom-glass-select fw-bold">
             <option value="all" selected>Toutes les interventions</option>
             <option value="technicien">Total des Techniciens (Global)</option>
@@ -66,8 +66,7 @@
           </select>
         </div>
 
-        <div class="col-md-4"
-          *ngIf="nouveauWidget.category === 'intervention' && nouveauWidget.display_type !== 'number'">
+        <div class="col-md-4" *ngIf="nouveauWidget.category === 'intervention' && nouveauWidget.display_type !== 'number'">
           <select [(ngModel)]="nouveauWidget.data_type" class="custom-glass-select fw-bold">
             <option value="client">Client</option>
             <option value="zone">Zone d'intervention (Agence)</option>
@@ -83,6 +82,26 @@
           </select>
         </div>
 
+        <div class="col-md-4" *ngIf="nouveauWidget.category === 'affaire' && nouveauWidget.display_type === 'number'">
+          <select [(ngModel)]="nouveauWidget.data_type" class="custom-glass-select fw-bold">
+            <option value="technicien">Techniciens (Global Affaire)</option>
+            <option *ngFor="let tech of techniciens" [value]="tech.id">
+              {{ tech.prenom }} {{ tech.nom }}
+            </option>
+          </select>
+        </div>
+
+        <div class="col-md-4" *ngIf="nouveauWidget.category === 'affaire' && nouveauWidget.display_type !== 'number'">
+          <select [(ngModel)]="nouveauWidget.data_type" class="custom-glass-select fw-bold">
+            <option value="client">Client</option>
+            <option value="etat">État</option>
+            <option value="date_cloture_estime">Date de clôture estimée</option>
+            <option value="referent">Référents</option>
+            <option value="createur">Créateur</option>
+            <option value="date_creation">Date de création</option>
+          </select>
+        </div>
+
         <div class="col-md-1 d-flex justify-content-center">
           <div class="color-picker-wrapper">
             <input type="color" [(ngModel)]="nouveauWidget.color" class="custom-color-input"
@@ -90,7 +109,7 @@
           </div>
         </div>
 
-        <div [ngClass]="nouveauWidget.category === 'intervention' ? 'col-md-1' : 'col-md-2'">
+        <div class="col-md-1">
           <button class="btn-neon-submit w-100 fw-bold" (click)="creerWidget()">SUIVANT</button>
         </div>
       </div>
